@@ -1,0 +1,90 @@
+<p class="fatal" id="fatal" hidden></p>
+<div class="layout">
+  <section class="stage-col" aria-label="Preview">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage">
+        <canvas id="view"></canvas>
+        <canvas id="overlay" class="is-off" aria-label="Drag here to draw a box around the logo"></canvas>
+        <div class="stage-empty" id="stageEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
+          <strong>Drop videos or photos here</strong>
+          <span>The logo is found automatically</span>
+        </div>
+        <div class="stage-pill" id="stagePill" hidden><span class="spin"></span><span id="stagePillText"></span></div>
+      </div>
+    </div>
+
+    <div class="transport">
+      <input type="range" id="scrub" min="0" max="1000" step="1" value="250" aria-label="Preview time" disabled>
+      <span class="tc" id="tc"><b>00:00.00</b> / 00:00.00</span>
+      <div class="subbar">
+        <label class="switch" for="compare">
+          <input type="checkbox" id="compare" disabled>
+          <span class="knob"></span>
+          <span>Show original</span>
+        </label>
+        <p class="hint">Logo found in the wrong place? Drag a box around it on the preview.</p>
+      </div>
+    </div>
+
+    <div class="loupes" id="loupes" hidden>
+      <figure class="loupe"><canvas id="loupeA" width="360" height="360"></canvas><figcaption><b>Before</b><span class="zoom" id="zoomA"></span></figcaption></figure>
+      <figure class="loupe"><canvas id="loupeB" width="360" height="360"></canvas><figcaption><b>After</b><span class="zoom" id="zoomB"></span></figcaption></figure>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Steps">
+    <section class="step">
+      <div class="step-head"><span class="step-no">1/4</span><h2>Add videos or photos</h2></div>
+      <label class="drop" id="drop" for="file">
+        <input type="file" id="file" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>
+        <strong>Choose files</strong>
+        <span>Add many at once · MP4, MOV, WebM · PNG, JPG, WebP</span>
+      </label>
+      <ul class="queue" id="queue"></ul>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="step-no">2/4</span><h2>Logo</h2></div>
+      <div id="logoInfo"></div>
+      <div class="row">
+        <button class="btn btn-ghost btn-small" id="redetect" type="button" disabled>Detect again</button>
+      </div>
+      <label class="switch" for="sameRect">
+        <input type="checkbox" id="sameRect" checked>
+        <span class="knob"></span>
+        <span>Use the lead video’s logo spot for all videos</span>
+      </label>
+      <p class="help">Turn off to search each video separately. Either way, the logo’s transparency is learned from every video on its own.</p>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="step-no">3/4</span><h2>Quality</h2></div>
+      <div class="seg" role="group" aria-label="Video quality">
+        <button type="button" id="qMax" aria-pressed="true">Maximum<small>about 2.5× the source bitrate</small></button>
+        <button type="button" id="qHigh" aria-pressed="false">High<small>smaller files</small></button>
+      </div>
+      <p class="help" id="qNote">Changing pixels means re-encoding the video. Maximum adds extra bitrate so the difference stays invisible. Resolution, frame rate and frame count stay the same, and the audio is copied untouched.</p>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="step-no">4/4</span><h2>Remove the logo</h2></div>
+      <button class="btn btn-primary btn-wide" id="runBtn" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 7l2 13h12l2-13M9 7V4h6v3"></path></svg>
+        <span id="runLabel">Remove logo</span>
+      </button>
+      <button class="btn btn-ghost btn-wide" id="cancelBtn" type="button" hidden>Stop</button>
+      <div id="total" hidden>
+        <div class="bar big"><i id="totalFill"></i></div>
+        <p class="hint" id="totalText" style="margin-top:6px"></p>
+      </div>
+      <button class="btn btn-ghost btn-wide" id="zipBtn" type="button" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"></path></svg>
+        <span id="zipLabel">Download all (ZIP)</span>
+      </button>
+      <p class="msg" id="note" hidden></p>
+    </section>
+  </aside>
+</div>
+<p class="foot">Only use it on videos and photos you made or have the right to edit. AI-generated media can also carry invisible watermarks such as SynthID; this tool does not touch them, so keep labelling AI content where platforms or laws ask for it. See-through logos are restored mathematically; any fully opaque part is filled in from its surroundings.</p>
