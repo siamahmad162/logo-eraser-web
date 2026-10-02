@@ -576,13 +576,11 @@ export function mountTool(root) {
     layoutStage();
     await renderPreview();
   }
+  // A file is previewed with its own logo measurement only (another file's could leave traces
+  // that its own result won't have).
   function previewModel(item) {
     if (!item) return null;
-    if (item.kind === 'image') return item.model && item.model.ok ? item.model : null;
-    if (item.model && item.model.ok) return item.model;
-    const ref = refItem();
-    if (ref && ref !== item && ref.model && ref.model.ok && item.info && ref.model.W === item.info.w && ref.model.H === item.info.h && S.sameRect) return ref.model;
-    return null;
+    return item.model && item.model.ok ? item.model : null;
   }
   function previewTime(item) { const i = item.info; return i.first + S.frac * Math.max(0, i.dur - i.first - 1 / i.fps); }
   const setTc = (t, dur) => { tcEl.innerHTML = '<b>' + tc(t) + '</b> / ' + tc(dur); };
@@ -611,9 +609,13 @@ export function mountTool(root) {
     try {
       do {
         P.pending = false;
-        const item = P.item, tok = P.token, t = previewTime(item);
-        const s = await P.sink.getSample(t);
-        if (!s || tok !== P.token) { if (s) s.close(); break; }
+        const item = P.item, sink = P.sink, tok = P.token;
+        if (!item || !sink) break;
+        const t = previewTime(item);
+        let s = null;
+        // another file may be picked while this frame loads; then its own request (pending) runs next
+        try { s = await sink.getSample(t); } catch (e) { if (tok === P.token) throw e; continue; }
+        if (!s || tok !== P.token) { if (s) s.close(); continue; }
         try { await drawSample(s, item); setTc(t, item.info.dur); } finally { s.close(); }
         drawView();
       } while (P.pending);
@@ -873,6 +875,7 @@ export function mountTool(root) {
     render();
     try { await openPreview(item); } catch (e) { setNote('Could not open the preview: ' + errText(e), 'warn'); }
     render();
+    prepareFollower(item);
   }
 
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
@@ -881,7 +884,7 @@ export function mountTool(root) {
     if (!item || !item.info || S.busy) return;
     if (S.analyzing) { if (!manualRect && !item.model) item.waiting = true; return; }
     S.analyzing = true;
-    item.status = 'analyzing'; item.msg = ''; item.progress = 0;
+    item.status = 'analyzing'; item.msg = ''; item.progress = 0; item.borrowed = false;
     render();
     try {
       if (item.kind === 'image') {
@@ -911,7 +914,7 @@ export function mountTool(root) {
       if (item.id === S.refId) {
         S.rectRel = toRel(rect, item.info.w, item.info.h);
         // other videos follow the reference box, so drop what they learned for the old one
-        S.items.forEach((o) => { if (o !== item && o.kind !== 'image' && !o.manual && o.status !== 'done') { o.model = null; } });
+        S.items.forEach((o) => { if (o !== item && o.kind !== 'image' && !o.manual && o.status !== 'done') { o.model = null; o.borrowed = false; } });
       }
     } catch (e) {
       item.status = 'ready'; item.msg = errText(e);
@@ -923,6 +926,7 @@ export function mountTool(root) {
       // files that arrived while this was busy (the lead video first)
       const ref = refItem(), next = ref && ref.waiting ? ref : S.items.find((i) => i.waiting);
       if (next) { next.waiting = false; if (!next.model) analyze(next); }
+      else if (selItem() && selItem() !== ref) prepareFollower(selItem());
     }
   }
 
@@ -942,6 +946,50 @@ export function mountTool(root) {
   const plainTitle = () => document.title.replace(OUR_TITLE, '');
   function setTitle(prefix) { document.title = prefix + plainTitle(); }
   function restoreTitle() { if (OUR_TITLE.test(document.title)) document.title = plainTitle(); }
+
+  // The logo model of a video that follows the lead file: its own logo when "same spot" is off (or
+  // the lead is a photo or a Veo clip), else the lead's spot and exact position, measured in this video.
+  async function followModel(it, ref, onP) {
+    let rect = null, guess = null;
+    if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
+      const d = await detectLogo(it, (p) => onP(p * 0.3));
+      if (d) { rect = d.rect; guess = d.tmpl; }
+    }
+    if (!rect && !S.rectRel) return null;
+    if (!rect) {
+      rect = fromRel(S.rectRel, it.info.w, it.info.h);
+      // the first video's exact logo position, carried over to this frame size
+      const ra = ref.model && ref.model.gemini && ref.model.align;
+      if (ra) {
+        const sx = it.info.w / ref.info.w, sy = it.info.h / ref.info.h;
+        guess = { x: (ra.x + 0.5) * sx - 0.5, y: (ra.y + 0.5) * sy - 0.5, s: ra.s * Math.min(sx, sy), usual: !!(ref.detected && ref.detected.tmpl && ref.detected.tmpl.usual) };
+        rect = C.placeTemplate(GEMINI, guess.x, guess.y, guess.s, it.info.w, it.info.h).rect;
+      }
+    }
+    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), guess);
+    it.borrowed = false;
+    if (!model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) { it.borrowed = true; return ref.model; }
+    return model;
+  }
+  // measures a following video when it is picked, so its preview shows its own result
+  async function prepareFollower(it) {
+    const ref = refItem();
+    if (!it || !ref || it === ref || it.kind !== 'video' || !it.info || it.model || it.status !== 'ready' || it.msg || S.busy || S.analyzing || !(ref.model && ref.model.ok)) return;
+    S.analyzing = true;
+    it.status = 'analyzing'; it.progress = 0;
+    render();
+    pill('Measuring this video’s logo…');
+    try {
+      const m = await followModel(it, ref, (p) => { it.progress = p; updItem(it); renderLogo(); });
+      if (m) it.model = m; else it.msg = 'No logo found automatically';
+    } catch (e) { it.msg = errText(e); }
+    finally {
+      it.status = 'ready'; S.analyzing = false;
+      pill('');
+      render();
+      if (P.item === it) { S.splitSet = false; renderPreview(); }
+    }
+  }
 
   async function runAll() {
     const ref = refItem();
@@ -971,24 +1019,9 @@ export function mountTool(root) {
         try {
           if (!it.model || !it.model.ok) {
             it.status = 'learning'; it.progress = 0; updItem(it); updTotal();
-            let rect = null, guess = null;
-            if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
-              const d = await detectLogo(it, (p) => { it.progress = p * 0.3; updItem(it); });
-              if (d) { rect = d.rect; guess = d.tmpl; }
-            }
-            if (!rect && !S.rectRel) { it.status = 'skipped'; it.msg = 'No logo found automatically in this video. Select it and draw a box around the logo.'; updItem(it); continue; }
-            if (!rect) {
-              rect = fromRel(S.rectRel, it.info.w, it.info.h);
-              // the first video's exact logo position, carried over to this frame size
-              const ra = ref.model && ref.model.gemini && ref.model.align;
-              if (ra) {
-                const sx = it.info.w / ref.info.w, sy = it.info.h / ref.info.h;
-                guess = { x: (ra.x + 0.5) * sx - 0.5, y: (ra.y + 0.5) * sy - 0.5, s: ra.s * Math.min(sx, sy), usual: !!(ref.detected && ref.detected.tmpl && ref.detected.tmpl.usual) };
-                rect = C.placeTemplate(GEMINI, guess.x, guess.y, guess.s, it.info.w, it.info.h).rect;
-              }
-            }
-            it.model = await learn(it, rect, (p) => { it.progress = 0.3 + p * 0.7; updItem(it); }, guess);
-            if (!it.model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) it.model = ref.model;
+            const m = await followModel(it, ref, (p) => { it.progress = p; updItem(it); });
+            if (!m) { it.status = 'skipped'; it.msg = 'No logo found automatically in this video. Select it and draw a box around the logo.'; updItem(it); continue; }
+            it.model = m;
           }
           if (S.cancel) break;
           if (!it.model.ok) { it.status = 'skipped'; it.msg = 'No logo at that spot in this video. Select it, draw a box around the logo and run again.'; updItem(it); continue; }
@@ -1174,11 +1207,11 @@ export function mountTool(root) {
       th.innerHTML = (it.thumb ? '<img alt="" src="' + it.thumb + '">' : ICON[it.kind]) + '<span class="kind">' + (it.kind === 'image' ? 'Photo' : 'Video') + '</span>';
     }
     const working = WORKING.includes(it.status);
-    const tone = it.status === 'done' ? 'ok' : it.status === 'error' || it.status === 'skipped' || (it.msg && !working) ? 'warn' : working ? 'run' : 'idle';
+    const tone = it.status === 'done' ? (it.borrowed ? 'warn' : 'ok') : it.status === 'error' || it.status === 'skipped' || (it.msg && !working) ? 'warn' : working ? 'run' : 'idle';
     li.dataset.tone = tone;
     let text = it.status === 'analyzing' && it.progress >= 0.3 ? 'Measuring the logo…' : STATUS[it.status] || '';
     if (working && it.progress) text += ' ' + pct(it.progress);
-    if (it.status === 'done' && it.result) text = 'Done · ' + fmtMB(it.result.size);
+    if (it.status === 'done' && it.result) text = 'Done · ' + fmtMB(it.result.size) + (it.borrowed ? ' · used the lead video’s logo measurement; if you see traces, process it on its own' : '');
     if (it.msg && !working) text = it.msg;
     const st = li.querySelector('.file-status');
     st.innerHTML = '<span class="st st-' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : tone === 'ok' ? ICON.ok : tone === 'warn' ? ICON.warn : '') + '<span></span></span>' + (it.id === S.refId && S.items.length > 1 ? '<span class="lead" title="The other videos follow this file’s logo spot">Lead</span>' : '');
@@ -1270,6 +1303,8 @@ export function mountTool(root) {
       const p = it.progress || 0;
       html = logoState('run', it.status !== 'analyzing' ? 'Opening the file…' : p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', 'This takes a few seconds.') +
         (it.status === 'analyzing' ? '<div class="bar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' : '');
+    } else if (m && m.ok && it.borrowed) {
+      html = logoState('warn', 'Using the lead video’s measurement', 'This video’s own measurement failed, so the lead file’s is used. If traces remain, remove this video on its own, or draw a box around its logo.');
     } else if (m && m.ok) {
       const name = m.kind === 'image' || m.gemini ? 'Gemini sparkle' : m.veo ? 'Veo text mark' : 'Logo';
       chip = it.manual ? 'Your box' : 'Automatic';
@@ -1290,7 +1325,7 @@ export function mountTool(root) {
     } else if (it.status === 'error') {
       html = logoState('warn', 'This file could not be opened', esc(it.msg));
     } else if (!isRef && ref && ref.model && ref.model.ok && S.sameRect && it.kind !== 'image') {
-      html = logoState('info', 'Same spot as the lead file', 'Its transparency is measured from this video when it is processed.');
+      html = logoState('info', 'Same spot as the lead file', 'This video’s logo is measured when you pick it or when it is processed. Until then the preview shows the original.');
     } else if (it.msg || (isRef && it.status === 'ready')) {
       html = logoState('warn', esc(it.msg || 'No logo found automatically'), 'Click “Draw a box”, then drag around the logo on the preview, a little larger than the logo.');
     } else {
