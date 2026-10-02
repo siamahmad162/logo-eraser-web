@@ -41,18 +41,21 @@ import PBreakfastAfter from './assets/media/p-breakfast-after.webp';
 import PBoatBefore from './assets/media/p-boat-before.webp';
 import PBoatAfter from './assets/media/p-boat-after.webp';
 
+// (the single-file test build carries only WebM, which every browser it targets plays)
+const FILE = import.meta.env.MODE === 'file';
+
 export type Demo = { id: string; source: 'Gemini' | 'Veo' | 'Photo'; title: string; alt: string; media: CompareMedia; logo: { x: number; y: number } };
 
 export const CLIPS = {
-  HERO_WATCH: { id: 'hero-watch', source: 'Gemini', title: 'Luxury watch', alt: 'A luxury watch turning on a pedestal', media: { kind: 'video', webm: HeroWatchWebm, mp4: HeroWatchMp4, poster: HeroWatchPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
-  G_OCEAN: { id: 'g-ocean', source: 'Gemini', title: 'Night ocean', alt: 'Waves on dark rocks at night', media: { kind: 'video', webm: GOceanWebm, mp4: GOceanMp4, poster: GOceanPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
-  G_GARDEN: { id: 'g-garden', source: 'Gemini', title: 'Glowing garden', alt: 'A 3D garden of glowing flowers', media: { kind: 'video', webm: GGardenWebm, mp4: GGardenMp4, poster: GGardenPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
-  G_ALLEY: { id: 'g-alley', source: 'Gemini', title: 'Neon alley', alt: 'A rainy neon alley at night', media: { kind: 'video', webm: GAlleyWebm, mp4: GAlleyMp4, poster: GAlleyPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
-  G_RAMEN: { id: 'g-ramen', source: 'Gemini', title: 'Ramen (9:16)', alt: 'A steaming bowl of ramen', media: { kind: 'video', webm: GRamenWebm, mp4: GRamenMp4, poster: GRamenPoster, w: 360, h: 640 }, logo: { x: 0.749, y: 0.749 } },
-  V_JELLY: { id: 'v-jelly', source: 'Veo', title: 'Deep-sea jellyfish', alt: 'Glowing jellyfish in the deep sea', media: { kind: 'video', webm: VJellyWebm, mp4: VJellyMp4, poster: VJellyPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
-  V_AURORA: { id: 'v-aurora', source: 'Veo', title: 'Aurora lake', alt: 'Snowy pines under the northern lights', media: { kind: 'video', webm: VAuroraWebm, mp4: VAuroraMp4, poster: VAuroraPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
-  V_LAVA: { id: 'v-lava', source: 'Veo', title: 'Lava field', alt: 'Glowing lava at night', media: { kind: 'video', webm: VLavaWebm, mp4: VLavaMp4, poster: VLavaPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
-  V_BOAT: { id: 'v-boat', source: 'Veo', title: 'Lantern boat (9:16)', alt: 'Dark river water at night', media: { kind: 'video', webm: VBoatWebm, mp4: VBoatMp4, poster: VBoatPoster, w: 360, h: 640 }, logo: { x: 0.85, y: 0.934 } },
+  HERO_WATCH: { id: 'hero-watch', source: 'Gemini', title: 'Luxury watch', alt: 'A luxury watch turning on a pedestal', media: { kind: 'video', webm: HeroWatchWebm, mp4: FILE ? '' : HeroWatchMp4, poster: HeroWatchPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
+  G_OCEAN: { id: 'g-ocean', source: 'Gemini', title: 'Night ocean', alt: 'Waves on dark rocks at night', media: { kind: 'video', webm: GOceanWebm, mp4: FILE ? '' : GOceanMp4, poster: GOceanPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
+  G_GARDEN: { id: 'g-garden', source: 'Gemini', title: 'Glowing garden', alt: 'A 3D garden of glowing flowers', media: { kind: 'video', webm: GGardenWebm, mp4: FILE ? '' : GGardenMp4, poster: GGardenPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
+  G_ALLEY: { id: 'g-alley', source: 'Gemini', title: 'Neon alley', alt: 'A rainy neon alley at night', media: { kind: 'video', webm: GAlleyWebm, mp4: FILE ? '' : GAlleyMp4, poster: GAlleyPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
+  G_RAMEN: { id: 'g-ramen', source: 'Gemini', title: 'Ramen (9:16)', alt: 'A steaming bowl of ramen', media: { kind: 'video', webm: GRamenWebm, mp4: FILE ? '' : GRamenMp4, poster: GRamenPoster, w: 360, h: 640 }, logo: { x: 0.749, y: 0.749 } },
+  V_JELLY: { id: 'v-jelly', source: 'Veo', title: 'Deep-sea jellyfish', alt: 'Glowing jellyfish in the deep sea', media: { kind: 'video', webm: VJellyWebm, mp4: FILE ? '' : VJellyMp4, poster: VJellyPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
+  V_AURORA: { id: 'v-aurora', source: 'Veo', title: 'Aurora lake', alt: 'Snowy pines under the northern lights', media: { kind: 'video', webm: VAuroraWebm, mp4: FILE ? '' : VAuroraMp4, poster: VAuroraPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
+  V_LAVA: { id: 'v-lava', source: 'Veo', title: 'Lava field', alt: 'Glowing lava at night', media: { kind: 'video', webm: VLavaWebm, mp4: FILE ? '' : VLavaMp4, poster: VLavaPoster, w: 640, h: 360 }, logo: { x: 0.916, y: 0.883 } },
+  V_BOAT: { id: 'v-boat', source: 'Veo', title: 'Lantern boat (9:16)', alt: 'Dark river water at night', media: { kind: 'video', webm: VBoatWebm, mp4: FILE ? '' : VBoatMp4, poster: VBoatPoster, w: 360, h: 640 }, logo: { x: 0.85, y: 0.934 } },
 } satisfies Record<string, Demo>;
 
 export const PHOTOS: Demo[] = [

@@ -189,7 +189,7 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
         {media.kind === 'video' && (
           <video ref={vid} className="mc-video" muted loop playsInline preload={eager ? 'auto' : 'none'} aria-hidden="true" tabIndex={-1}>
             <source src={media.webm} type="video/webm" />
-            <source src={media.mp4} type="video/mp4" />
+            {media.mp4 && <source src={media.mp4} type="video/mp4" />}
           </video>
         )}
         <span className="mc-tag mc-tag-l">Original</span>

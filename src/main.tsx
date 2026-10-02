@@ -25,3 +25,4 @@ else {
   document.title = metaFor(path).title;
   createRoot(root).render(tree);
 }
+(window as Window & { __bootDone?: () => void }).__bootDone?.();
