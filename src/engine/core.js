@@ -704,7 +704,7 @@ const LogoCore = (() => {
     const dev = new Float32Array(n).fill(NaN), lim = new Float32Array(n);
     let any = false;
     for (const g of geo) {
-      const m = bgAt(c, g, true);
+      const m = bgAt(c, g, pm.finishStripes !== false);
       if (!(m >= 0)) continue;
       dev[g.q] = c[g.q] - m;
       lim[g.q] = Math.max(2.5, Math.min(8, 0.2 * a3[g.q] * Math.abs(pm.L - m)));
@@ -720,7 +720,66 @@ const LogoCore = (() => {
       known++; if (Math.abs(dev[g.q]) > Math.max(12, 2 * lim[g.q])) off++;
     }
     if (!known || off > 0.05 * known) return;
-    for (const g of geo) {
+    // How well the surroundings' smooth surface predicts the picture just outside the logo, where
+    // nothing was changed. Over a textured background (water, foliage) it doesn't, and pulling the
+    // logo's inside toward that surface would paint its streaks in; then only the shared offset
+    // below is taken out.
+    let rs = 0, rn = 0;
+    for (const g of geo) { const q = g.q; if (a3[q] !== 0 || !(dev[q] === dev[q])) continue; rs += dev[q] * dev[q]; rn++; }
+    const rough = rn >= 20 ? Math.sqrt(rs / rn) : 0, smoothPass = rough <= (pm.finishRough == null ? 1e9 : pm.finishRough);
+    // Pixels where the surface couldn't be read (the surroundings disagree there) would be left
+    // as they are and stand out against corrected neighbours: they take their neighbours' deviation.
+    if (pm.finishFill !== false) for (let pass = 0; pass < 2; pass++) for (const g of geo) {
+      const q = g.q;
+      if (dev[q] === dev[q] || a3[q] === 0) continue;
+      const i = q % w, j = (q - i) / w;
+      let s = 0, cnt = 0, sc = 0;
+      for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) {
+        const a2 = i + di, b2 = j + dj;
+        if (a2 < 0 || b2 < 0 || a2 >= w || b2 >= h) continue;
+        const v = dev[b2 * w + a2];
+        if (v === v) { s += v; sc += c[b2 * w + a2]; cnt++; }
+      }
+      // (not a pixel that differs from its neighbours itself: that is something real, like a thin line)
+      if (cnt < 6 || Math.abs(c[q] - sc / cnt) > (pm.fillTol == null ? 4 : pm.fillTol)) continue;
+      dev[q] = s / cnt;
+      lim[q] = Math.max(2.5, Math.min(8, 0.2 * a3[q] * Math.abs(pm.L - (c[q] - dev[q]))));
+    }
+    // Some frames show the logo a little stronger or weaker than its map (very dark scenes do).
+    // Undoing it then leaves the whole logo area a few levels off, in proportion to how much was
+    // taken out at each pixel: dev ≈ κ·a(L − bg)/(1 − a). The local pass below only corrects
+    // pixels close to the plain surroundings, so the rest would stay as dark or light specks.
+    // Measure that shared part over the logo's inside and take it out everywhere first.
+    if (pm.gainFix !== false) {
+      const sens = new Float32Array(n), rat = [];
+      let amx = 0;
+      for (const g of geo) if (dev[g.q] === dev[g.q]) amx = Math.max(amx, pm.alpha[g.q]);
+      for (const g of geo) {
+        const q = g.q, a = pm.alpha[q];
+        if (!(dev[q] === dev[q]) || a <= 0 || a >= OPAQUE) continue;
+        sens[q] = a * (pm.L - (c[q] - dev[q])) / (1 - a);
+        if (a >= 0.6 * amx && Math.abs(sens[q]) >= 20) rat.push(dev[q] / sens[q]);
+      }
+      if (rat.length >= 30) {
+        rat.sort((x, y) => x - y);
+        const kap = rat[rat.length >> 1];
+        let near = 0;
+        for (const v of rat) if (Math.abs(v - kap) <= 0.04) near++;
+        // a clear, shared offset of a plausible size only
+        if (Math.abs(kap) <= 0.2 && near >= 0.5 * rat.length) {
+          for (const g of geo) {
+            const q = g.q;
+            if (!sens[q]) continue;
+            const fix = kap * sens[q];
+            if (Math.abs(fix) < 0.5) continue;
+            const v = clamp(Math.round(c[q] - fix), 0, 255);
+            dev[q] -= c[q] - v; c[q] = v; p.data[at(q)] = v;
+          }
+        }
+      }
+    }
+    const LF = new Float32Array(n).fill(NaN);
+    if (smoothPass) for (const g of geo) {
       const q = g.q, i = q % w, j = (q - i) / w;
       if (!(Math.abs(dev[q]) <= 2 * lim[q])) continue;
       let s = 0, cnt = 0;
@@ -730,7 +789,26 @@ const LogoCore = (() => {
         const v = dev[b2 * w + a2];
         if (Math.abs(v) <= 2 * lim[q]) { s += v; cnt++; }
       }
-      const lf = s / cnt;
+      LF[q] = s / cnt;
+    }
+    // (optionally only the broad part of the correction: the surroundings' surface can carry
+    // streaks of its own over a textured background)
+    const R = pm.finishBlur || 0;
+    for (const g of geo) {
+      const q = g.q;
+      if (!(LF[q] === LF[q])) continue;
+      let lf = LF[q];
+      if (R) {
+        const i = q % w, j = (q - i) / w;
+        let s = 0, cnt = 0;
+        for (let dj = -R; dj <= R; dj++) for (let di = -R; di <= R; di++) {
+          const a2 = i + di, b2 = j + dj;
+          if (a2 < 0 || b2 < 0 || a2 >= w || b2 >= h) continue;
+          const v = LF[b2 * w + a2];
+          if (v === v) { s += v; cnt++; }
+        }
+        lf = s / cnt;
+      }
       if (Math.abs(lf) <= lim[q]) p.data[at(q)] = clamp(Math.round(c[q] - lf), 0, 255);
     }
     // Pixels on the logo's edge that are far off. Joined videos can draw the logo's edge a hair
