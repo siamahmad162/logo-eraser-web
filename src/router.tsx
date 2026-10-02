@@ -2,9 +2,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { metaFor, normalizePath } from './routes';
 
 // A small router: the site has a handful of static pages, each prerendered to its own HTML file.
+// The single-file test build (`npm run build:file`) opens from disk, where there are no paths to
+// route on, so it keeps the page in the hash instead (#/pricing).
+const HASH = import.meta.env.MODE === 'file';
+
 type Ctx = { path: string; navigate: (to: string) => void };
 const RouterContext = createContext<Ctx>({ path: '/', navigate: () => {} });
 export const useRouter = () => useContext(RouterContext);
+
+export const currentPath = () => normalizePath(HASH ? (location.hash.startsWith('#/') ? location.hash.slice(1) : '/') : location.pathname);
+const hrefFor = (to: string) => (HASH ? '#' + to : to);
 
 // A page can veto in-app navigation (the tool asks before abandoning a running job).
 let leaveGuard: (() => boolean) | null = null;
@@ -25,15 +32,29 @@ function applyMeta(path: string) {
 export function Router({ initialPath, children }: { initialPath: string; children: ReactNode }) {
   const [path, setPath] = useState(normalizePath(initialPath));
   useEffect(() => {
-    const onPop = () => { setPath(normalizePath(location.pathname)); applyMeta(location.pathname); };
-    addEventListener('popstate', onPop);
-    return () => removeEventListener('popstate', onPop);
+    const sync = () => {
+      // in hash mode an in-page anchor (#main) is not a page change
+      if (HASH && location.hash && !location.hash.startsWith('#/')) return;
+      const p = currentPath();
+      setPath(p);
+      applyMeta(p);
+      if (HASH) window.scrollTo(0, 0);
+    };
+    const ev = HASH ? 'hashchange' : 'popstate';
+    addEventListener(ev, sync);
+    return () => removeEventListener(ev, sync);
   }, []);
   const navigate = useCallback((to: string) => {
+    if (HASH) {
+      const next = normalizePath(to.split('#')[0]);
+      if (next !== currentPath() && leaveGuard && !leaveGuard()) return;
+      location.hash = next;
+      return;
+    }
     const url = new URL(to, location.href);
     const next = normalizePath(url.pathname);
-    if (next !== normalizePath(location.pathname) && leaveGuard && !leaveGuard()) return;
-    if (next === normalizePath(location.pathname) && url.hash) {
+    if (next !== currentPath() && leaveGuard && !leaveGuard()) return;
+    if (next === currentPath() && url.hash) {
       history.pushState(null, '', url.pathname + url.search + url.hash);
       scrollToHash(url.hash);
       return;
@@ -56,5 +77,5 @@ export function Link({ to, onClick, ...rest }: LinkProps) {
     e.preventDefault();
     navigate(to);
   };
-  return <a href={to} onClick={handle} {...rest} />;
+  return <a href={hrefFor(to)} onClick={handle} {...rest} />;
 }

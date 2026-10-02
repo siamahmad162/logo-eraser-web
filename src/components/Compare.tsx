@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import burgerAfter from '../assets/demo/burger-after.webp';
+import burgerBefore from '../assets/demo/burger-before.webp';
+import cloudAfter from '../assets/demo/cloud-after.webp';
+import cloudBefore from '../assets/demo/cloud-before.webp';
+import hudAfter from '../assets/demo/hud-after.webp';
+import hudBefore from '../assets/demo/hud-before.webp';
 
 // Real results from the engine: the corner of a frame (or photo) with the logo, and the same corner after.
 type Sample = { id: string; kind: 'Video' | 'Photo'; label: string; before: string; after: string; logoX: number; alt: string };
 
 export const SAMPLES: Sample[] = [
-  { id: 'cloud', kind: 'Video', label: 'Server room', before: '/demo/cloud-before.webp', after: '/demo/cloud-after.webp', logoX: 77, alt: 'Corner of an animated server-room video' },
-  { id: 'hud', kind: 'Video', label: 'Sci-fi HUD', before: '/demo/hud-before.webp', after: '/demo/hud-after.webp', logoX: 77, alt: 'Corner of an animated sci-fi dashboard video' },
-  { id: 'burger', kind: 'Photo', label: 'Food photo', before: '/demo/burger-before.webp', after: '/demo/burger-after.webp', logoX: 90, alt: 'Corner of a food photo' },
+  { id: 'cloud', kind: 'Video', label: 'Server room', before: cloudBefore, after: cloudAfter, logoX: 77, alt: 'Corner of an animated server-room video' },
+  { id: 'hud', kind: 'Video', label: 'Sci-fi HUD', before: hudBefore, after: hudAfter, logoX: 77, alt: 'Corner of an animated sci-fi dashboard video' },
+  { id: 'burger', kind: 'Photo', label: 'Food photo', before: burgerBefore, after: burgerAfter, logoX: 90, alt: 'Corner of a food photo' },
 ];
 
 const startPos = (s: Sample) => Math.min(98, s.logoX + 12);

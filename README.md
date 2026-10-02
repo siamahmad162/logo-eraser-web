@@ -18,6 +18,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/
 npm run preview    # serve dist/ at http://localhost:4173
+npm run build:file # dist-file/ClearFrame-test.html: the whole site in one file, opens from disk
 ```
 
 ## Deploy (Cloudflare Pages, free)
@@ -42,7 +43,7 @@ same job if you host on Vercel instead.
 | Styles and colours | `src/styles.css` (tool: `src/engine/tool.css`) |
 | Removal engine | `src/engine/core.js` |
 | Tool page logic and markup | `src/engine/tool.js`, `src/engine/tool-markup.html` |
-| Before/after demo images | `public/demo/` |
+| Before/after demo images | `src/assets/demo/` |
 
 Every page is prerendered to its own HTML file at build time (`scripts/prerender.mjs`), so pages
 load fast and search engines can read them without running JavaScript.
