@@ -1,6 +1,13 @@
+import { LANDINGS } from '../content/meta';
 import { Link } from '../router';
 import { SITE } from '../site';
 import { LogoMark } from './Icons';
+
+const USE_CASES: Record<string, string> = {
+  '/gemini-watermark-remover': 'Gemini watermark remover',
+  '/veo-watermark-remover': 'Veo watermark remover',
+  '/ai-image-watermark-remover': 'AI image watermark remover',
+};
 
 export function Footer() {
   return (
@@ -9,12 +16,24 @@ export function Footer() {
         <div className="footer-brand">
           <Link to="/" className="brand"><LogoMark className="brand-mark" /><span>{SITE.name}</span></Link>
           <p>Frame-by-frame watermark removal for AI videos and photos. Runs in your browser; your files never leave your device.</p>
+          <a className="footer-mail" href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>
         </div>
         <nav aria-label="Product">
           <h2>Product</h2>
           <Link to="/app">Watermark remover</Link>
+          <Link to="/how-it-works">How it works</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQ</Link>
+        </nav>
+        <nav aria-label="Use cases">
+          <h2>Use cases</h2>
+          {LANDINGS.map((l) => <Link key={l.path} to={l.path}>{USE_CASES[l.path] || l.title}</Link>)}
+        </nav>
+        <nav aria-label="Resources">
+          <h2>Resources</h2>
+          <Link to="/guides">Guides</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
         </nav>
         <nav aria-label="Legal">
           <h2>Legal</h2>
@@ -22,15 +41,11 @@ export function Footer() {
           <Link to="/privacy">Privacy Policy</Link>
           <Link to="/refunds">Refund Policy</Link>
         </nav>
-        <div>
-          <h2>Contact</h2>
-          <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>
-        </div>
       </div>
       <div className="wrap">
         <div className="footer-base">
-        <p>© <span suppressHydrationWarning>{new Date().getFullYear()}</span> {SITE.operator}. All rights reserved.</p>
-        <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC, mentioned only to describe compatibility.</p>
+          <p>© <span suppressHydrationWarning>{new Date().getFullYear()}</span> {SITE.operator}. All rights reserved.</p>
+          <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC, mentioned only to describe compatibility.</p>
         </div>
       </div>
     </footer>

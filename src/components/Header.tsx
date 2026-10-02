@@ -5,6 +5,8 @@ import { Close, LogoMark, Menu } from './Icons';
 
 const NAV = [
   { to: '/app', label: 'Remover' },
+  { to: '/how-it-works', label: 'How it works' },
+  { to: '/guides', label: 'Guides' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/faq', label: 'FAQ' },
 ];
@@ -25,7 +27,7 @@ export function Header() {
         </button>
         <nav id="site-nav" className={open ? 'nav is-open' : 'nav'} aria-label="Main">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} className="nav-link" aria-current={path === n.to ? 'page' : undefined} onClick={close}>
+            <Link key={n.to} to={n.to} className="nav-link" aria-current={path === n.to || (n.to === '/guides' && path.startsWith('/guides/')) ? 'page' : undefined} onClick={close}>
               {n.label}
             </Link>
           ))}

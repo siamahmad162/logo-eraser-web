@@ -33,8 +33,9 @@ function page(meta, html) {
 }
 
 for (const r of ROUTES) {
-  const file = r.path === '/' ? 'index.html' : r.path.slice(1) + '.html';
-  fs.writeFileSync(path.join(dist, file), page(r, render(r.path)));
+  const file = path.join(dist, r.path === '/' ? 'index.html' : r.path.slice(1) + '.html');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, page(r, render(r.path)));
 }
 fs.writeFileSync(path.join(dist, '404.html'), page(NOT_FOUND, render('/404')));
 

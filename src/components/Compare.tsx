@@ -18,8 +18,8 @@ export const SAMPLES: Sample[] = [
 const startPos = (s: Sample) => Math.min(98, s.logoX + 12);
 const endPos = (s: Sample) => s.logoX - 24;
 
-export function Compare() {
-  const [i, setI] = useState(0);
+export function Compare({ initial = 0 }: { initial?: number }) {
+  const [i, setI] = useState(initial);
   const s = SAMPLES[i];
   const [pos, setPos] = useState(startPos(s));
   const touched = useRef(false);

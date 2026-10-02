@@ -1,11 +1,14 @@
 import { Compare } from '../components/Compare';
 import { ArrowRight, Download, Frames, Gauge, Lock, Photo, Scan, Stack, Text, Upload } from '../components/Icons';
 import { Plans } from '../components/Plans';
+import { JsonLd, abs } from '../components/Seo';
+import { GUIDES, LANDINGS } from '../content/meta';
+import { GuideCards } from './Guides';
 import { FAQ, FaqList } from '../faq';
 import { Link } from '../router';
 import { SITE } from '../site';
 
-const STEPS = [
+export const STEPS = [
   { icon: Upload, title: 'Drop in your files', text: 'Videos or photos, one or fifty. Nothing is uploaded: the work happens in your browser.' },
   { icon: Scan, title: 'The logo is found', text: 'The sparkle is located to the pixel, and its exact opacity is measured in your file.' },
   { icon: Download, title: 'Download clean files', text: 'Same resolution, frame rate and audio. Grab files one by one or as a single ZIP.' },
@@ -19,6 +22,23 @@ const FEATURES = [
   { icon: Photo, title: 'Photos too', text: 'PNG, JPG and WebP images from AI generators, cleaned in a second.' },
   { icon: Text, title: 'Other logos', text: 'Handles the Veo text logo, and any steady corner logo you box in yourself.' },
 ];
+
+const SCHEMA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('/favicon.svg'), email: SITE.supportEmail },
+    { '@type': 'WebSite', name: SITE.name, url: abs('/') },
+    {
+      '@type': 'SoftwareApplication',
+      name: SITE.name,
+      url: abs('/app'),
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'Any (runs in a web browser)',
+      description: 'Removes visible AI watermarks from videos and photos by restoring the pixels under the logo, frame by frame, on your own device.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    },
+  ],
+};
 
 export function Home() {
   return (
@@ -61,6 +81,23 @@ export function Home() {
         </div>
       </section>
 
+      <section className="section pt-0" aria-labelledby="made-for">
+        <div className="wrap">
+          <h2 id="made-for" className="section-title">Made for</h2>
+          <ul className="usecases">
+            {LANDINGS.map((l, k) => (
+              <li key={l.path}>
+                <Link to={l.path} className="usecase">
+                  <span className="usecase-kind">{['Gemini', 'Veo', 'AI images'][k]}</span>
+                  <span className="usecase-title">{l.title}</span>
+                  <span className="usecase-go">Learn more <ArrowRight /></span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section className="section section-alt" aria-labelledby="why">
         <div className="wrap">
           <h2 id="why" className="section-title">Why {SITE.name}</h2>
@@ -85,7 +122,16 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section section-alt" aria-labelledby="faq">
+      <section className="section section-alt" aria-labelledby="guides">
+        <div className="wrap">
+          <h2 id="guides" className="section-title">Guides</h2>
+          <p className="section-lede">Practical help for publishing AI video.</p>
+          <GuideCards items={GUIDES.slice(0, 3)} />
+          <p className="more"><Link to="/guides">All guides <ArrowRight /></Link></p>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="faq">
         <div className="wrap narrow">
           <h2 id="faq" className="section-title">Questions</h2>
           <FaqList items={FAQ.slice(0, 5)} />
@@ -105,6 +151,7 @@ export function Home() {
           <p className="fine">Use {SITE.name} only on content you have the right to edit. It removes the visible logo, not invisible watermarks such as SynthID, so label AI-generated content where required.</p>
         </div>
       </section>
+      <JsonLd data={SCHEMA} />
     </>
   );
 }

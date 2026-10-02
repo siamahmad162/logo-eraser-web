@@ -1,3 +1,4 @@
+import { GUIDES, LANDINGS } from './content/meta';
 import { SITE } from './site';
 
 export type RouteMeta = { path: string; title: string; description: string };
@@ -24,6 +25,20 @@ export const ROUTES: RouteMeta[] = [
     title: `FAQ — ${n}`,
     description: `How ${n} removes watermarks, which files it supports, privacy, and billing.`,
   },
+  ...LANDINGS.map((l) => ({ path: l.path, title: `${l.title} — ${n}`, description: l.description })),
+  {
+    path: '/how-it-works',
+    title: `How ${n} removes watermarks — ${n}`,
+    description: 'The maths behind restoring the pixels under a see-through watermark, step by step, and why it all happens on your own device.',
+  },
+  {
+    path: '/guides',
+    title: `Guides — ${n}`,
+    description: 'Practical guides to removing AI watermarks, keeping video quality and labelling AI-generated content correctly.',
+  },
+  ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, title: `${g.title} — ${n}`, description: g.description })),
+  { path: '/about', title: `About — ${n}`, description: `Who makes ${n}, and the principles behind it: privacy, honest results and responsible use.` },
+  { path: '/contact', title: `Contact — ${n}`, description: `Get help with ${n}, billing questions or business enquiries.` },
   { path: '/terms', title: `Terms of Service — ${n}`, description: `The terms for using ${n}.` },
   { path: '/privacy', title: `Privacy Policy — ${n}`, description: `How ${n} handles your data. Your files are processed on your device.` },
   { path: '/refunds', title: `Refund Policy — ${n}`, description: `Refunds and cancellations for ${n} subscriptions.` },

@@ -6,7 +6,10 @@ are never uploaded.
 
 - **Home** `/` – before/after demo, how it works, features, pricing, FAQ
 - **Remover** `/app` – the tool itself
-- **Pricing** `/pricing`, **FAQ** `/faq`
+- **Pricing** `/pricing`, **FAQ** `/faq`, **How it works** `/how-it-works`
+- **Use cases** `/gemini-watermark-remover`, `/veo-watermark-remover`, `/ai-image-watermark-remover`
+- **Guides** `/guides` and five articles under `/guides/…`
+- **About** `/about`, **Contact** `/contact`
 - **Legal** `/terms`, `/privacy`, `/refunds`
 
 ## Run it locally
@@ -39,6 +42,7 @@ same job if you host on Vercel instead.
 | Name, prices, support email, legal details | `src/site.ts` |
 | Page titles and descriptions (SEO) | `src/routes.ts` |
 | FAQ answers | `src/faq.tsx` |
+| Guide articles (text) | `src/content/guides.tsx`; titles, dates and use-case page titles in `src/content/meta.ts` |
 | Pages | `src/pages/` |
 | Styles and colours | `src/styles.css` (tool: `src/engine/tool.css`) |
 | Removal engine | `src/engine/core.js` |
@@ -53,7 +57,7 @@ load fast and search engines can read them without running JavaScript.
 1. ✅ Static site: home, remover, pricing, FAQ, legal pages
 2. Accounts (Google sign-in) and free-plan limits with Supabase
 3. Payments (Paddle or Lemon Squeezy as merchant of record), Pro plan
-4. More languages, blog and SEO pages
+4. ✅ SEO content: use-case pages, how-it-works, guides, structured data · next: more languages
 
 ## Before taking payments
 
