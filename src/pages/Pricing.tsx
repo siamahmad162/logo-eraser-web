@@ -13,6 +13,7 @@ export function Pricing() {
       </section>
       <section className="section section-tight">
         <div className="wrap">
+          <h2 className="sr-only">Plans</h2>
           <Plans />
           <p className="fine center">Prices in US dollars. Local taxes may be added at checkout.</p>
         </div>
