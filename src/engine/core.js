@@ -1697,6 +1697,51 @@ const LogoCore = (() => {
   // follow the photo's size. The corner is searched at every plausible size on a reduced copy, the
   // best few places are fitted at full size, and a place only counts when removing the logo there
   // takes the edge along its outline away (see logoPresence).
+  // The "Veo" text mark: a small word of fixed size in the bottom-right corner of Veo videos.
+  // T = { w, h, mr, mb, a }: its opacity map at 720p (short side) with its right and bottom margins.
+  // img is a stable picture of an area (a low percentile over time, so passing bright things don't
+  // hide the mark), w×h at full resolution; sc0 = frame's short side / 720. Without `anywhere` only
+  // the usual place in the bottom-right corner of img is searched. Returns the best normalized
+  // correlation and the matched box, or null.
+  function findVeo(img, w, h, T, sc0, anywhere) {
+    let best = null;
+    for (const f of [0.75, 0.85, 0.93, 1, 1.08, 1.17, 1.3, 1.45]) {
+      const s = sc0 * f, tw = Math.round(T.w * s), th = Math.round(T.h * s);
+      if (tw < 10 || th < 5 || tw > w || th > h) continue;
+      // template resampled to this size (bilinear), zero mean
+      const tm = new Float32Array(tw * th);
+      for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
+        const fx = clamp((x + 0.5) * T.w / tw - 0.5, 0, T.w - 1), fy = clamp((y + 0.5) * T.h / th - 0.5, 0, T.h - 1);
+        const x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(T.w - 1, x0 + 1), y1 = Math.min(T.h - 1, y0 + 1), ax = fx - x0, ay = fy - y0;
+        tm[y * tw + x] = (T.a[y0 * T.w + x0] * (1 - ax) + T.a[y0 * T.w + x1] * ax) * (1 - ay) + (T.a[y1 * T.w + x0] * (1 - ax) + T.a[y1 * T.w + x1] * ax) * ay;
+      }
+      let tmean = 0;
+      for (const v of tm) tmean += v;
+      tmean /= tm.length;
+      let tn = 0;
+      for (let q = 0; q < tm.length; q++) { tm[q] -= tmean; tn += tm[q] * tm[q]; }
+      tn = Math.sqrt(tn);
+      let xa, xb, ya, yb;
+      if (anywhere) { xa = 0; ya = 0; xb = w - tw; yb = h - th; }
+      else {
+        const ex = w - Math.round((T.mr + T.w) * s), ey = h - Math.round((T.mb + T.h) * s), R = Math.max(3, Math.round(6 * s));
+        xa = Math.max(0, ex - R); xb = Math.min(w - tw, ex + R); ya = Math.max(0, ey - R); yb = Math.min(h - th, ey + R);
+      }
+      for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+        let m = 0;
+        for (let j = 0; j < th; j++) for (let i = 0; i < tw; i++) m += img[(y + j) * w + x + i];
+        m /= tw * th;
+        let dot = 0, vn = 0;
+        for (let j = 0; j < th; j++) for (let i = 0; i < tw; i++) { const d = img[(y + j) * w + x + i] - m; dot += d * tm[j * tw + i]; vn += d * d; }
+        // a flat patch has nothing to match; the mark must also be brighter than its surroundings
+        if (vn < 1 || dot <= 0) continue;
+        const score = dot / (Math.sqrt(vn) * tn);
+        if (!best || score > best.score) best = { x, y, w: tw, h: th, s, score };
+      }
+    }
+    return best;
+  }
+
   function findImageLogo(lum, W, H, Ts) {
     const cands = [];
     for (let px = 20; px <= Math.min(220, 0.5 * Math.min(W, H)); px *= 1.15) {
@@ -1841,6 +1886,6 @@ const LogoCore = (() => {
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
 
-  return { smoothFill, detect, PlaneLearner, fitLuma, refineByMoments, fitBlackLift, alphaOnPlane, cleanMask, restorePlane, planeRect, decodeTemplate, matchTemplate, refineTemplate, robustScore, alignTemplate, blurTemplate, sharpenTemplate, fitTemplateEdge, calibrateOutline, outlineSetup, outlineEnergy, refineAlphaFlat, surroundOf, bgAt, templateIn, placeTemplate, findTemplate, logoPresence, findImageLogo, fitImageLogo, cleanImage, fitTemplateColour, OPAQUE, clamp };
+  return { smoothFill, detect, PlaneLearner, fitLuma, refineByMoments, fitBlackLift, alphaOnPlane, cleanMask, restorePlane, planeRect, decodeTemplate, matchTemplate, refineTemplate, robustScore, alignTemplate, blurTemplate, sharpenTemplate, fitTemplateEdge, calibrateOutline, outlineSetup, outlineEnergy, refineAlphaFlat, surroundOf, bgAt, templateIn, placeTemplate, findTemplate, logoPresence, findVeo, findImageLogo, fitImageLogo, cleanImage, fitTemplateColour, OPAQUE, clamp };
 })();
 export default LogoCore;
