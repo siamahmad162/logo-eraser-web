@@ -17,7 +17,7 @@ export function Header() {
   const close = () => setOpen(false);
   return (
     <header className="site-header">
-      <div className="wrap header-row">
+      <div className={path === '/app' ? 'wrap wrap-app header-row' : 'wrap header-row'}>
         <Link to="/" className="brand" onClick={close}>
           <LogoMark className="brand-mark" />
           <span>{SITE.name}</span>

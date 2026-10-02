@@ -48,6 +48,7 @@ same job if you host on Vercel instead.
 | Removal engine | `src/engine/core.js` |
 | Tool page logic and markup | `src/engine/tool.js`, `src/engine/tool-markup.html` |
 | Before/after demo images | `src/assets/demo/` |
+| Sample clip behind “Try a sample video” on the remover | `public/samples/gemini-sample.mp4` |
 
 Every page is prerendered to its own HTML file at build time (`scripts/prerender.mjs`), so pages
 load fast and search engines can read them without running JavaScript.

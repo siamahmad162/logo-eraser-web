@@ -479,9 +479,10 @@ button { font: inherit; }
 .contact-card a { color: var(--ink); }
 
 /* Tool page */
-.tool-page { padding-block: 28px 48px; display: grid; gap: 22px; }
-.tool-head h1 { font-size: clamp(30px, 3.6vw, 42px); font-weight: 650; letter-spacing: -0.045em; }
-.tool-head p { color: var(--muted); margin-top: 8px; max-width: 70ch; }
+.tool-page { padding-block: 24px 44px; display: grid; gap: 18px; }
+.wrap.tool-page, .wrap.wrap-app { max-width: 1480px; }
+.tool-head h1 { font-size: clamp(28px, 3vw, 38px); font-weight: 650; letter-spacing: -0.045em; }
+.tool-head p { color: var(--muted); margin-top: 6px; max-width: 75ch; }
 .main-tool { background: radial-gradient(900px 400px at 50% -100px, rgba(219, 20, 104, 0.12), transparent 70%); }
 
 /* Footer */

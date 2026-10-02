@@ -29,7 +29,7 @@ export function Tool() {
     <div className="wrap tool-page">
       <header className="tool-head">
         <h1>Watermark remover</h1>
-        <p>Drop in AI videos or photos. The logo is removed frame by frame on your device; nothing is uploaded.</p>
+        <p>Remove the Gemini sparkle and the Veo text mark from videos and photos. It works frame by frame, right here in your browser.</p>
       </header>
       <div ref={host}>
         <ToolShell />
