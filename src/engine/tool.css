@@ -58,6 +58,16 @@
   .loupe figcaption b { color: var(--ink); font-weight: 600; }
   .loupe .zoom { font-family: var(--f-mono); font-size: 12px; }
 
+  /* tips fill the space under the preview until the close-ups appear (wide layout only) */
+  .tips { display: none; }
+  @media (min-width: 1000px) {
+    .tips { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    .loupes:not([hidden]) ~ .tips { display: none; }
+  }
+  .tips ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tips li { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+  .tips li b { color: var(--ink); font-weight: 600; font-size: 14.5px; }
+
   /* Panel */
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
   .step { padding: 18px 18px 20px; display: grid; gap: 12px; min-width: 0; }

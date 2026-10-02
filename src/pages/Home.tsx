@@ -156,6 +156,11 @@ export function Home() {
                 <Frames className="bento-icon" />
                 <h3>Every frame, really restored</h3>
                 <p>Blur tools smudge the corner and inpainting invents new pixels that flicker. {SITE.name} reverses the logo’s blend in each frame, so whatever moves behind it stays sharp. <Link to="/how-it-works">How it works</Link></p>
+                <ul className="ticks">
+                  <li><Check /> The real pixels come back, not a guess</li>
+                  <li><Check /> Steady in motion: no smudge, no flicker</li>
+                  <li><Check /> Same resolution, framing and audio</li>
+                </ul>
               </div>
               <div className="bento-media">
                 <MediaCompare media={PHOTOS[3].media} logo={PHOTOS[3].logo} alt={PHOTOS[3].alt} />
@@ -258,16 +263,17 @@ export function Home() {
       </section>
 
       <section className="section" aria-labelledby="faq">
-        <div className="wrap faq-split">
+        <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">FAQ</span>
             <h2 id="faq" className="section-title">Questions, answered.</h2>
             <p className="section-lede">Anything else? <Link to="/contact">Get in touch</Link>.</p>
           </div>
-          <div>
-            <FaqList items={FAQ.slice(0, 6)} />
-            <p className="more"><Link to="/faq">All questions <ArrowRight /></Link></p>
+          <div className="faq-cols">
+            <FaqList items={FAQ.slice(0, 3)} />
+            <FaqList items={FAQ.slice(3, 6)} />
           </div>
+          <p className="more"><Link to="/faq">All questions <ArrowRight /></Link></p>
         </div>
       </section>
 

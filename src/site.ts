@@ -33,8 +33,10 @@ export const PLANS: Plan[] = [
     features: [
       '3 videos a day, up to 20 seconds each',
       '10 photos a day',
+      'Gemini sparkle and Veo text mark',
       'Full resolution, frame rate and audio kept',
       'Files never leave your device',
+      'Nothing to install: runs in your browser',
     ],
   },
   {

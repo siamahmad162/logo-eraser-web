@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { GALLERY_VERTICAL, GALLERY_VIDEOS, PHOTOS, type Demo } from '../media';
+import { Link } from '../router';
+import { ArrowRight, Check } from './Icons';
 import { MediaCompare } from './MediaCompare';
 
 function Card({ d }: { d: Demo }) {
@@ -33,6 +35,12 @@ export function Gallery() {
               <span className="eyebrow">9:16 too</span>
               <h3>Made for Reels and Shorts</h3>
               <p>Vertical clips are handled exactly like wide ones: the logo is found in its corner, and resolution, frame rate and audio stay as they were.</p>
+              <ul className="ticks">
+                <li><Check /> Gemini sparkle and Veo text mark</li>
+                <li><Check /> No crop, so captions and framing stay put</li>
+                <li><Check /> A whole series in one batch, one ZIP out</li>
+              </ul>
+              <Link to="/app" className="btn btn-primary">Try it on a vertical clip <ArrowRight /></Link>
             </div>
           </div>
         </div>
