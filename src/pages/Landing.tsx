@@ -121,9 +121,9 @@ export function Landing({ path }: { path: string }) {
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
                 <span className="window-title">{p.demo.title} <em>· original vs. result</em></span>
               </div>
-              <MediaCompare media={p.demo.media} logo={p.demo.logo} alt={p.demo.alt} variant="hero" lens eager />
+              <MediaCompare media={p.demo.media} logo={p.demo.logo} alt={p.demo.alt} variant="hero" zoom eager />
             </div>
-            <p className="product-note">Real output, unedited. Drag to compare.</p>
+            <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>
         </div>
       </section>

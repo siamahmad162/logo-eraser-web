@@ -88,9 +88,9 @@ export function Home() {
                 <span className="window-title">watch.mp4 <em>· original vs. {SITE.name}</em></span>
                 <span className="window-live"><span className="live-dot" />Live preview</span>
               </div>
-              <MediaCompare media={hero.media} logo={hero.logo} alt={hero.alt} variant="hero" lens eager />
+              <MediaCompare media={hero.media} logo={hero.logo} alt={hero.alt} variant="hero" zoom eager />
             </div>
-            <p className="product-note">Real output, unedited. Drag the divider, or hover to look closely.</p>
+            <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>
         </div>
       </section>

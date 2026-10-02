@@ -12,22 +12,24 @@ type Props = {
   logo: { x: number; y: number }; // logo centre as fractions of the frame
   alt: string;
   variant?: 'hero' | 'card';
-  lens?: boolean;
+  zoom?: boolean;
   eager?: boolean;
 };
 
-const LENS = 3; // lens magnification
+const ZOOM_MS = 700;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
-export function MediaCompare({ media, logo, alt, variant = 'card', lens = false, eager = false }: Props) {
+export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const cv = useRef<HTMLCanvasElement>(null);
-  const lensCv = useRef<HTMLCanvasElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
   const range = useRef<HTMLInputElement>(null);
-  const state = useRef({ pos: 0, touched: false, hover: false, visible: false, drawn: false, lens: null as null | { x: number; y: number }, pinned: false });
-  const [pinned, setPinned] = useState(false);
+  const api = useRef<{ zoom?: (z: number) => void }>({});
+  const state = useRef({ pos: 0, z: 1, ky: 50, touched: false, hover: false, visible: false, drawn: false });
+  const [level, setLevel] = useState(1);
   const [ready, setReady] = useState(false);
+  const levels = [1, 2, media.w >= 1000 ? 4 : 3];
   const lx = logo.x * 100;
   const start = variant === 'hero' ? Math.min(97, lx + 7) : lx - 6;
 
@@ -36,48 +38,51 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
     const st = state.current;
     let imgs: [HTMLImageElement, HTMLImageElement] | null = null;
     let raf = 0, alive = true, dirty = true, lastT = -1, sweepT0 = -1;
+    let anim: null | { t0: number; z0: number; z1: number; p0: number; k0: number } = null;
     const v = vid.current;
+
+    // The part of the frame on screen at zoom z: centred on the logo, kept inside the frame. Once
+    // zoomed it stays half a pixel inside the frame, so smoothing never samples the other half of
+    // the stacked video.
+    const view = (z: number) => {
+      const sw = media.w / z, sh = media.h / z, m = Math.min(0.5, z - 1);
+      const fit = (centre: number, size: number, full: number) => Math.max(m, Math.min(full - size - m, centre - size / 2));
+      return { sx: fit(logo.x * media.w, sw, media.w), sy: fit(logo.y * media.h, sh, media.h), sw, sh };
+    };
+    const logoAt = (z: number) => { const r = view(z); return ((logo.x * media.w - r.sx) / r.sw) * 100; };
+    // the knob sits mid-height unless the logo is there; then it moves below the logo (or above)
+    const knobFor = (z: number) => {
+      if (!zoom) return 50;
+      const r = view(z), y = ((logo.y * media.h - r.sy) / r.sh) * 100;
+      return Math.abs(y - 50) >= 22 ? 50 : y + 30 <= 88 ? y + 30 : y - 30;
+    };
+    const setKnob = (k: number) => { st.ky = k; el.style.setProperty('--ky', `${k}%`); };
+    setKnob(knobFor(st.z));
 
     const draw = () => {
       const W = c.width, H = c.height, split = Math.round((W * st.pos) / 100);
+      const { sx, sy, sw, sh } = view(st.z);
+      let before: CanvasImageSource, after: CanvasImageSource, dy: number;
       if (media.kind === 'video') {
         if (!v || v.readyState < 2) return false;
-        ctx.drawImage(v, 0, media.h, media.w, media.h, 0, 0, W, H);
-        if (split > 0) ctx.drawImage(v, 0, 0, Math.min(media.w, split), media.h, 0, 0, Math.min(W, split), H);
+        before = after = v; dy = media.h;
       } else {
         if (!imgs) return false;
-        ctx.drawImage(imgs[1], 0, 0, W, H);
-        if (split > 0) ctx.drawImage(imgs[0], 0, 0, Math.min(media.w, split), media.h, 0, 0, Math.min(W, split), H);
+        [before, after] = imgs; dy = 0;
       }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(after, sx, sy + dy, sw, sh, 0, 0, W, H);
+      if (split > 0) ctx.drawImage(before, sx, sy, (sw * Math.min(W, split)) / W, sh, 0, 0, Math.min(W, split), H);
       if (!st.drawn) { st.drawn = true; setReady(true); }
-      drawLens();
+      if (zoom) {
+        el.style.setProperty('--vx', `${(sx / media.w) * 100}%`);
+        el.style.setProperty('--vy', `${(sy / media.h) * 100}%`);
+        el.style.setProperty('--vw', `${(sw / media.w) * 100}%`);
+        el.style.setProperty('--vh', `${(sh / media.h) * 100}%`);
+        el.dataset.zoomed = st.z > 1.01 ? 'yes' : 'no';
+      }
       return true;
-    };
-    const drawLens = () => {
-      const lc = lensCv.current;
-      if (!lc) return;
-      const at = st.pinned ? { x: logo.x, y: logo.y } : st.lens;
-      el.dataset.lens = at ? 'on' : 'off';
-      if (!at) return;
-      const lctx = lc.getContext('2d')!, box = el.getBoundingClientRect();
-      const cssR = lc.getBoundingClientRect().width / 2 || 90;
-      const r = (cssR * (media.w / (box.width || media.w))) / LENS, L = lc.width;
-      const sx = at.x * media.w - r, sy = at.y * media.h - r;
-      // the same spot before (left half) and after (right half), side by side
-      const src = media.kind === 'video' ? (v && v.readyState >= 2 ? [v, v] : null) : imgs;
-      if (!src) return;
-      const dy = media.kind === 'video' ? media.h : 0;
-      lctx.imageSmoothingEnabled = false;
-      lctx.clearRect(0, 0, L, L);
-      lctx.drawImage(src[0], sx, sy, 2 * r, 2 * r, 0, 0, L, L);
-      lctx.save();
-      lctx.beginPath(); lctx.rect(L / 2, 0, L / 2, L); lctx.clip();
-      lctx.drawImage(src[1], sx, sy + dy, 2 * r, 2 * r, 0, 0, L, L);
-      lctx.restore();
-      lctx.fillStyle = 'rgba(255,255,255,0.9)';
-      lctx.fillRect(L / 2 - 1.5, 0, 3, L);
-      el.style.setProperty('--lx', `${at.x * 100}%`);
-      el.style.setProperty('--ly', `${at.y * 100}%`);
     };
     const setPos = (p: number) => {
       p = Math.max(0, Math.min(100, p));
@@ -92,10 +97,19 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
     setPos(start);
 
     // One loop while on screen: move the divider (heroes sweep once across the logo, cards drift
-    // back and forth over it) and redraw only when the divider moved or the video showed a new frame.
+    // back and forth over it), animate the zoom, and redraw only when something changed or the
+    // video showed a new frame.
     const tick = (now: number) => {
       if (!alive || !st.visible) { raf = 0; return; }
-      if (sweepT0 >= 0) {
+      if (anim) {
+        // zoom at an even pace, and bring the divider onto the logo as the view closes in
+        const k = Math.min(1, (now - anim.t0) / ZOOM_MS), e = ease(k);
+        st.z = anim.z0 * (anim.z1 / anim.z0) ** e;
+        setPos(anim.p0 + (logoAt(st.z) - anim.p0) * e);
+        setKnob(anim.k0 + (knobFor(anim.z1) - anim.k0) * e);
+        dirty = true;
+        if (k >= 1) anim = null;
+      } else if (sweepT0 >= 0) {
         if (variant === 'hero') {
           if (!st.touched) {
             const k = Math.min(1, Math.max(0, (now - sweepT0) / 1500)), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
@@ -148,20 +162,25 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
     io.observe(el);
     if (eager) load();
 
-    // hover: cards follow the pointer; the hero shows the lens
-    const rel = (e: PointerEvent) => { const b = c.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height }; };
+    // cards follow a mouse pointer
     const onMove = (e: PointerEvent) => {
-      if (variant === 'card' && e.pointerType === 'mouse') { st.hover = true; setPos(rel(e).x * 100); run(); }
-      if (lens && e.pointerType === 'mouse') { st.lens = rel(e); dirty = true; run(); }
+      if (variant !== 'card' || e.pointerType !== 'mouse') return;
+      const b = c.getBoundingClientRect();
+      st.hover = true; setPos(((e.clientX - b.left) / b.width) * 100); run();
     };
-    const onLeave = () => { st.hover = false; st.lens = null; dirty = true; run(); };
+    const onLeave = () => { st.hover = false; };
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerleave', onLeave);
-    const onInput = () => { st.touched = true; setPos(+range.current!.value); run(); };
+    const onInput = () => { st.touched = true; anim = null; setPos(+range.current!.value); run(); };
     range.current!.addEventListener('input', onInput);
     const onResize = () => { dirty = true; run(); };
     addEventListener('resize', onResize);
-    (el as HTMLDivElement & { __pin?: (on: boolean) => void }).__pin = (on: boolean) => { st.pinned = on; dirty = true; run(); };
+    api.current.zoom = (z: number) => {
+      st.touched = true; sweepT0 = -1;
+      if (reduced()) { anim = null; st.z = z; setPos(logoAt(z)); setKnob(knobFor(z)); dirty = true; if (!st.visible) draw(); }
+      else anim = { t0: performance.now(), z0: st.z, z1: z, p0: st.pos, k0: st.ky };
+      run();
+    };
 
     return () => {
       alive = false;
@@ -170,20 +189,21 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
       if (v) { v.removeEventListener('loadeddata', redraw); v.pause(); }
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerleave', onLeave);
+      range.current?.removeEventListener('input', onInput);
       removeEventListener('resize', onResize);
+      api.current.zoom = undefined;
     };
-  }, [media, logo.x, logo.y, variant, lens, eager, lx, start]);
+  }, [media, logo.x, logo.y, variant, zoom, eager, lx, start]);
 
-  const togglePin = () => {
-    const on = !pinned;
-    setPinned(on);
-    (wrap.current as HTMLDivElement & { __pin?: (on: boolean) => void })?.__pin?.(on);
+  const pick = (z: number) => {
+    setLevel(z);
+    api.current.zoom?.(z);
   };
 
   const poster = media.kind === 'video' ? media.poster : media.before;
   return (
     <div className={`mc mc-${variant}`} data-ready={ready || undefined}>
-      <div ref={wrap} className="mc-stage" style={{ aspectRatio: `${media.w} / ${media.h}` }} data-side="before" data-lens="off">
+      <div ref={wrap} className="mc-stage" style={{ aspectRatio: `${media.w} / ${media.h}` }} data-side="before" data-zoomed="no">
         {poster && <img className="mc-poster" src={poster} alt="" width={media.w} height={media.h} loading={eager ? 'eager' : 'lazy'} decoding="async" />}
         <canvas ref={cv} className="mc-canvas" width={media.w} height={media.h} role="img" aria-label={`${alt}: original on the left of the divider, logo removed on the right`} />
         {media.kind === 'video' && (
@@ -199,15 +219,22 @@ export function MediaCompare({ media, logo, alt, variant = 'card', lens = false,
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5" /></svg>
           </span>
         </span>
-        {lens && <canvas ref={lensCv} className="mc-lens" width={360} height={360} aria-hidden="true" />}
-        {lens && <span className="mc-lens-labels" aria-hidden="true"><span>Before</span><span>After</span></span>}
+        {zoom && (
+          <span className="mc-map" aria-hidden="true" style={{ aspectRatio: `${media.w} / ${media.h}`, backgroundImage: `url(${poster})` }}>
+            <span className="mc-map-view" />
+          </span>
+        )}
         <input ref={range} className="mc-range" type="range" min={0} max={100} step={0.1} defaultValue={start} aria-label={`Compare original and result: ${alt}`} />
       </div>
-      {lens && (
-        <button type="button" className="mc-zoom" aria-pressed={pinned} onClick={togglePin}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5M11 8.5v5M8.5 11h5" /></svg>
-          {pinned ? 'Hide zoom' : `Zoom ${LENS}× on the logo`}
-        </button>
+      {zoom && (
+        <div className="mc-zoom" role="group" aria-label="Zoom in on the logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
+          {levels.map((z) => (
+            <button key={z} type="button" aria-pressed={level === z} onClick={() => pick(z)}>
+              {z === 1 ? 'Fit' : `${z}×`}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
