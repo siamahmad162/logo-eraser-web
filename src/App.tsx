@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { useRouter } from './router';
@@ -38,8 +38,22 @@ function renderPage(path: string) {
   return <NotFound />;
 }
 
+// Sections marked data-reveal fade in as they scroll into view (after hydration, per page).
+function useReveal(path: string) {
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') { document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('is-in')); return; }
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px' });
+    const scan = () => document.querySelectorAll('[data-reveal]:not(.is-in)').forEach((el) => io.observe(el));
+    scan();
+    const mo = new MutationObserver(scan);
+    mo.observe(document.getElementById('main')!, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
+  }, [path]);
+}
+
 export function App() {
   const { path } = useRouter();
+  useReveal(path);
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>

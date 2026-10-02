@@ -33,7 +33,7 @@ export function Header() {
           ))}
           {path !== '/app' && (
             <Link to="/app" className="btn btn-primary btn-sm nav-cta" onClick={close}>
-              Remove a watermark
+              Try it free
             </Link>
           )}
         </nav>

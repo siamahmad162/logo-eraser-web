@@ -9,10 +9,14 @@ const dist = path.join(root, 'dist');
 const ssr = path.join(root, 'dist-ssr');
 const { render, ROUTES, NOT_FOUND, SITE } = await import(pathToFileURL(path.join(ssr, 'entry-server.js')).href);
 const template = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
+// preload the two fonts the first screen uses, so text doesn't reflow when they arrive
+const fonts = fs.readdirSync(path.join(dist, 'assets')).filter((f) => /^geist(-mono)?-latin-wght-normal-.*\.woff2$/.test(f));
+const preload = fonts.map((f) => `<link rel="preload" href="/assets/${f}" as="font" type="font/woff2" crossorigin />`);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function page(meta, html) {
   const head = [
+    ...preload,
     `<meta property="og:site_name" content="${esc(SITE.name)}" />`,
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
