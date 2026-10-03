@@ -20,7 +20,9 @@ export function Footer() {
         </div>
         <nav aria-label="Product">
           <h2>Product</h2>
-          <Link to="/app">Watermark remover</Link>
+          <Link to="/app">Gemini &amp; Veo remover</Link>
+          <Link to="/sora-watermark-remover">Sora watermark remover</Link>
+          <Link to="/remove-logo">Any-logo remover</Link>
           <Link to="/how-it-works">How it works</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQ</Link>
@@ -45,7 +47,7 @@ export function Footer() {
       <div className="wrap">
         <div className="footer-base">
           <p>© <span suppressHydrationWarning>{new Date().getFullYear()}</span> {SITE.operator}. All rights reserved.</p>
-          <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC, mentioned only to describe compatibility.</p>
+          <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC and Sora is a trademark of OpenAI, mentioned only to describe compatibility.</p>
         </div>
       </div>
     </footer>

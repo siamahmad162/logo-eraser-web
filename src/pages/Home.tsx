@@ -237,6 +237,20 @@ export function Home() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link to="/sora-watermark-remover" className="usecase">
+                <span className="usecase-kind">Sora</span>
+                <span className="usecase-title">Sora watermark remover: found by itself, even as it moves</span>
+                <span className="usecase-go">Open the remover <ArrowRight /></span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/remove-logo" className="usecase">
+                <span className="usecase-kind">Any logo</span>
+                <span className="usecase-title">Remove a logo from any video or photo: draw a box</span>
+                <span className="usecase-go">Open the remover <ArrowRight /></span>
+              </Link>
+            </li>
           </ul>
         </div>
       </section>

@@ -13,11 +13,15 @@ import { Guide, Guides } from './pages/Guides';
 import { HowItWorks } from './pages/HowItWorks';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
+import { SoraRemover, LogoRemover } from './pages/OtherTools';
 import { GUIDES, LANDINGS } from './content/meta';
 
+const TOOL_PATHS = new Set(['/app', '/sora-watermark-remover', '/remove-logo']);
 const PAGES: Record<string, () => React.JSX.Element> = {
   '/': Home,
-  '/app': Tool,
+  '/app': () => <Tool />,
+  '/sora-watermark-remover': SoraRemover,
+  '/remove-logo': LogoRemover,
   '/pricing': Pricing,
   '/faq': Faq,
   '/terms': Terms,
@@ -58,7 +62,7 @@ export function App() {
     <>
       <a className="skip" href="#main">Skip to content</a>
       <Header />
-      <main id="main" className={path === '/app' ? 'main main-tool' : 'main'}>
+      <main id="main" className={TOOL_PATHS.has(path) ? 'main main-tool' : 'main'}>
         <Fragment key={path}>{renderPage(path)}</Fragment>
       </main>
       <Footer />

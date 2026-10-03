@@ -16,6 +16,16 @@ export const ROUTES: RouteMeta[] = [
     description: 'Drop in videos or photos and remove the AI watermark frame by frame, right in your browser.',
   },
   {
+    path: '/sora-watermark-remover',
+    title: `Sora Watermark Remover — Free to Try, No Upload`,
+    description: 'Remove the moving Sora watermark from your videos automatically. Found at every moment, rebuilt frame by frame, in your browser. Nothing is uploaded.',
+  },
+  {
+    path: '/remove-logo',
+    title: `Remove a Logo from Any Video or Photo — ${n}`,
+    description: 'Drag a box around a logo, a badge or a date stamp and it is removed from the video or photo. Runs in your browser; nothing is uploaded.',
+  },
+  {
     path: '/pricing',
     title: `Pricing — ${n}`,
     description: `Start free. Upgrade to ${n} Pro for unlimited videos, batch mode and ZIP downloads.`,

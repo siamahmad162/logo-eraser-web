@@ -1,8 +1,11 @@
 // Runs the heavy parts of the engine (finding the logo, learning it, cleaning and writing the video) off the page's thread.
 import { makeEngine } from './engine.js';
+import { makeSora } from './sora.js';
+import FillWorker from './fillworker.js?worker&inline';
 
 const env = { cancel: false, quality: 'max', conv: null };
 const E = makeEngine(env);
+const SR = makeSora(E, env, { newFillWorker: () => new FillWorker() });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let holding = false;
 const post = (m, transfer) => self.postMessage(m, transfer || []);
@@ -20,7 +23,7 @@ self.onmessage = async (e) => {
       post({ id: m.id, type: 'done', result: await E.detectLogo(item, progress(m.id)) });
     } else if (m.type === 'learn') {
       post({ id: m.id, type: 'done', result: await E.learn(item, m.rect, progress(m.id), m.guess) });
-    } else if (m.type === 'convert') {
+    } else if (m.type === 'convert' || m.type === 'soraConvert') {
       // pictures of the work in progress, drawn here and handed over as bitmaps
       let live = null;
       if (m.live) {
@@ -35,8 +38,18 @@ self.onmessage = async (e) => {
         };
       }
       const hold = async () => { while (holding && !env.cancel) await sleep(60); };
-      const blob = await E.convert(item, m.model, progress(m.id), live, hold);
+      const blob = m.type === 'convert' ? await E.convert(item, m.model, progress(m.id), live, hold) : await SR.convert(item, m.model, progress(m.id), live, hold);
       post({ id: m.id, type: 'done', result: blob, outCodec: item.outCodec });
+    } else if (m.type === 'logoPrepare') {
+      const model = await SR.prepareLogo(item, m.rect, progress(m.id));
+      const moved = [];
+      if (model.intervals) for (const iv of model.intervals) { moved.push(iv.mask.buffer); for (const p of iv.pool) moved.push(p.rgb.buffer); }
+      post({ id: m.id, type: 'done', result: model }, [...new Set(moved)]);
+    } else if (m.type === 'soraDetect') {
+      const model = await SR.detectSora(item, progress(m.id));
+      const moved = [];
+      if (model.intervals) for (const iv of model.intervals) for (const p of iv.pool) moved.push(p.rgb.buffer);
+      post({ id: m.id, type: 'done', result: model }, [...new Set(moved)]);
     }
   } catch (err) { fail(m.id, err); }
 };
