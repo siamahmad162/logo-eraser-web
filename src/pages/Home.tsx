@@ -179,7 +179,7 @@ export function Home() {
             <article className="bento-card">
               <Stack className="bento-icon" />
               <h3>Batch mode</h3>
-              <p>Drop a whole folder. The lead video teaches the logo’s spot to the rest.</p>
+              <p>Drop a whole folder. The first video shows the rest where the logo sits.</p>
             </article>
             <article className="bento-card">
               <Photo className="bento-icon" />

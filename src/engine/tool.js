@@ -1559,7 +1559,7 @@ export function mountTool(root) {
         if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
         if (it.stopped) return { tone: 'idle', icon: 'stop', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
         if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s logo settings', sub: 'This video’s own check failed. If traces remain, clean it on its own.' };
-        return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: 'Ready to remove' + (it.manual ? ' · your box' : '') };
+        return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: 'Ready to clean' + (it.manual ? ' · your box' : '') };
       case 'nologo':
         if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo to clean this file.' };
@@ -1712,13 +1712,13 @@ export function mountTool(root) {
       setBar({
         tone: S.stopped ? 'warn' : 'ok', icon: S.stopped ? ICON.stop : ICON.ok, title: S.stopped ? 'Stopped' : done + ' of ' + (done + todo) + ' files done',
         sub: S.stopped ? [plural(done, 'file', 'files') + ' finished and kept', todo + ' left', ...issues].join(' · ') : [todo + ' still to clean', ...issues].join(' · '),
-        primary: { act: 'run', label: (S.stopped ? 'Continue with ' : 'Remove logo from ') + (S.stopped ? plural(todo, 'file', 'files') : plural(todo, 'more file', 'more files')), icon: S.stopped ? ICON.play : ICON.wand },
+        primary: { act: 'run', label: (S.stopped ? 'Continue with ' : 'Clean ') + (S.stopped ? plural(todo, 'file', 'files') : plural(todo, 'more file', 'more files')), icon: S.stopped ? ICON.play : ICON.wand },
         secondary: { act: 'save', label: done === 1 ? 'Download the finished file' : 'Download ' + done + ' finished files', icon: ICON.save, disabled: S.zipping },
       });
       return;
     }
     if (todo) {
-      const waiting = c.opening + c.queued + c.finding, label = todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo';
+      const waiting = c.opening + c.queued + c.finding, label = 'Clean ' + plural(todo, 'file', 'files');
       if (S.stopped) {
         setBar({ tone: 'warn', icon: ICON.stop, title: 'Stopped', sub: ['Nothing was lost', plural(todo, 'file', 'files') + ' left', ...issues].join(' · '), primary: { act: 'run', label: 'Continue with ' + plural(todo, 'file', 'files'), icon: ICON.play } });
         return;
@@ -1736,16 +1736,16 @@ export function mountTool(root) {
       const found = waiting ? 'Still checking ' + waiting + ' more' : todo === 1 ? logoName(first && first.model) + ' found' : issues.length ? 'Logo found in ' + todo + ' files' : 'Logo found in all ' + todo + ' files';
       setBar({
         tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.found,
-        title: todo === 1 ? 'Ready to remove the logo' : todo + ' files ready',
+        title: todo === 1 ? 'Ready to clean' : todo + ' files ready',
         sub: [found, ...issues].join(' · '),
-        primary: { act: 'run', label, icon: ICON.wand },
+        primary: { act: 'run', label, icon: ICON.wand, tip: 'Removes the logo from every frame and gets the files ready to download. The previews above are only samples.' },
       });
       return;
     }
     setBar({
       tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to clean',
       sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
-      primary: { act: 'run', label: 'Remove logo', icon: ICON.wand, disabled: true },
+      primary: { act: 'run', label: 'Clean files', icon: ICON.wand, disabled: true },
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }

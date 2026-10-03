@@ -18,20 +18,20 @@ export const GUIDE_BODIES: Record<string, () => ReactNode> = {
       </ul>
 
       <h2>Step 1: Open the remover and add your video</h2>
-      <p>Open the <Link to="/app">{n} remover</Link> and drag your video onto the page, or click <em>Choose files</em>. Nothing is uploaded: the video is read straight from your disk by your browser.</p>
+      <p>Open the <Link to="/app">{n} remover</Link> and drag your video onto the page, or click <em>Choose files</em> (<em>Choose a folder</em> adds a whole folder). Nothing is uploaded: the video is read straight from your disk by your browser.</p>
 
       <h2>Step 2: Let it find the logo</h2>
-      <p>{n} looks at frames from across the whole video and finds the sparkle by its shape. Once found, a dashed box marks it on the preview and the panel says <em>Sparkle logo found</em>. It then measures the logo’s exact opacity in your file, pixel by pixel, which takes a few seconds.</p>
-      <p>If the box lands in the wrong place (rare, but possible with a busy picture right behind the logo), drag a new box around the logo on the preview. Make it a little larger than the logo.</p>
+      <p>You don’t have to press anything for this. Your video appears as a card, and {n} looks at frames from across the whole video and finds the sparkle by its shape. Once found, the card says <em>Gemini sparkle found</em> and <em>Ready to clean</em>. It then measures the logo’s exact opacity in your file, pixel by pixel, which takes a few seconds.</p>
+      <p>If no logo is found (rare, but possible with a busy picture right behind the logo), the card says <em>No logo found</em>. Click <em>Draw a box</em>, then drag a box around the logo. Make it a little larger than the logo.</p>
 
       <h2>Step 3: Check the preview</h2>
-      <p>The two zoomed views under the preview show the logo area before and after, at several times its real size. Move the timeline slider to look at different moments, and switch on <em>Show original</em> to flip between the two. This is the best way to judge the result before spending time on the full video.</p>
+      <p>The card already shows the logo area before and after, at several times its real size. Click <em>Review</em> for a bigger look: drag the slider to compare, press play, or move the timeline to look at different moments. The after picture is a <em>Preview</em> of the frames you are looking at; the full file is made in the next step. This is the best way to judge the result before spending time on the full video.</p>
 
       <h2>Step 4: Pick the quality</h2>
-      <p>Changing pixels means the video has to be encoded again. <strong>Maximum</strong> uses about 2.5 times the original bitrate so the re-encoding can’t be seen; <strong>High</strong> makes smaller files that still look the same at normal viewing sizes. Either way the resolution, frame rate and number of frames stay the same, and the audio is copied untouched.</p>
+      <p>Open <em>Options</em> above the cards. Changing pixels means the video has to be encoded again. <strong>Best quality</strong> uses about 2.5 times the original bitrate so the re-encoding can’t be seen; <strong>Smaller files</strong> makes smaller files that still look the same at normal viewing sizes. Either way the resolution, frame rate and number of frames stay the same, and the audio is copied untouched.</p>
 
-      <h2>Step 5: Remove the logo and download</h2>
-      <p>Click <em>Remove logo</em>. Every frame is processed in turn; a progress bar shows how far it has got. When it says <em>Done</em>, click the download icon next to the file. The cleaned video is saved as <code>yourvideo-clean.mp4</code> next to your other downloads.</p>
+      <h2>Step 5: Clean the file and download</h2>
+      <p>Click <em>Clean 1 file</em>. The logo is removed from every frame in turn; the card and the bar at the bottom show how far it has got, and you can press <em>Stop</em> at any time. When the card says <em>Finished</em>, click <em>Download</em>. The cleaned video is saved as <code>yourvideo-clean.mp4</code> next to your other downloads.</p>
 
       <h2>Tips for the best result</h2>
       <ul>
@@ -132,18 +132,18 @@ export const GUIDE_BODIES: Record<string, () => ReactNode> = {
       <p>If you generate a lot of AI clips, cleaning them one by one gets tedious. {n}’s batch mode takes a whole folder at once and gives you everything back as one ZIP.</p>
 
       <h2>1. Add all your files at once</h2>
-      <p>Open the <Link to="/app">remover</Link> and drop in as many videos and photos as you like, or select them together in the file picker. They appear in a list on the right; each one is opened and checked as it arrives.</p>
+      <p>Open the <Link to="/app">remover</Link> and drop in as many videos and photos as you like, or select them together in the file picker. They appear as a list of cards; each one is opened and checked as it arrives.</p>
 
       <h2>2. The first video leads</h2>
-      <p>The first video in the list is the <em>lead file</em>. {n} finds the logo in it and shows the result in the preview. With <em>Use the lead video’s logo spot for all videos</em> switched on, every other video uses the same logo position, scaled to its own size, which is fast and reliable because the AI sparkle always sits in the same place.</p>
+      <p>{n} finds the logo in the first video and shows the before and after on its card. With <em>Use the first video’s logo position for all videos</em> switched on (it is in <em>Options</em> once you have two or more videos), every other video uses the same logo position, scaled to its own size, which is fast and reliable because the AI sparkle always sits in the same place.</p>
       <p>Each video still gets its own measurement of the logo’s opacity, because different videos are compressed differently. You don’t need to do anything for that; it happens while the batch runs.</p>
       <p>If your videos come from different sources and the logo is not always in the same place, switch the option off. {n} will then search each video separately.</p>
 
-      <h2>3. Check any file before you run</h2>
-      <p>Click any file in the list to preview it. If the logo was missed in one of them, select it and drag a box around the logo; that file then uses your box.</p>
+      <h2>3. Check any file before you start</h2>
+      <p>Click <em>Review</em> on any card for a closer look. If the logo was missed in one of them, click <em>Draw a box</em> on its card and drag a box around the logo; that file then uses your box.</p>
 
       <h2>4. Run the batch</h2>
-      <p>Click <em>Remove logo from N files</em>. Files are processed one after another, with progress for each and an overall bar. You can stop at any time; finished files stay finished. Files where no logo could be found are skipped and marked, so nothing is changed by mistake.</p>
+      <p>Click <em>Clean N files</em>. Files are processed one after another, with progress on each card and an overall bar at the bottom. You can press <em>Stop</em> at any time; finished files stay finished and <em>Continue</em> picks up the rest. Files where no logo could be found are skipped and marked <em>needs a box</em>, so nothing is changed by mistake.</p>
 
       <h2>5. Download everything</h2>
       <p>When two or more files are done, <em>Download all (ZIP)</em> appears. The ZIP is built in your browser and simply packs the cleaned files (they are already compressed, so zipping them again would only waste time). A single ZIP can hold up to 4 GB; above that, download the files one by one.</p>

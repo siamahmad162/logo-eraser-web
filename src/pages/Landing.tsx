@@ -62,7 +62,7 @@ const PAGES: Record<string, Landing> = {
       },
       {
         title: 'Keep the clip exactly as it was',
-        body: <p>Your clip keeps its resolution, frame rate, length and audio. Maximum quality encodes at about 2.5 times the original bitrate, so the new file can’t be told apart from the original anywhere outside the logo.</p>,
+        body: <p>Your clip keeps its resolution, frame rate, length and audio. Best quality encodes at about 2.5 times the original bitrate, so the new file can’t be told apart from the original anywhere outside the logo.</p>,
       },
     ],
     faq: ['which-watermarks', 'clean', 'quality', 'formats', 'allowed'],
