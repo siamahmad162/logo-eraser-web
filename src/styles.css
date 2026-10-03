@@ -23,7 +23,7 @@
   --ok-soft: rgba(61, 220, 151, 0.12);
   --warn: #f5a55b;
   --warn-soft: rgba(245, 165, 91, 0.12);
-  --glass: rgba(10, 11, 15, 0.62);
+  --glass: rgba(10, 11, 15, 0.9);
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -24px rgba(0, 0, 0, 0.8);
   --f-display: "Geist Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-body: "Geist Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -481,6 +481,12 @@ button { font: inherit; }
 /* Tool page */
 .tool-page { padding-block: 24px 44px; display: grid; gap: 18px; }
 .wrap.tool-page { max-width: 1104px; }
+.wrap.tool-page:has(.studio.docked.on) { max-width: 1520px; }
+.wrap.tool-page:has(.studio.docked.on) .lx-tool { max-width: none; }
+body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
+.wrap.tool-page:has(.studio.docked.on) { padding-block: 14px 36px; gap: 12px; }
+.wrap.tool-page:has(.studio.docked.on) .tool-head p { display: none; }
+.wrap.tool-page:has(.studio.docked.on) .tool-head h1 { font-size: 26px; }
 .tool-head h1 { font-size: clamp(28px, 3vw, 38px); font-weight: 650; letter-spacing: -0.045em; }
 .tool-head p { color: var(--muted); margin-top: 6px; max-width: 75ch; }
 .main-tool { background: radial-gradient(900px 400px at 50% -100px, rgba(219, 20, 104, 0.12), transparent 70%); }

@@ -25,6 +25,9 @@ export function mountTool(root) {
   const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note'), noteBox = $('#noteBox'), noteClose = $('#noteClose'), srStatus = $('#srStatus'), rvHint = $('#rvHint');
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // on a wide screen the review window is docked beside the queue (an inspector); elsewhere it is a window
+  const dockMq = matchMedia('(min-width: 1180px)'), studioEl = $('#studio'), pipeEl = $('#pipe');
+  const docked = () => dockMq.matches;
 
   // ---------- small helpers ----------
   const bn = (n) => String(n);
@@ -475,7 +478,7 @@ export function mountTool(root) {
     const avail = stageWrap.clientWidth;
     if (!avail) return;
     const W = view.width || 16, H = view.height || 9;
-    const maxH = clamp(window.innerHeight - 290, 220, 720);
+    const maxH = docked() ? clamp(window.innerHeight - 430, 240, 640) : clamp(window.innerHeight - 290, 220, 720);
     let w = avail, h = w * H / W;
     if (h > maxH) { h = maxH; w = h * W / H; }
     stage.style.width = Math.floor(w) + 'px'; stage.style.height = Math.floor(h) + 'px';
@@ -613,18 +616,19 @@ export function mountTool(root) {
   // ---------- the review window ----------
   const reviewItem = () => getItem(S.reviewId);
   let rvOpener = null;
+  let rvLocked = false;
   async function openReview(it) {
     if (!it || !it.info || it.removed) return;
     S.reviewId = it.id; S.boxMode = false;
-    if (reviewEl.hidden) { rvOpener = document.activeElement; reviewEl.hidden = false; lockScroll(true); }
+    if (reviewEl.hidden) { rvOpener = docked() ? null : document.activeElement; reviewEl.hidden = false; reviewEl.setAttribute('aria-modal', String(!docked())); if (!docked()) { lockScroll(true); rvLocked = true; } }
     layoutStage(); rvRender(); startOverlay();
-    $('#rvCard').focus({ preventScroll: true });
+    if (!docked()) $('#rvCard').focus({ preventScroll: true });
     try { await openPreview(it); } catch (e) { setNote('Could not open the preview: ' + errText(e), 'warn'); }
     rvRender();
   }
   async function closeReview() {
     if (reviewEl.hidden) return;
-    reviewEl.hidden = true; lockScroll(false); stopOverlay();
+    reviewEl.hidden = true; if (rvLocked) { lockScroll(false); rvLocked = false; } stopOverlay();
     S.boxMode = false; drag = null; S.reviewId = null;
     await stopPlay();
     closePreview();
@@ -649,17 +653,21 @@ export function mountTool(root) {
     if (next) await showInReview(next);
   }
   const stageTagR = $('.tag-r');
+  let wasBoxing = false;
   function rvRender() {
     if (reviewEl.hidden) return;
     const it = reviewItem();
     if (!it) return;
     const mode = viewMode(), box = boxOn(), idx = S.items.indexOf(it);
+    for (const x of S.items) if (x.card) x.card.el.classList.toggle('is-selected', x.id === it.id);
     rvTitle.textContent = it.name;
     rvMeta.textContent = it.info ? itemMeta(it) : '';
     rvNav.hidden = S.items.length < 2;
     rvCount.textContent = (idx + 1) + ' / ' + S.items.length;
     rvPrev.disabled = idx <= 0; rvNext.disabled = idx >= S.items.length - 1;
     stage.classList.toggle('is-boxing', box);
+    if (box && !wasBoxing) stage.scrollIntoView({ block: 'nearest' });
+    wasBoxing = box;
     boxHint.hidden = !box || !!drag;
     boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found. Drag a box around it.' : 'Drag a box around the logo';
     for (const b of [boxBtn, boxBtn2]) { b.disabled = !canDraw(); b.setAttribute('aria-pressed', String(!!S.boxMode)); }
@@ -1469,10 +1477,27 @@ export function mountTool(root) {
   }
 
   // ---------- the page ----------
+  let autoOpening = false;
+  dockMq.addEventListener('change', () => { if (!docked() && !reviewEl.hidden) closeReview(); else render(); }, { signal });
+  // where the files are, at a glance
+  function renderPipe() {
+    const c = counts(), fin = doneItems(), flagged = fin.filter((i) => i.check && i.check.level !== 'ok').length;
+    const parts = [['', 'Waiting', c.opening + c.queued + c.finding + c.ready], ['on', 'Working', c.working], ['ok', 'Clean', fin.length - flagged], ['warn', 'To check', flagged], ['warn', 'Needs you', c.nologo + c.error]];
+    const html = parts.filter((x) => x[2] > 0).map(([k, l, n]) => '<span class="' + k + '">' + l + ' <b>' + n + '</b></span>').join('');
+    const shown = parts.filter((x) => x[2] > 0).length;
+    pipeEl.hidden = S.items.length < 2 || shown < 2;
+    setHtml(pipeEl, html);
+  }
   function render() {
     const has = S.items.length > 0;
     welcomeEl.hidden = has; jobArea.hidden = !has; barEl.hidden = !has;
+    studioEl.classList.toggle('on', has); studioEl.classList.toggle('docked', docked());
     reconcileCards();
+    renderPipe();
+    if (has && docked() && reviewEl.hidden && !autoOpening) {
+      const pick = S.items.find((i) => i.info && i.status !== 'error' && !i.removed) || null;
+      if (pick) { autoOpening = true; openReview(pick).finally(() => { autoOpening = false; }); }
+    }
     fileCount.textContent = has ? String(S.items.length) : '';
     filesTotal.textContent = has ? fmtMB(S.items.reduce((s, x) => s + x.size, 0)) : '';
     clearBtn.disabled = S.busy;
@@ -1644,7 +1669,11 @@ export function mountTool(root) {
   // ---------- events ----------
   jobsEl.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
+    if (!btn) {
+      const row = e.target.closest('.job');
+      if (row && docked() && !e.target.closest('summary, a, button')) { const x = getItem(+row.dataset.id); if (x && x.info && x.id !== S.reviewId) showInReview(x); }
+      return;
+    }
     const it = getItem(+btn.closest('[data-id]').dataset.id);
     if (!it) return;
     switch (btn.dataset.act) {
@@ -1754,8 +1783,8 @@ export function mountTool(root) {
       return;
     }
     if (reviewEl.hidden) return;
-    if (e.key === 'Escape') { e.preventDefault(); if (S.boxMode) { S.boxMode = false; drag = null; rvRender(); } else closeReview(); return; }
-    if (e.key === 'Tab') {
+    if (e.key === 'Escape') { if (S.boxMode) { e.preventDefault(); S.boxMode = false; drag = null; rvRender(); } else if (!docked()) { e.preventDefault(); closeReview(); } return; }
+    if (e.key === 'Tab' && !docked()) {
       const f = focusables(reviewEl);
       if (f.length) { const i = f.indexOf(document.activeElement); const n = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1); e.preventDefault(); f[n].focus(); }
       return;

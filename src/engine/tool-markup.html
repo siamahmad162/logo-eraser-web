@@ -36,9 +36,11 @@
 </section>
 
 <!-- with files: one card per file -->
+<div class="studio" id="studio">
 <section class="job-area" id="jobArea" aria-label="Your files" hidden>
   <div class="job-toolbar">
     <div class="job-title"><h2>Your files</h2><span class="count" id="fileCount"></span><span class="job-total" id="filesTotal"></span></div>
+    <div class="pipe" id="pipe" hidden></div>
     <button type="button" class="link-btn" id="clearBtn">Clear all</button>
   </div>
 
@@ -70,31 +72,6 @@
     <button type="button" class="link-btn strong" id="addFolderBtn">add a folder</button>
   </div>
 </section>
-
-<!-- progress and the next action: always in view -->
-<div class="actionbar" id="actionbar" role="region" aria-label="Progress and actions" hidden>
-  <div class="ab-progress" id="abProgress" hidden><i id="abFill"></i></div>
-  <div class="ab-main">
-    <div class="ab-left">
-      <span class="ab-icon" id="abIcon" aria-hidden="true"></span>
-      <div class="ab-text">
-        <div class="ab-line"><b id="abTitle" aria-live="polite"></b><span class="ab-pct" id="abPct" title="Overall progress" hidden></span></div>
-        <span class="ab-sub" id="abSub"></span>
-      </div>
-    </div>
-    <div class="ab-right">
-      <button type="button" class="btn-soft" id="abSecondary" hidden></button>
-      <button type="button" class="cta cta-inline" id="abPrimary" disabled>
-        <span class="cta-ico" id="abPrimaryIcon" aria-hidden="true"></span><span id="abPrimaryLabel">Clean files</span>
-      </button>
-    </div>
-  </div>
-  <div class="note" id="noteBox" hidden><span id="note"></span><button type="button" class="icon-btn" id="noteClose" aria-label="Dismiss this message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
-</div>
-
-<p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>
-
-<p class="foot">Only use it on videos and photos you made or have the right to edit. AI-generated media can also carry invisible watermarks such as SynthID; this tool does not touch them, so keep labelling AI content where platforms or laws ask for it. See-through logos are restored mathematically; any fully opaque part is filled in from its surroundings.</p>
 
 <!-- review window: a closer look at one file -->
 <div class="modal" id="review" role="dialog" aria-modal="true" aria-labelledby="rvTitle" hidden>
@@ -157,6 +134,32 @@
     </div>
   </div>
 </div>
+</div>
+
+<!-- progress and the next action: always in view -->
+<div class="actionbar" id="actionbar" role="region" aria-label="Progress and actions" hidden>
+  <div class="ab-progress" id="abProgress" hidden><i id="abFill"></i></div>
+  <div class="ab-main">
+    <div class="ab-left">
+      <span class="ab-icon" id="abIcon" aria-hidden="true"></span>
+      <div class="ab-text">
+        <div class="ab-line"><b id="abTitle" aria-live="polite"></b><span class="ab-pct" id="abPct" title="Overall progress" hidden></span></div>
+        <span class="ab-sub" id="abSub"></span>
+      </div>
+    </div>
+    <div class="ab-right">
+      <button type="button" class="btn-soft" id="abSecondary" hidden></button>
+      <button type="button" class="cta cta-inline" id="abPrimary" disabled>
+        <span class="cta-ico" id="abPrimaryIcon" aria-hidden="true"></span><span id="abPrimaryLabel">Clean files</span>
+      </button>
+    </div>
+  </div>
+  <div class="note" id="noteBox" hidden><span id="note"></span><button type="button" class="icon-btn" id="noteClose" aria-label="Dismiss this message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+</div>
+
+<p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>
+
+<p class="foot">Only use it on videos and photos you made or have the right to edit. AI-generated media can also carry invisible watermarks such as SynthID; this tool does not touch them, so keep labelling AI content where platforms or laws ask for it. See-through logos are restored mathematically; any fully opaque part is filled in from its surroundings.</p>
 
 <!-- a question before something is lost -->
 <div class="modal modal-sm" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText" hidden>

@@ -97,7 +97,7 @@
 
   /* ---------- your files ---------- */
   .job-area { display: grid; gap: 14px; }
-  .job-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .job-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
   .job-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .job-title h2 { font-size: 18px; }
   .count { font: 500 11.5px/1 var(--f-mono); color: var(--muted); padding: 4px 8px; border-radius: 999px; background: var(--field); }
@@ -197,6 +197,40 @@
   .job[data-tone="warn"] .strip figure:has(figcaption.worst) { border-color: rgba(245, 165, 91, 0.45); }
   .job[data-tone="idle"] .js-ico { background: var(--field); color: var(--muted); }
   .ab-icon.idle { background: var(--field); color: var(--muted); border: 1px solid var(--line); }
+  /* ---- studio: the queue on the left, the inspector (the old review window) docked on the right ---- */
+  .pipe { display: flex; gap: 6px; flex-wrap: wrap; order: 3; flex: 1 0 100%; }
+  .pipe span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); font: 550 12px/1 inherit; color: var(--muted); }
+  .pipe span b { font-weight: 650; color: var(--ink); }
+  .pipe span.on { border-color: rgba(255, 77, 141, 0.5); color: var(--ink); }
+  .pipe span.ok b { color: var(--ok); }
+  .pipe span.warn { border-color: rgba(245, 165, 91, 0.45); }
+  .pipe span.warn b { color: var(--warn); }
+  .studio.docked.on { display: grid; grid-template-columns: minmax(400px, 0.85fr) minmax(0, 1.4fr); gap: 22px; align-items: start; }
+  .studio.docked.on:has(#review[hidden]) { grid-template-columns: minmax(0, 1fr); }
+  .studio.docked #review { position: sticky; inset: auto; top: 78px; z-index: 1; display: block; padding: 0; height: calc(100dvh - 250px); min-height: 480px; }
+  .studio.docked #review[hidden] { display: none; }
+  .studio.docked .modal-backdrop, .studio.docked #rvClose { display: none; }
+  .studio.docked .rv-card { width: 100%; height: 100%; border-radius: 22px; animation: none; }
+  .studio.docked .rv-body { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .studio.docked .loupes:not([data-empty="1"]) { grid-template-columns: 1fr 1fr; }
+  .studio.docked .job { cursor: default; }
+  .studio.docked .job.is-selected { border-color: rgba(255, 77, 141, 0.7); box-shadow: 0 0 0 1px rgba(255, 77, 141, 0.35) inset, 0 12px 40px -20px rgba(255, 77, 141, 0.6); }
+  /* a compact queue row, like on a phone */
+  .studio.docked .job { grid-template-columns: 112px minmax(0, 1fr); gap: 8px 14px; padding: 12px; align-items: start; }
+  .studio.docked .job-body { display: contents; }
+  .studio.docked .job-media { grid-column: 1; grid-row: 1 / span 3; }
+  .studio.docked .job-head { grid-column: 2; grid-row: 1; }
+  .studio.docked .job-meta { grid-column: 2; grid-row: 2; white-space: normal; }
+  .studio.docked .job-status { grid-column: 2; grid-row: 3; margin-top: 0; }
+  .studio.docked .job-bar, .studio.docked .job-foot, .studio.docked .steps { grid-column: 1 / -1; }
+  .studio.docked .th-badge, .studio.docked .th-hover { display: none; }
+  .studio.docked .job-actions { margin-left: 0; width: 100%; }
+  .studio.docked .job-actions .btn-soft, .studio.docked .job-actions .cta { flex: 1 1 auto; justify-content: center; }
+  .studio.docked .strip { gap: 8px; }
+  .studio.docked .strip figure { padding: 6px; gap: 5px; }
+  .studio.docked .st-pair { grid-template-columns: 1fr; gap: 4px; }
+  .studio.docked .st-lbl { display: none; }
+
   /* one loading, shown as stages one after the other */
   .steps { list-style: none; margin: 2px 0 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
   .steps li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--faint); font: 550 12px/1 var(--f-body, inherit); }
