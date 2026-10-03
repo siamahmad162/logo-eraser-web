@@ -531,7 +531,7 @@ export function mountTool(root) {
           process: async (s) => {
             if (hold) await hold();
             const out = await cleanSample(s, model, holder);
-            if (live && frameNo++ % 6 === 0) { try { live(s, out); } catch (e) { /* only a preview */ } }
+            if (live && frameNo++ % 12 === 0) { try { live(s, out); } catch (e) { /* only a preview */ } }
             return out;
           },
         },
@@ -656,6 +656,10 @@ export function mountTool(root) {
     const m = it.model, c = it.card;
     if (!c || it.removed || !it.info || !m || !m.ok) return;
     const g = cuGeom(m.rect, it.info.w, it.info.h);
+    if (from === 'result' && it.kind === 'video' && it.result) {
+      await drawStrip(it);
+      if (it.stripHas) { it.cuHas = true; it.cuKind = from; updItem(it); return; }
+    }
     try {
       if (it.kind === 'image') {
         cuDraw(it.bmp, c.b, g, false);
@@ -676,7 +680,6 @@ export function mountTool(root) {
       it.cuHas = true; it.cuKind = from;
     } catch (e) { /* no close-ups for this file; the card still works */ }
     updItem(it);
-    if (from === 'result') await drawStrip(it);
   }
   const mmss = (t) => { const s = Math.max(0, Math.round(t)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   // The finished video at three moments (the worst one when the check found something), before and after.
@@ -685,16 +688,18 @@ export function mountTool(root) {
     if (!c || it.removed || it.kind !== 'video' || !it.result || !it.info || !m || !m.ok) return;
     const g = cuGeom(m.rect, it.info.w, it.info.h), span = Math.max(0, it.info.dur - it.info.first - 1 / it.info.fps), flagged = !!(it.check && it.check.level !== 'ok');
     const times = [it.info.first + span * 0.1, flagged ? it.check.worstT : it.info.first + span * 0.5, it.info.first + span * 0.9];
+    const inA = openInput(it.file), inB = openInput(it.result);
     try {
+      const sinkA = new MB.VideoSampleSink(await inA.getPrimaryVideoTrack()), sinkB = new MB.VideoSampleSink(await inB.getPrimaryVideoTrack());
       for (let i = 0; i < 3; i++) {
-        const t = times[i], f = c.strip.figs[i];
-        await withSampleAt(it.file, t, async (s) => cuDraw(s, f.b, g, true));
-        await withSampleAt(it.result, t, async (r) => cuDraw(r, f.a, g, true));
+        const t = times[i], f = c.strip.figs[i], a = await sinkA.getSample(t), b = await sinkB.getSample(t);
+        try { if (!a || !b) throw new Error('no frame'); cuDraw(a, f.b, g, true); cuDraw(b, f.a, g, true); } finally { if (a) a.close(); if (b) b.close(); }
         f.cap.textContent = (flagged && i === 1 ? 'Worst moment · ' : '') + mmss(t - it.info.first);
         f.cap.classList.toggle('worst', flagged && i === 1);
       }
       it.stripHas = true;
     } catch (e) { /* no strip for this file; the single close-up stays */ }
+    finally { try { inA.dispose(); inB.dispose(); } catch (e) { /* closed */ } }
     updItem(it);
   }
   // Where a logo would be, to ask "is it here?" about a file whose logo was not found.
@@ -1448,7 +1453,7 @@ export function mountTool(root) {
   const progressTick = (fn) => { let last = 0; return (p) => { const now = performance.now(); if (p < 1 && now - last < 90) return; last = now; fn(p); }; };
 
   async function analyzeOne(it, manualRect, guess) {
-    if (S.analyzing || S.busy || it.removed || !it.info) return;
+    if (S.analyzing || (S.busy && !S.encNow) || it.removed || !it.info) return;
     S.analyzing = true;
     it.status = 'analyzing'; it.stage = 0; it.msg = ''; it.progress = 0; it.borrowed = false;
     updItem(it); renderBar(); rvRender();
@@ -1485,7 +1490,7 @@ export function mountTool(root) {
     if (pumping) return;
     pumping = true;
     try {
-      while (alive && !S.busy && !S.analyzing) {
+      while (alive && (!S.busy || (S.encNow && !S.cancel && !P.playing)) && !S.analyzing) {
         const it = nextToAnalyze();
         if (!it) break;
         const rect = it.boxReq || null, guess = it.boxGuess || null; it.boxReq = null; it.boxGuess = null;
@@ -1573,10 +1578,11 @@ export function mountTool(root) {
       await waitAnalyzing();
       for (;;) {
         if (S.cancel) break;
-        const it = S.items.find(isRunnable);
+        // a file being looked at in the background is waited for rather than measured twice
+        const it = S.items.find((x) => isRunnable(x) && (x.model || !S.analyzing));
         if (!it) {
-          // files that were still being opened when the run got to the end of the list
-          if (S.items.some((x) => !x.removed && (x.status === 'new' || x.status === 'probing'))) { await sleep(120); continue; }
+          // files that were still being opened (or looked at) when the run got to the end of the list
+          if (S.analyzing || S.items.some((x) => !x.removed && (x.status === 'new' || x.status === 'probing'))) { await sleep(120); continue; }
           break;
         }
         it.runId = S.runId;
@@ -1610,17 +1616,15 @@ export function mountTool(root) {
         updItem(it); render(); updTotal();
         try {
           if (it.kind === 'image') it.result = await encodeImage(it);
-          else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live, previewHold);
+          else { S.encNow = true; pump(); it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live, previewHold).finally(() => { S.encNow = false; }); }
           it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
           it.liveOn = false; it.verifying = it.kind === 'video' && !!it.checkG; updItem(it); updTotal();
           announce(it.name + ' is finished');
-          // looking at the finished file runs beside the next file, so it does not hold anything up
-          verifyJobs.push((async () => {
-            try { await verifyResult(it); } catch (e) { it.check = null; }
-            it.verifying = false; updItem(it); updTotal();
-            if (it.check && it.check.level !== 'ok') announce(it.name + ' needs a look');
-            await makeCloseups(it, 'result');
-          })());
+          // the finished file is checked and its pictures are shown before anything else is started
+          try { await verifyResult(it); } catch (e) { it.check = null; }
+          it.verifying = false; updItem(it); updTotal();
+          if (it.check && it.check.level !== 'ok') announce(it.name + ' needs a look');
+          await makeCloseups(it, 'result');
         } catch (e) {
           it.liveOn = false;
           if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; it.result = null; it.stopped = true; updItem(it); break; }
