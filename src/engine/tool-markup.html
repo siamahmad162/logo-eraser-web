@@ -8,7 +8,7 @@
   <div class="hero-drop" id="drop">
     <span class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg></span>
     <h2>Drop your videos or photos here</h2>
-    <p class="hero-sub">Gemini and Veo clips, one at a time or a whole folder. Everything stays on your device.</p>
+    <p class="hero-sub">Gemini and Veo clips, one at a time or a whole folder. The logo is found and removed automatically, and everything stays on your device.</p>
     <div class="hero-buttons">
       <button type="button" class="cta cta-inline" id="chooseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Choose files</button>
       <button type="button" class="btn-soft" id="chooseFolderBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Choose a folder</button>
@@ -20,6 +20,13 @@
     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Nothing is uploaded</li>
     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Works on a whole batch</li>
   </ul>
+  <div class="quality-line" id="welcomeQuality">
+    <span>Video quality</span>
+    <div class="seg-sm" role="group" aria-label="Video quality">
+      <button type="button" id="wqMax" aria-pressed="true" title="About 2.5 times the original bitrate, so the new file can’t be told apart from the original">Best quality</button>
+      <button type="button" id="wqHigh" aria-pressed="false" title="Smaller files that still look the same at normal viewing sizes">Smaller files</button>
+    </div>
+  </div>
   <div class="sample-line" id="sampleCard">
     <span>No file handy?</span>
     <button type="button" class="link-btn strong" id="sampleBtn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg><span>Try a sample video</span></button>

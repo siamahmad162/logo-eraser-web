@@ -18,7 +18,7 @@ export function mountTool(root) {
   const fileEl = $('#file'), folderEl = $('#folder'), dropEl = $('#drop'), dropOverlay = $('#dropOverlay');
   const welcomeEl = $('#welcome'), welcomeNote = $('#welcomeNote'), sampleCard = $('#sampleCard'), sampleBtn = $('#sampleBtn'), chooseBtn = $('#chooseBtn'), chooseFolderBtn = $('#chooseFolderBtn');
   const jobArea = $('#jobArea'), jobsEl = $('#jobs'), fileCount = $('#fileCount'), filesTotal = $('#filesTotal'), clearBtn = $('#clearBtn'), addFilesBtn = $('#addFilesBtn'), addFolderBtn = $('#addFolderBtn');
-  const optSum = $('#optSum'), qMax = $('#qMax'), qHigh = $('#qHigh'), qNote = $('#qNote'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
+  const optSum = $('#optSum'), qMax = $('#qMax'), qHigh = $('#qHigh'), wqMax = $('#wqMax'), wqHigh = $('#wqHigh'), qNote = $('#qNote'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
   const barEl = $('#actionbar'), abProgress = $('#abProgress'), abFill = $('#abFill'), abIcon = $('#abIcon'), abTitle = $('#abTitle'), abPct = $('#abPct'), abSub = $('#abSub');
   const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note'), noteBox = $('#noteBox'), noteClose = $('#noteClose'), srStatus = $('#srStatus'), rvHint = $('#rvHint');
 
@@ -1288,8 +1288,16 @@ export function mountTool(root) {
         if (!it) break;
         const rect = it.boxReq || null; it.boxReq = null;
         await analyzeOne(it, rect);
+        maybeAutoRun();
       }
-    } finally { pumping = false; }
+    } finally { pumping = false; maybeAutoRun(); }
+  }
+  // Cleaning starts by itself as soon as a logo has been found: nobody has to press a button. Files whose
+  // logo was not found wait for a box. After Stop it waits for Continue (or for new files).
+  function maybeAutoRun() {
+    if (!alive || S.busy || S.stopped || S.analyzing) return;
+    if (!S.items.some((i) => isRunnable(i) && i.model && i.model.ok)) return;
+    runAll();
   }
   // a hand-drawn box for one file; it is measured as soon as its turn comes
   function requestBox(it, rect) {
@@ -1356,7 +1364,6 @@ export function mountTool(root) {
     announce('Removing the logo from ' + plural(S.items.filter((i) => i.runId === S.runId).length, 'file', 'files'));
     await stopPlay();
     keepAwake(true);
-    setNote('');
     render();
     const t0 = performance.now();
     try {
@@ -1559,7 +1566,7 @@ export function mountTool(root) {
         if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
         if (it.stopped) return { tone: 'idle', icon: 'stop', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
         if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s logo settings', sub: 'This video’s own check failed. If traces remain, clean it on its own.' };
-        return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: 'Ready to clean' + (it.manual ? ' · your box' : '') };
+        return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: (S.stopped ? 'Paused · press Continue to clean it' : 'Cleaning starts by itself') + (it.manual ? ' · your box' : '') };
       case 'nologo':
         if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo to clean this file.' };
@@ -1589,6 +1596,8 @@ export function mountTool(root) {
     c.box.hidden = ph !== 'nologo';
     c.box.classList.toggle('primary', ph === 'nologo');
     c.retry.hidden = !(ph === 'error' || ph === 'nologo' || (ph === 'ready' && it.borrowed));
+    c.box.disabled = c.retry.disabled = S.busy;
+    c.box.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
     setText(c.retry, ph === 'error' ? 'Try again' : 'Check again');
     c.download.hidden = ph !== 'done';
     setText(c.downloadLabel, it.saved ? 'Download again' : 'Download');
@@ -1617,8 +1626,8 @@ export function mountTool(root) {
     rvRender();
   }
   function renderOptions() {
-    qMax.setAttribute('aria-pressed', String(S.quality === 'max'));
-    qHigh.setAttribute('aria-pressed', String(S.quality === 'high'));
+    for (const b of [qMax, wqMax]) b.setAttribute('aria-pressed', String(S.quality === 'max'));
+    for (const b of [qHigh, wqHigh]) b.setAttribute('aria-pressed', String(S.quality === 'high'));
     const vid = refItem() && refItem().kind === 'video' && refItem().info ? refItem() : S.items.find((i) => i.kind === 'video' && i.info);
     qMax.disabled = qHigh.disabled = S.busy || !vid;
     const videos = S.items.filter((i) => i.kind === 'video').length;
@@ -1723,12 +1732,16 @@ export function mountTool(root) {
         setBar({ tone: 'warn', icon: ICON.stop, title: 'Stopped', sub: ['Nothing was lost', plural(todo, 'file', 'files') + ' left', ...issues].join(' · '), primary: { act: 'run', label: 'Continue with ' + plural(todo, 'file', 'files'), icon: ICON.play } });
         return;
       }
+      if (c.ready && (S.analyzing || pumping)) {
+        // a logo was just found; its pictures are being made and the cleaning starts right after
+        setBar({ tone: 'run', icon: ICON.spin, title: 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…', sub: ['Logo found · starting now', ...issues].join(' · ') });
+        return;
+      }
       if (waiting && !c.ready) {
         const checked = c.ready + c.nologo, n = todo + c.nologo;
         setBar({
           tone: 'run', icon: ICON.spin, title: 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…',
-          sub: [c.opening && !c.finding && !c.queued ? 'Opening your ' + (todo === 1 ? 'file' : 'files') : 'Finding the logo in file ' + Math.min(n, checked + 1) + ' of ' + n, ...issues].join(' · '),
-          primary: { act: 'run', label, icon: ICON.wand, tip: 'Starts as soon as the logos are found' },
+          sub: [c.opening && !c.finding && !c.queued ? 'Opening your ' + (todo === 1 ? 'file' : 'files') : 'Finding the logo in file ' + Math.min(n, checked + 1) + ' of ' + n, 'cleaning starts by itself', ...issues].join(' · '),
         });
         return;
       }
@@ -1745,7 +1758,6 @@ export function mountTool(root) {
     setBar({
       tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to clean',
       sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
-      primary: { act: 'run', label: 'Clean files', icon: ICON.wand, disabled: true },
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
@@ -1828,8 +1840,8 @@ export function mountTool(root) {
     if (!b || b.disabled) return;
     S.view = b.dataset.view; drawView(); rvRender();
   });
-  qMax.addEventListener('click', () => { S.quality = 'max'; render(); });
-  qHigh.addEventListener('click', () => { S.quality = 'high'; render(); });
+  for (const b of [qMax, wqMax]) b.addEventListener('click', () => { S.quality = 'max'; render(); });
+  for (const b of [qHigh, wqHigh]) b.addEventListener('click', () => { S.quality = 'high'; render(); });
   sameRectEl.addEventListener('change', () => {
     S.sameRect = sameRectEl.checked;
     for (const o of S.items) if (o.kind === 'video' && o !== refItem() && !o.manual && o.status === 'ready') { o.model = null; o.borrowed = false; o.msg = ''; o.cuHas = false; }

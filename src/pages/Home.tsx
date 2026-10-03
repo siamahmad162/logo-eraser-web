@@ -12,7 +12,7 @@ import { GuideCards } from './Guides';
 
 export const STEPS = [
   { icon: Upload, title: 'Drop in your files', text: 'Videos or photos, one or fifty. Nothing is uploaded: your browser does the work.' },
-  { icon: Scan, title: 'The logo is found', text: 'The sparkle or Veo mark is located to the pixel, and its exact opacity is measured in your file.' },
+  { icon: Scan, title: 'It removes the logo by itself', text: 'The sparkle or Veo mark is located to the pixel, its exact opacity is measured in your file, and every frame is restored. No button to press.' },
   { icon: Download, title: 'Download clean files', text: 'Same resolution, frame rate and audio. One by one, or everything as a single ZIP.' },
 ];
 

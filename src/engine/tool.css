@@ -91,6 +91,7 @@
   .trust-row { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; color: var(--muted); font-size: 14px; }
   .trust-row li { display: inline-flex; align-items: center; gap: 7px; }
   .trust-row svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+  .quality-line { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; flex-wrap: wrap; justify-content: center; }
   .sample-line { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
   .sample-line .link-btn { font-size: 14px; }
 
