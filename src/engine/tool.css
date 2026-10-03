@@ -181,6 +181,22 @@
   .cu figure:last-child figcaption { color: var(--ok); }
   .cu-arrow { color: var(--faint); margin-bottom: 18px; display: grid; }
   .cu-arrow svg { width: 18px; height: 18px; }
+  /* "is the logo here?": only the one picture, the arrow and the after picture are left out */
+  .cu.ask .cu-arrow, .cu.ask figure:last-child { display: none; }
+  .cu.ask figure:first-child figcaption { color: var(--warn); }
+  /* the finished video at three moments */
+  .strip { display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 14px 18px; align-items: start; }
+  .strip figure { margin: 0; display: grid; gap: 6px; }
+  .strip figcaption { font: 500 10px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .strip figcaption.worst { color: var(--warn); }
+  .st-pair { display: flex; gap: 6px; }
+  .strip canvas { width: 104px; height: 78px; border-radius: 9px; outline: 1px solid var(--line); background: var(--field); display: block; }
+  .st-lbl { display: flex; gap: 6px; font: 500 9px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+  .st-lbl i { font-style: normal; width: 104px; text-align: center; }
+  .st-lbl i:last-child { color: var(--ok); }
+  .job[data-tone="warn"] .strip figcaption.worst { color: var(--warn); }
+  .job[data-tone="idle"] .js-ico { background: var(--field); color: var(--muted); }
+  .ab-icon.idle { background: var(--field); color: var(--muted); border: 1px solid var(--line); }
   .job-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: center; }
 
   .add-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 16px; border-radius: 18px; border: 1.5px dashed var(--line-2); color: var(--muted); font-size: 14px; }
@@ -353,6 +369,12 @@
   button:focus-visible, .job-thumb:focus-visible, summary:focus-visible { outline: 2px solid var(--mask); outline-offset: 2px; }
 
   /* ---------- phones ---------- */
+  @media (max-width: 999px) {
+    .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+    .st-pair { flex-direction: column; gap: 4px; }
+    .strip canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+    .st-lbl { display: none; }
+  }
   @media (max-width: 719px) {
     .job { grid-template-columns: 96px minmax(0, 1fr); gap: 8px 12px; padding: 12px; align-items: start; }
     .job-body { display: contents; }
@@ -368,6 +390,10 @@
     .job-meta { white-space: normal; }
     .js-text span { font-size: 12.5px; }
     .cu canvas { width: 100px; height: 75px; }
+    .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+    .st-pair { flex-direction: column; gap: 4px; }
+    .strip canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+    .st-lbl { display: none; }
     .ab-icon { width: 36px; height: 36px; border-radius: 11px; }
     .job-actions { margin-left: 0; width: 100%; }
     .job-actions .btn-soft, .job-actions .cta { flex: 1 1 auto; justify-content: center; }

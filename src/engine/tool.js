@@ -610,6 +610,7 @@ export function mountTool(root) {
     if (it.status === 'analyzing') return 'finding';
     if (it.boxReq) return 'queued';
     if (it.model && it.model.ok) return 'ready';
+    if (it.skipped && !it.model) return 'skipped';
     if (it.msg || it.model) return 'nologo';
     return 'queued';
   }
@@ -618,7 +619,7 @@ export function mountTool(root) {
   const doneItems = () => S.items.filter((i) => i.status === 'done' && i.result);
   const unsavedItems = () => doneItems().filter((i) => !i.saved);
   function counts() {
-    const c = { opening: 0, queued: 0, finding: 0, ready: 0, nologo: 0, working: 0, done: 0, error: 0 };
+    const c = { opening: 0, queued: 0, finding: 0, ready: 0, nologo: 0, skipped: 0, working: 0, done: 0, error: 0 };
     for (const it of S.items) c[phase(it)]++;
     return c;
   }
@@ -673,6 +674,48 @@ export function mountTool(root) {
       }
       it.cuHas = true; it.cuKind = from;
     } catch (e) { /* no close-ups for this file; the card still works */ }
+    updItem(it);
+    if (from === 'result') await drawStrip(it);
+  }
+  const mmss = (t) => { const s = Math.max(0, Math.round(t)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  // The finished video at three moments (the worst one when the check found something), before and after.
+  async function drawStrip(it) {
+    const c = it.card, m = it.model;
+    if (!c || it.removed || it.kind !== 'video' || !it.result || !it.info || !m || !m.ok) return;
+    const g = cuGeom(m.rect, it.info.w, it.info.h), span = Math.max(0, it.info.dur - it.info.first - 1 / it.info.fps), flagged = !!(it.check && it.check.level !== 'ok');
+    const times = [it.info.first + span * 0.1, flagged ? it.check.worstT : it.info.first + span * 0.5, it.info.first + span * 0.9];
+    try {
+      for (let i = 0; i < 3; i++) {
+        const t = times[i], f = c.strip.figs[i];
+        await withSampleAt(it.file, t, async (s) => cuDraw(s, f.b, g, true));
+        await withSampleAt(it.result, t, async (r) => cuDraw(r, f.a, g, true));
+        f.cap.textContent = (flagged && i === 1 ? 'Worst moment · ' : '') + mmss(t - it.info.first);
+        f.cap.classList.toggle('worst', flagged && i === 1);
+      }
+      it.stripHas = true;
+    } catch (e) { /* no strip for this file; the single close-up stays */ }
+    updItem(it);
+  }
+  // Where a logo would be, to ask "is it here?" about a file whose logo was not found.
+  function suggestRect(it) {
+    const { w: W, h: H } = it.info;
+    if (it.kind === 'image') return evenRect({ x: W * 0.84, y: H * 0.84, w: W * 0.14, h: H * 0.14 }, W, H);
+    const ref = refItem();
+    if (S.rectRel && ref && ref !== it && ref.model && ref.model.ok) return fromRel(S.rectRel, W, H); // where the first video's logo sits
+    const g = usualPlace(it.info);
+    return evenRect(C.placeTemplate(GEMINI, g.x, g.y, g.s, W, H).rect, W, H);
+  }
+  async function makeAsk(it) {
+    const c = it.card;
+    if (!c || it.removed || !it.info || it.askBusy) return;
+    it.askBusy = true;
+    try {
+      const r = suggestRect(it), g = cuGeom(r, it.info.w, it.info.h);
+      if (it.kind === 'image') cuDraw(it.bmp, c.b, g, false);
+      else await withSampleAt(it.file, thumbTime(it), async (s) => cuDraw(s, c.b, g, true));
+      it.suggest = r; it.suggestGuess = it.kind === 'video' ? { ...usualPlace(it.info), usual: true } : null; it.askHas = true;
+    } catch (e) { /* no suggestion for this file */ }
+    it.askBusy = false;
     updItem(it);
   }
   // A small picture of each file for its card.
@@ -952,6 +995,17 @@ export function mountTool(root) {
     S.split = clamp(S.split + d, 0, 1); S.splitSet = true; drawView();
   });
 
+  // from a flagged file's panel: jump to the moment where the check looked worst
+  logoInfo.addEventListener('click', async (e) => {
+    if (!e.target.closest('#goWorst')) return;
+    const it = reviewItem();
+    if (!it || !it.check || !it.info || !P.has) return;
+    const span = Math.max(0, it.info.dur - it.info.first - 1 / it.info.fps);
+    S.frac = span ? clamp((it.check.worstT - it.info.first) / span, 0, 1) : 0;
+    if (S.view === 'original') S.view = 'split';
+    if (P.playing) await stopPlay();
+    renderPreview(); rvRender();
+  });
   scrub.addEventListener('input', async () => {
     S.frac = +scrub.value / 1000;
     if (P.playing) await stopPlay();
@@ -1071,7 +1125,11 @@ export function mountTool(root) {
           '<dt>Method</dt><dd>' + (m.method === 'template' ? (m.planeAlpha ? 'known logo shape, matched to this video pixel by pixel' : 'known logo shape (still background)') : 'learned from the video') + '</dd>' +
           '<dt>Analysed</dt><dd>' + m.frames + ' frames · ' + (m.mode === 'yuv' ? 'YUV, no colour conversion' : 'RGB') + '</dd>' +
           (m.resp ? '<dt>Dark scenes</dt><dd>extra correction on (from ' + m.resp.frames + ' frames)</dd>' : '');
-      html = logoState('ok', logoName(m) + ' found', (it.manual ? 'Your box. ' : '') + (opaque ? 'Parts of it are fully solid; those pixels are filled in from around them.' : 'It is see-through, so the real picture underneath is restored.')) +
+      const ck = it.status === 'done' ? it.check : null;
+      const verdict = ck && ck.level !== 'ok'
+        ? logoState('warn', ck.level === 'bad' ? 'Needs a look' : 'Please check', (ck.core > 0 ? 'A trace of the logo may be left' : 'The spot may look a little dark') + ' around ' + mmss(ck.worstT - it.info.first) + '.') + '<button type="button" class="btn-soft sm go-worst" id="goWorst">Go to that moment</button>'
+        : '';
+      html = (verdict || logoState('ok', logoName(m) + (ck ? ' removed' : ' found'), ck ? 'Checked after cleaning: nothing of it is left behind.' : (it.manual ? 'Your box. ' : '') + (opaque ? 'Parts of it are fully solid; those pixels are filled in from around them.' : 'It is see-through, so the real picture underneath is restored.'))) +
         '<details class="details"><summary>Technical details</summary><dl class="kv">' + kv + '</dl></details>';
     } else if (m && !m.ok) {
       html = logoState('warn', 'No logo in that box', 'Draw a slightly bigger box around it.');
@@ -1189,32 +1247,124 @@ export function mountTool(root) {
   // ---------- finding each file's logo (one file at a time, in the background) ----------
   // A video that follows the lead file: its own logo when "same spot" is off (or the lead is a photo
   // or a Veo clip), else the lead's spot and exact position, measured in this video.
-  // Is the sparkle really in this video? The engine's own test, run on a few frames at the given place:
-  // taking the logo away there must take the edge along its outline away (a ratio well under 1).
-  // Over 1 means nothing is there, and removing it would only leave a dark sparkle behind.
-  async function sparkleRatio(it, g, onP) {
-    const { w: W, h: H } = it.info, pr = C.placeTemplate(GEMINI, g.x, g.y, g.s, W, H).rect;
+  // ---------- looking at a few frames around the logo (to check things, never to change them) ----------
+  // Calls fn(img, rr, t) with the luma of the area around the sparkle for n frames spread over the video. With a
+  // model the frame is first cleaned in memory exactly as it will be written, so a model can be judged before
+  // anything is encoded. `src` is the file (the original, or a finished result).
+  async function lookAt(src, info, g, n, fn, model) {
+    const { w: W, h: H } = info, pr = C.placeTemplate(GEMINI, g.x, g.y, g.s, W, H).rect;
     const x0 = Math.max(0, pr.x - 8), y0 = Math.max(0, pr.y - 8), rr = { x: x0, y: y0, w: Math.min(W, pr.x + pr.w + 8) - x0, h: Math.min(H, pr.y + pr.h + 8) - y0 };
-    return withTrack(it, async (track) => {
-      const sink = new MB.VideoSampleSink(track), holder = {}, ts = stamps(it.info, 8), vals = [];
-      let n = 0;
+    const rd = model ? unionRect(rr, model.rect) : rr;
+    const input = openInput(src);
+    try {
+      const track = await input.getPrimaryVideoTrack();
+      if (!track) return 0;
+      const t0 = (await track.getFirstTimestamp()) - info.first; // a finished file starts at its own zero
+      const sink = new MB.VideoSampleSink(track), holder = {}, ts = stamps(info, n).map((t) => t + t0);
+      let done = 0;
       for await (const s of sink.samplesAtTimestamps(ts)) {
         if (S.cancel) break;
         if (!s) continue;
         try {
-          const fr = await readFrame(s, rr, holder), p = fr.planes[fr.mode === 'yuv' ? 0 : 1];
-          const img = new Float32Array(rr.w * rr.h);
+          const fr = await readFrame(s, rd, holder);
+          if (model && fr.W === model.W && fr.H === model.H) {
+            const pms = planeModels(model, fr);
+            fr.planes.forEach((p, i) => C.restorePlane(p, pms[i]));
+          }
+          const p = fr.planes[fr.mode === 'yuv' ? 0 : 1], img = new Float32Array(rr.w * rr.h);
           for (let j = 0; j < rr.h; j++) for (let i = 0; i < rr.w; i++) img[j * rr.w + i] = p.data[p.off + (rr.y + j) * p.stride + (rr.x + i) * p.step];
-          const Lw = p.white === 255 ? (GEMINI.L - 16) * 255 / 219 : GEMINI.L;
-          vals.push(C.logoPresence(img, rr.w, rr.h, GEMINI, g.x - rr.x, g.y - rr.y, g.s, Lw));
+          await fn(img, rr, s.timestamp - t0, p.white);
+          done++;
         } finally { s.close(); }
-        if (onP) onP(++n / ts.length);
       }
       if (S.cancel) throw uerr('Stopped.');
-      if (!vals.length) return null;
-      vals.sort((a, b) => a - b);
-      return vals[vals.length >> 1];
+      return done;
+    } finally { try { input.dispose(); } catch (e) { /* closed */ } }
+  }
+  const unionRect = (a, b) => { const x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y), x1 = Math.max(a.x + a.w, b.x + b.w), y1 = Math.max(a.y + a.h, b.y + b.h); return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; };
+  const median = (v) => { const a = v.slice().sort((x, y) => x - y); return a.length ? a[a.length >> 1] : null; };
+
+  // Is the sparkle really in this video? The engine's own test, run on a few frames at the given place:
+  // taking the logo away there must take the edge along its outline away (a ratio well under 1).
+  // Over 1 means nothing is there, and removing it would only leave a dark sparkle behind.
+  async function sparkleRatio(it, g, onP) {
+    const vals = [];
+    await lookAt(it.file, it.info, g, 8, (img, rr, t, white) => {
+      const Lw = white === 255 ? (GEMINI.L - 16) * 255 / 219 : GEMINI.L;
+      vals.push(C.logoPresence(img, rr.w, rr.h, GEMINI, g.x - rr.x, g.y - rr.y, g.s, Lw));
+      if (onP) onP(vals.length / 8);
     });
+    return median(vals);
+  }
+  // What is left along the sparkle's outline: a few pixels inside it minus the same distance outside it. Where the
+  // logo is gone cleanly the picture simply continues (about 0); a bright step means a trace of it is left, a dark
+  // one means too much was taken away (a dark sparkle). The middle value of the whole outline, so what happens to
+  // pass behind it, or a striped background, does not matter. k is the distance in pixels.
+  function outlineStep(img, rr, g, k) {
+    const rect = C.placeTemplate(GEMINI, g.x - rr.x, g.y - rr.y, g.s, rr.w, rr.h).rect, c = new Float32Array(rect.w * rect.h);
+    for (let j = 0; j < rect.h; j++) for (let i = 0; i < rect.w; i++) c[j * rect.w + i] = img[(rect.y + j) * rr.w + rect.x + i];
+    const b = C.outlineSetup([c], rect, GEMINI, g.x - rr.x, g.y - rr.y, g.s).band, w = rect.w, n = c.length;
+    if (b.length < 4 * 20) return null;
+    const st = [];
+    for (let u = 0; u < b.length; u += 4) {
+      const q = b[u], d = b[u + 1] - q, dy = Math.round(d / w), dx = d - dy * w, a = q + k * (dy * w + dx), o = q - k * (dy * w + dx);
+      const xa = q % w + k * dx, xo = q % w - k * dx;
+      if (a < 0 || o < 0 || a >= n || o >= n || xa < 0 || xa >= w || xo < 0 || xo >= w) continue;
+      st.push(c[a] - c[o]);
+    }
+    return st.length >= 20 ? median(st) : null;
+  }
+  // The outline step over a few frames of `src` (cleaned in memory first when a model is given).
+  async function traceCheck(src, info, g, model, n = 8) {
+    const frames = [], k = Math.max(3, Math.round(4 * g.s));
+    await lookAt(src, info, g, n, (img, rr, t) => { const v = outlineStep(img, rr, g, k); if (v != null) frames.push({ t, core: v }); }, model);
+    if (!frames.length) return null;
+    return { core: median(frames.map((f) => f.core)), frames };
+  }
+  // ---------- checking the outcome: before it is encoded, and again on the finished file ----------
+  const CORE_OK = 5;     // a removal that leaves no more than this (in brightness levels) behind is clean (good ones measure 0 to 2)
+  const CORE_LOOK = 12;  // more than this is plainly wrong (a dark sparkle measures about -21, a logo left in place +55)
+  const usualPlace = (info) => { const sx = info.w / 1920, sy = info.h / 1080; return { x: (1739.431 + 0.5) * sx - 0.5, y: (899.555 + 0.5) * sy - 0.5, s: Math.min(sx, sy) }; };
+  // Where the sparkle sits, when the model is the sparkle's template (else there is nothing to compare with).
+  const sparklePlace = (model) => (model && model.ok && model.gemini && model.align && model.align.score >= 0 ? { x: model.align.x, y: model.align.y, s: model.align.s } : null);
+  const coreOf = async (it, model, g, n) => { const r = await traceCheck(it.file, it.info, g, model, n); return r ? r.core : null; };
+  const noop = () => {};
+  // Before the long encode: clean a few frames in memory and see what would be left. When something would,
+  // try the other ways of measuring this logo and keep the one that leaves the least.
+  async function vetModel(it) {
+    it.check = null; it.checkG = null; it.retried = ''; it.vetFirst = it.vetBest = null;
+    if (it.kind !== 'video' || !it.model || !it.model.ok) return false;
+    const g = sparklePlace(it.model);
+    if (!g) return false;            // a Veo mark, or a shape learned from the video: nothing known to compare with
+    it.checkG = g;
+    const first = await coreOf(it, it.model, g, 6);
+    it.vetFirst = it.vetBest = first;
+    if (first == null || Math.abs(first) <= CORE_OK) return false;
+    let best = { model: it.model, core: first, why: '' };
+    const tries = [
+      ['its own search', async () => { const d = await detectLogo(it, noop); return d ? learn(it, d.rect, noop, d.tmpl) : null; }],
+      ['learned from this video', () => learn(it, it.model.rect, noop, null)],
+    ];
+    for (const [why, make] of tries) {
+      if (Math.abs(best.core) <= CORE_OK) break;
+      let m = null;
+      try { m = await make(); } catch (e) { if (S.cancel || (e && e.userMsg === 'Stopped.')) throw e; continue; }
+      if (!m || !m.ok) continue;
+      const c = await coreOf(it, m, g, 6);
+      if (c != null && Math.abs(c) < Math.abs(best.core) * 0.6) best = { model: m, core: c, why };
+    }
+    it.retried = best.why; it.vetBest = best.core;
+    if (best.model !== it.model) { it.model = best.model; return true; }
+    return false;
+  }
+  // After the encode: look at the finished file the same way. This is what the card and the bar report.
+  async function verifyResult(it) {
+    it.check = null;
+    if (it.kind !== 'video' || !it.result || !it.checkG) return;
+    const r = await traceCheck(it.result, it.info, it.checkG, null, 8);
+    if (!r) return;
+    const mag = Math.abs(r.core), worst = r.frames.reduce((a, f) => (Math.abs(f.core) > Math.abs(a.core) ? f : a), r.frames[0]);
+    it.check = { level: mag <= CORE_OK ? 'ok' : mag <= CORE_LOOK ? 'look' : 'bad', core: r.core, worstT: worst.t, retried: it.retried };
   }
   // Over this the sparkle is not there (the videos that have it measure under 1.2, the ones that don't over 17).
   const SPARKLE_ABSENT = 4;
@@ -1257,7 +1407,7 @@ export function mountTool(root) {
     const ratio = await sparkleRatio(it, { x: model.align.x, y: model.align.y, s: model.align.s });
     return ratio == null || ratio === Infinity || ratio <= SPARKLE_ABSENT;
   }
-  async function measure(it, manualRect, onP) {
+  async function measure(it, manualRect, onP, spotGuess) {
     if (it.kind === 'image') {
       const model = await analyzeImage(it, manualRect);
       return { model, msg: model ? '' : manualRect ? 'No sparkle logo fits inside this box' : 'No logo found automatically' };
@@ -1275,8 +1425,9 @@ export function mountTool(root) {
       rect = det.rect;
     }
     const detected = { rect, confidence: det ? det.confidence : null, manual: !!manualRect, gemini: !!(det && det.tmpl && !det.tmpl.veo), tmpl: det && det.tmpl };
-    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), det && det.tmpl);
-    if (!manualRect && !(await sparkleSeen(it, model))) return { model: null, msg: 'No logo found automatically' };
+    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), (det && det.tmpl) || spotGuess || null);
+    // a drawn box is taken as it is; a confirmed suggestion (the usual spot) is still checked
+    if ((!manualRect || spotGuess) && !(await sparkleSeen(it, model))) return { model: null, msg: 'No logo found automatically' };
     return { model, msg: '', detected, rect };
   }
   function applyMeasure(it, r, manualRect) {
@@ -1293,14 +1444,14 @@ export function mountTool(root) {
   const waitAnalyzing = () => (S.analyzing ? new Promise((r) => idleWaiters.push(r)) : Promise.resolve());
   const progressTick = (fn) => { let last = 0; return (p) => { const now = performance.now(); if (p < 1 && now - last < 90) return; last = now; fn(p); }; };
 
-  async function analyzeOne(it, manualRect) {
+  async function analyzeOne(it, manualRect, guess) {
     if (S.analyzing || S.busy || it.removed || !it.info) return;
     S.analyzing = true;
     it.status = 'analyzing'; it.msg = ''; it.progress = 0; it.borrowed = false;
     updItem(it); renderBar(); rvRender();
     let r = null;
     try {
-      r = await measure(it, manualRect, progressTick((p) => { it.progress = p; updItem(it); renderLogo(); }));
+      r = await measure(it, manualRect, progressTick((p) => { it.progress = p; updItem(it); renderLogo(); }), guess);
     } catch (e) {
       if (!(e && e.userMsg === 'Stopped.')) it.msg = errText(e);
     }
@@ -1334,8 +1485,8 @@ export function mountTool(root) {
       while (alive && !S.busy && !S.analyzing) {
         const it = nextToAnalyze();
         if (!it) break;
-        const rect = it.boxReq || null; it.boxReq = null;
-        await analyzeOne(it, rect);
+        const rect = it.boxReq || null, guess = it.boxGuess || null; it.boxReq = null; it.boxGuess = null;
+        await analyzeOne(it, rect, guess);
         maybeAutoRun();
       }
     } finally { pumping = false; maybeAutoRun(); }
@@ -1348,14 +1499,14 @@ export function mountTool(root) {
     runAll();
   }
   // a hand-drawn box for one file; it is measured as soon as its turn comes
-  function requestBox(it, rect) {
+  function requestBox(it, rect, guess) {
     if (!it || !it.info || S.busy || it.removed) return;
-    it.model = null; it.msg = ''; it.borrowed = false; it.cuHas = false; it.boxReq = rect;
+    it.model = null; it.msg = ''; it.borrowed = false; it.cuHas = false; it.boxReq = rect; it.boxGuess = guess || null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
     updItem(it); render(); pump();
   }
   function retryItem(it) {
     if (!it || S.busy || it.removed) return;
-    it.msg = ''; it.model = null; it.detected = null; it.borrowed = false; it.manual = false; it.cuHas = false; it.boxReq = null;
+    it.msg = ''; it.model = null; it.detected = null; it.borrowed = false; it.manual = false; it.cuHas = false; it.boxReq = null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
     if (!it.info) { it.status = 'new'; updItem(it); render(); intake(); return; }
     if (it.status === 'done' || it.status === 'error') { it.result = null; it.saved = false; }
     it.status = 'ready';
@@ -1384,7 +1535,7 @@ export function mountTool(root) {
     let W = 0, D = 0;
     for (const it of S.items) {
       if (it.runId !== S.runId || it.removed) continue;
-      if (it.status === 'error' || phase(it) === 'nologo') continue;
+      if (it.status === 'error' || phase(it) === 'nologo' || phase(it) === 'skipped') continue;
       const w = weight(it);
       W += w;
       D += w * (it.status === 'done' ? 1 : it.status === 'encoding' ? clamp(it.progress, 0, 1) : 0);
@@ -1427,10 +1578,10 @@ export function mountTool(root) {
         it.runId = S.runId;
         // a file the background queue hasn't reached yet is measured right here
         if (!it.model) {
-          const rect = it.boxReq || null; it.boxReq = null;
+          const rect = it.boxReq || null, guess = it.boxGuess || null; it.boxReq = null; it.boxGuess = null;
           it.status = 'learning'; it.progress = 0; updItem(it); updTotal();
           try {
-            applyMeasure(it, await measure(it, rect, progressTick((p) => { it.progress = p; updItem(it); })), rect);
+            applyMeasure(it, await measure(it, rect, progressTick((p) => { it.progress = p; updItem(it); }), guess), rect);
           } catch (e) {
             if (S.cancel || (e && e.userMsg === 'Stopped.')) { it.status = 'ready'; it.progress = 0; it.stopped = true; updItem(it); break; }
             it.status = 'error'; it.msg = errText(e); updItem(it); updTotal();
@@ -1440,6 +1591,16 @@ export function mountTool(root) {
           if (!(it.model && it.model.ok)) { updItem(it); updTotal(); continue; }
           await makeCloseups(it, 'preview');
         }
+        if (it.kind === 'video') {
+          // see what the model would leave behind before spending the time to encode with it
+          it.status = 'learning'; it.progress = 0.1; updItem(it); updTotal();
+          try {
+            if (await vetModel(it)) await makeCloseups(it, 'preview');
+          } catch (e) {
+            if (S.cancel || (e && e.userMsg === 'Stopped.')) { it.status = 'ready'; it.progress = 0; it.stopped = true; updItem(it); break; }
+            // a check that fails never stops the cleaning
+          }
+        } else { it.check = null; it.checkG = null; }
         it.status = 'encoding'; it.progress = it.kind === 'image' ? 0.5 : 0; it.encT0 = performance.now(); it.fps = 0;
         const live = it.kind === 'video' ? liveFor(it) : null;
         updItem(it); render(); updTotal();
@@ -1447,8 +1608,11 @@ export function mountTool(root) {
           if (it.kind === 'image') it.result = await encodeImage(it);
           else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live);
           it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
-          it.liveOn = false; updItem(it); updTotal();
+          it.liveOn = false; it.verifying = it.kind === 'video' && !!it.checkG; updItem(it); updTotal();
           announce(it.name + ' is finished');
+          try { await verifyResult(it); } catch (e) { it.check = null; }
+          it.verifying = false; updItem(it); updTotal();
+          if (it.check && it.check.level !== 'ok') announce(it.name + ' needs a look');
           await makeCloseups(it, 'result');
         } catch (e) {
           it.liveOn = false;
@@ -1551,7 +1715,7 @@ export function mountTool(root) {
   // redo the finished files, e.g. after the quality was changed
   function redoDone() {
     if (S.busy) return;
-    for (const it of S.items) if (it.status === 'done') { it.status = 'ready'; it.result = null; it.saved = false; it.progress = 0; it.cuKind = 'preview'; }
+    for (const it of S.items) if (it.status === 'done') { it.status = 'ready'; it.result = null; it.saved = false; it.progress = 0; it.cuKind = 'preview'; it.check = null; it.stripHas = false; }
     render();
     runAll();
   }
@@ -1567,11 +1731,13 @@ export function mountTool(root) {
       '<div class="job-status"><span class="js-ico"></span><span class="js-text"><b></b><span></span></span></div>' +
       '<div class="job-bar" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>' +
       '<div class="job-foot">' +
-        '<div class="cu" hidden><figure><canvas class="cu-b" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption>Before</figcaption></figure>' +
+        '<div class="cu" hidden><figure><canvas class="cu-b" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption class="cu-b-cap">Before</figcaption></figure>' +
           '<span class="cu-arrow">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>' + '</span>' +
           '<figure><canvas class="cu-a" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption class="cu-a-cap">After</figcaption></figure></div>' +
         '<div class="job-actions">' +
           '<button type="button" class="btn-soft sm" data-act="review">Review</button>' +
+          '<button type="button" class="cta cta-sm" data-act="yes">Yes, remove it</button>' +
+          '<button type="button" class="btn-soft sm" data-act="skip">Nothing to remove</button>' +
           '<button type="button" class="btn-soft sm" data-act="box">Draw a box</button>' +
           '<button type="button" class="btn-soft sm" data-act="retry">Try again</button>' +
           '<button type="button" class="cta cta-sm" data-act="download">' + ICON.save + '<span>Download</span></button>' +
@@ -1585,10 +1751,21 @@ export function mountTool(root) {
     it.card = {
       el: li, img: q('.th-img'), ph: q('.th-ph'), live: q('.th-live'), badge: q('.th-badge'), liveTag: q('.th-live-tag'),
       name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stWrap: q('.js-text'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
-      cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'),
+      cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'), bCap: q('.cu-b-cap'),
       thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
-      review: q('.job-actions [data-act="review"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'), downloadLabel: q('[data-act="download"] span'),
+      review: q('.job-actions [data-act="review"]'), yes: q('[data-act="yes"]'), skip: q('[data-act="skip"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'), downloadLabel: q('[data-act="download"] span'),
     };
+    // the finished video's before and after at three moments, so it can be judged without opening anything
+    const strip = document.createElement('div');
+    strip.className = 'strip'; strip.hidden = true;
+    const figs = [0, 1, 2].map(() => {
+      const f = document.createElement('figure');
+      f.innerHTML = '<figcaption></figcaption><div class="st-pair"><canvas class="st-b" width="' + CU_W + '" height="' + CU_H + '"></canvas><canvas class="st-a" width="' + CU_W + '" height="' + CU_H + '"></canvas></div><span class="st-lbl"><i>Before</i><i>After</i></span>';
+      strip.appendChild(f);
+      return { cap: f.querySelector('figcaption'), b: f.querySelector('.st-b'), a: f.querySelector('.st-a') };
+    });
+    li.querySelector('.job-foot').insertBefore(strip, li.querySelector('.job-actions'));
+    it.card.strip = { el: strip, figs };
     it.card.name.textContent = it.name; it.card.name.title = it.name;
     it.card.thumbBtn.setAttribute('aria-label', 'Review ' + it.name);
     it.card.ph.innerHTML = ICON[it.kind];
@@ -1616,10 +1793,23 @@ export function mountTool(root) {
         if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s logo settings', sub: 'This video’s own check failed. If traces remain, clean it on its own.' };
         return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: (S.stopped ? 'Paused · press Continue to clean it' : 'Cleaning starts by itself') + (it.manual ? ' · your box' : '') };
       case 'nologo':
-        if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
-        return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo, or leave this file out if it has none.' };
+        if (it.manual) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
+        return { tone: 'idle', icon: 'info', title: 'No logo found', sub: 'It may already be clean. If you can see a logo, point it out.' };
+      case 'skipped': return { tone: 'idle', icon: 'info', title: 'Left as it is', sub: 'Nothing to remove. Draw a box if you change your mind.' };
       case 'working': return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(p) };
-      case 'done': return { tone: 'ok', title: 'Finished', sub: fmtMB(it.result ? it.result.size : 0) + (it.saved ? ' · downloaded' : ' · ready to download') };
+      case 'done': {
+        const size = fmtMB(it.result ? it.result.size : 0), tail = it.saved ? ' · downloaded' : ' · ready to download', ck = it.check;
+        if (it.verifying) return { tone: 'run', title: 'Checking the result…', sub: size };
+        if (ck && ck.level !== 'ok') {
+          const bright = ck.core > 0;
+          return {
+            tone: 'warn', icon: 'warn', flag: true, title: ck.level === 'bad' ? 'Finished · needs a look' : 'Finished · please check',
+            sub: size + ' · ' + (bright ? (ck.level === 'bad' ? 'part of the logo may still show' : 'a faint trace of the logo may be left') : (ck.level === 'bad' ? 'a dark patch may be left where the logo was' : 'the spot may look a little dark')) + tail,
+            tip: 'Open Review to see the worst moment.',
+          };
+        }
+        return { tone: 'ok', title: 'Finished', sub: size + (ck ? ' · checked, nothing left behind' : '') + tail };
+      }
       default: { const e = explain(it); return { tone: 'bad', title: it.info ? 'Couldn’t clean this file' : 'Can’t open this file', sub: e.text, tip: e.raw }; }
     }
   }
@@ -1636,16 +1826,25 @@ export function mountTool(root) {
     const barOn = ph === 'finding' || ph === 'working';
     c.bar.hidden = !barOn;
     if (barOn) { const v = (clamp(it.progress, 0, 1) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
-    c.cuWrap.hidden = !(it.cuHas && (ph === 'ready' || ph === 'working' || ph === 'done'));
+    const asking = ph === 'nologo' && !it.manual && !!it.askHas;
+    const strip = ph === 'done' && it.kind === 'video' && !!it.stripHas && !it.verifying;
+    c.strip.el.hidden = !strip;
+    c.cuWrap.hidden = strip || !((it.cuHas && (ph === 'ready' || ph === 'working' || ph === 'done')) || asking);
+    c.cuWrap.classList.toggle('ask', asking);
+    setText(c.bCap, asking ? 'Is the logo here?' : 'Before');
     setText(c.aCap, ph === 'working' ? 'After (live)' : ph === 'done' && it.cuKind === 'result' ? 'After (result)' : 'After (preview)');
     const live = !!it.liveOn && ph === 'working';
     c.live.hidden = !live; c.liveTag.hidden = !live;
     c.review.hidden = !it.info || ph === 'error';
-    c.box.hidden = ph !== 'nologo';
-    c.box.classList.toggle('primary', ph === 'nologo');
-    c.retry.hidden = !(ph === 'error' || ph === 'nologo' || (ph === 'ready' && it.borrowed));
-    c.box.disabled = c.retry.disabled = S.busy;
-    c.box.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
+    c.review.classList.toggle('primary', !!s.flag);
+    const firstAsk = ph === 'nologo' && !it.manual;
+    c.yes.hidden = !(firstAsk && it.suggest);
+    c.skip.hidden = !firstAsk;
+    c.box.hidden = !(ph === 'nologo' || ph === 'skipped');
+    c.box.classList.toggle('primary', ph === 'nologo' && !firstAsk);
+    c.retry.hidden = !(ph === 'error' || (ph === 'nologo' && !firstAsk) || (ph === 'ready' && it.borrowed));
+    c.yes.disabled = c.box.disabled = c.retry.disabled = S.busy;
+    c.yes.title = c.box.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
     setText(c.retry, ph === 'error' ? 'Try again' : 'Check again');
     c.download.hidden = ph !== 'done';
     setText(c.downloadLabel, it.saved ? 'Download again' : 'Download');
@@ -1658,6 +1857,7 @@ export function mountTool(root) {
       const c = ensureCard(it), at = jobsEl.children[idx];
       if (at !== c.el) jobsEl.insertBefore(c.el, at || null);
       updItem(it);
+      if (phase(it) === 'nologo' && !it.manual && it.info && !it.askHas && !it.askBusy) makeAsk(it);
     });
   }
 
@@ -1698,7 +1898,7 @@ export function mountTool(root) {
     const p = runProgress();
     abFill.style.width = (p * 100).toFixed(1) + '%';
     setText(abPct, pct(p));
-    const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && phase(i) !== 'nologo' && !i.removed);
+    const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && phase(i) !== 'nologo' && phase(i) !== 'skipped' && !i.removed);
     const cur = S.items.find((i) => i.status === 'encoding' || i.status === 'learning');
     if (cur && cur.kind === 'video' && cur.status === 'encoding' && cur.encT0 && cur.progress > 0.02) {
       const secs = (performance.now() - cur.encT0) / 1000, frames = (cur.info.dur - cur.info.first) * cur.info.fps;
@@ -1737,7 +1937,7 @@ export function mountTool(root) {
   // what is wrong with the files that will not be cleaned, in a few words
   function issueParts(c) {
     const out = [], open = S.items.filter((i) => i.status === 'error' && !i.info && !i.removed).length, clean = c.error - open;
-    if (c.nologo) out.push(c.nologo === 1 ? '1 file needs a box' : c.nologo + ' files need a box');
+    if (c.nologo) out.push('no logo found in ' + plural(c.nologo, 'file', 'files'));
     if (open) out.push(open === 1 ? '1 file can’t be opened' : open + ' files can’t be opened');
     if (clean) out.push(clean === 1 ? '1 file couldn’t be cleaned' : clean + ' files couldn’t be cleaned');
     return out;
@@ -1756,9 +1956,14 @@ export function mountTool(root) {
     const saved = unsavedItems().length === 0;
     const took = S.lastSecs ? 'took ' + spanText(S.lastSecs) : '';
     if (done && !todo) {
+      // every finished file was looked at again after it was written: say so, and say which ones to look at
+      const fin = doneItems(), flagged = fin.filter((i) => i.check && i.check.level !== 'ok').length, verified = fin.every((i) => i.check && i.check.level === 'ok');
+      const title = flagged ? plural(done, 'file', 'files') + ' done · ' + flagged + ' to check'
+        : issues.length ? plural(done, 'file', 'files') + ' done'
+        : verified ? (done === 1 ? 'Your file is clean' : 'All clean') : done === 1 ? 'Your file is done' : 'All done';
       setBar({
-        tone: 'ok', icon: ICON.ok, title: issues.length ? plural(done, 'file', 'files') + ' done' : done === 1 ? 'Your file is done' : 'All done',
-        sub: [plural(done, 'file', 'files') + ' · ' + sizeDone, took, saved ? 'downloaded' : '', ...issues].filter(Boolean).join(' · '),
+        tone: flagged ? 'warn' : 'ok', icon: flagged ? ICON.warn : ICON.ok, title,
+        sub: [flagged ? 'Open the amber ' + (flagged === 1 ? 'card' : 'cards') + ' to see what to look at' : '', plural(done, 'file', 'files') + ' · ' + sizeDone, took, saved ? 'downloaded' : '', ...issues].filter(Boolean).join(' · '),
         primary: { act: 'save', label: saved ? (done === 1 ? 'Download again' : 'Download all again (ZIP)') : done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
         secondary: stale ? { act: 'redo', label: 'Redo in ' + (S.quality === 'max' ? 'best quality' : 'smaller files'), icon: ICON.redo } : { act: 'startover', label: 'Start over' },
       });
@@ -1804,8 +2009,8 @@ export function mountTool(root) {
       return;
     }
     setBar({
-      tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to clean',
-      sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
+      tone: 'idle', icon: ICON.info, title: c.nologo ? 'No logo found' : 'Nothing to clean',
+      sub: c.nologo ? 'Nothing was changed. It may already be clean; if you can see a logo, point it out on the card.' : c.skipped ? 'Every file was left as it is.' : 'Remove the files that can’t be opened, or add others.',
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
@@ -1839,6 +2044,8 @@ export function mountTool(root) {
       case 'review': openReview(it); break;
       case 'download': if (it.result) { saveBlob(it.result, outName(it)); it.saved = true; updItem(it); renderBar(); } break;
       case 'retry': retryItem(it); break;
+      case 'yes': if (it.suggest) requestBox(it, it.suggest, it.suggestGuess); break;
+      case 'skip': it.skipped = true; it.model = null; updItem(it); render(); announce(it.name + ' is left as it is'); break;
       case 'box': await openReview(it); if (canDraw()) { S.boxMode = true; rvRender(); } break;
       case 'remove': removeItem(it); break;
     }
@@ -1982,7 +2189,7 @@ export function mountTool(root) {
   }
   layoutStage();
   render();
-  window.__tool = { S, P, leaveWarning };
+  window.__tool = { S, P, leaveWarning, render: () => render(), vetModel, verifyResult, probeSteps: async (file, g, n) => { const it = { file }; await probe(it); const sx = it.info.w / 1920, sy = it.info.h / 1080; g = g || { x: (1739.431 + 0.5) * sx - 0.5, y: (899.555 + 0.5) * sy - 0.5, s: Math.min(sx, sy) }; return traceCheck(file, it.info, g, null, n || 8); } };
 
   return {
     isBusy: () => S.busy,
