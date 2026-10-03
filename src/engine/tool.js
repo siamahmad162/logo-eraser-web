@@ -514,7 +514,7 @@ export function mountTool(root) {
     const pps = info.w * info.h * info.fps, src = info.bitrate || pps * 0.1;
     return Math.round(q === 'max' ? clamp(src * 2.5, pps * 0.12, 150e6) : clamp(src * 1.5, pps * 0.07, 100e6));
   }
-  async function convert(item, model, onP, live) {
+  async function convert(item, model, onP, live, hold) {
     const input = openInput(item.file);
     try {
       const target = new MB.BufferTarget();
@@ -529,6 +529,7 @@ export function mountTool(root) {
         video: {
           codec, quality, forceTranscode: true,
           process: async (s) => {
+            if (hold) await hold();
             const out = await cleanSample(s, model, holder);
             if (live && frameNo++ % 6 === 0) { try { live(s, out); } catch (e) { /* only a preview */ } }
             return out;
@@ -816,9 +817,11 @@ export function mountTool(root) {
 
   // Plays the preview from the timeline position, cleaning each frame as it goes (slower than real
   // time on big videos, never faster).
+  // while a preview plays, the cleaning waits between frames so the preview gets the whole machine and plays smoothly
+  const previewHold = async () => { while (P.playing && !S.cancel) await sleep(60); };
   function play() {
     const item = P.item;
-    if (!item || item.kind !== 'video' || !P.sink || P.playing || S.busy) return;
+    if (!item || item.kind !== 'video' || !P.sink || P.playing) return;
     P.playing = true;
     renderTransport();
     P.loop = (async () => {
@@ -913,7 +916,7 @@ export function mountTool(root) {
   readTokens();
 
   let drag = null;
-  const canDraw = () => !!(P.has && !S.busy && P.item);
+  const canDraw = () => !!(P.has && P.item);
   const needsBox = (it) => !!it && phase(it) === 'nologo';
   const boxOn = () => !!canDraw() && (S.boxMode || needsBox(P.item));
 
@@ -1023,7 +1026,7 @@ export function mountTool(root) {
   function renderTransport() {
     const it = P.item, video = !!(it && it.kind === 'video' && P.has);
     scrub.disabled = !video;
-    playBtn.disabled = !video || S.busy;
+    playBtn.disabled = !video;
     playBtn.classList.toggle('is-playing', P.playing);
     playBtn.setAttribute('aria-label', P.playing ? 'Pause preview' : 'Play preview');
   }
@@ -1091,9 +1094,9 @@ export function mountTool(root) {
     stageMsg.innerHTML = it.status === 'error' ? '<b>Can’t show this file</b><span>' + esc(explain(it).text) + '</span>' : '<b>Opening the preview…</b>';
     pill(ph === 'finding' ? (it.progress < 0.3 ? 'Finding the logo…' : 'Measuring the logo…') : ph === 'queued' ? 'In line to find the logo…' : '');
     // controls that are off say why
-    const paused = S.busy ? 'Paused while files are being processed' : '';
+    const paused = '';
     playBtn.title = paused; boxBtn.title = paused; boxBtn2.title = paused; redetectBtn.title = paused;
-    rvHint.hidden = !S.busy; rvHint.textContent = S.busy ? 'Playback and drawing are paused while files are being processed.' : '';
+    rvHint.hidden = !(S.busy && P.playing); rvHint.textContent = 'Cleaning pauses while the preview plays, so it stays smooth.';
     redetectBtn.disabled = !it.info || S.busy || ph === 'finding';
     renderTransport();
     renderLogo();
@@ -1500,7 +1503,8 @@ export function mountTool(root) {
   }
   // a hand-drawn box for one file; it is measured as soon as its turn comes
   function requestBox(it, rect, guess) {
-    if (!it || !it.info || S.busy || it.removed) return;
+    if (!it || !it.info || it.removed || it.status === 'encoding' || it.status === 'learning') return;
+    if (S.busy) it.runId = S.runId;
     it.model = null; it.msg = ''; it.borrowed = false; it.cuHas = false; it.boxReq = rect; it.boxGuess = guess || null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
     updItem(it); render(); pump();
   }
@@ -1606,7 +1610,7 @@ export function mountTool(root) {
         updItem(it); render(); updTotal();
         try {
           if (it.kind === 'image') it.result = await encodeImage(it);
-          else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live);
+          else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live, previewHold);
           it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
           it.liveOn = false; it.verifying = it.kind === 'video' && !!it.checkG; updItem(it); updTotal();
           announce(it.name + ' is finished');
@@ -1781,12 +1785,14 @@ export function mountTool(root) {
   }
   // The words for one file, the same everywhere: opening → in line → finding → logo found / no logo found →
   // waiting in line → removing → finished (or can't open / couldn't clean).
+  // finding the logo, checking and removing it are one loading: 0-25% find, 25-30% check, 30-100% remove
+  const shownP = (it) => { const p = clamp(it.progress || 0, 0, 1); return it.status === 'analyzing' || (it.status === 'learning' && p < 0.1) ? p * 0.25 : it.status === 'learning' ? 0.25 + p * 0.05 : it.status === 'encoding' ? 0.3 + p * 0.7 : p; };
   function statusOf(it, ph) {
     const p = clamp(it.progress || 0, 0, 1);
     switch (ph) {
       case 'opening': return { tone: 'run', title: 'Opening the file…', sub: '' };
       case 'queued': return { tone: 'idle', title: 'In line to find the logo', sub: '' };
-      case 'finding': return { tone: 'run', title: p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', sub: pct(p) };
+      case 'finding': return { tone: 'run', title: 'Removing the logo…', sub: pct(shownP(it)) };
       case 'ready':
         if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
         if (it.stopped) return { tone: 'idle', icon: 'stop', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
@@ -1796,7 +1802,7 @@ export function mountTool(root) {
         if (it.manual) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'idle', icon: 'info', title: 'No logo found', sub: 'It may already be clean. If you can see a logo, point it out.' };
       case 'skipped': return { tone: 'idle', icon: 'info', title: 'Left as it is', sub: 'Nothing to remove. Draw a box if you change your mind.' };
-      case 'working': return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(p) };
+      case 'working': return { tone: 'run', title: S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(shownP(it)) };
       case 'done': {
         const size = fmtMB(it.result ? it.result.size : 0), tail = it.saved ? ' · downloaded' : ' · ready to download', ck = it.check;
         if (it.verifying) return { tone: 'run', title: 'Checking the result…', sub: size };
@@ -1825,7 +1831,7 @@ export function mountTool(root) {
     setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub; c.stWrap.title = s.tip || '';
     const barOn = ph === 'finding' || ph === 'working';
     c.bar.hidden = !barOn;
-    if (barOn) { const v = (clamp(it.progress, 0, 1) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
+    if (barOn) { const v = (shownP(it) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
     const asking = ph === 'nologo' && !it.manual && !!it.askHas;
     const strip = ph === 'done' && it.kind === 'video' && !!it.stripHas && !it.verifying;
     c.strip.el.hidden = !strip;
@@ -1843,8 +1849,8 @@ export function mountTool(root) {
     c.box.hidden = !(ph === 'nologo' || ph === 'skipped');
     c.box.classList.toggle('primary', ph === 'nologo' && !firstAsk);
     c.retry.hidden = !(ph === 'error' || (ph === 'nologo' && !firstAsk) || (ph === 'ready' && it.borrowed));
-    c.yes.disabled = c.box.disabled = c.retry.disabled = S.busy;
-    c.yes.title = c.box.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
+    c.yes.disabled = c.retry.disabled = S.busy; c.box.disabled = false;
+    c.yes.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
     setText(c.retry, ph === 'error' ? 'Try again' : 'Check again');
     c.download.hidden = ph !== 'done';
     setText(c.downloadLabel, it.saved ? 'Download again' : 'Download');
