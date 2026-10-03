@@ -197,6 +197,14 @@
   .job[data-tone="warn"] .strip figcaption.worst { color: var(--warn); }
   .job[data-tone="idle"] .js-ico { background: var(--field); color: var(--muted); }
   .ab-icon.idle { background: var(--field); color: var(--muted); border: 1px solid var(--line); }
+  /* one loading, shown as stages one after the other */
+  .steps { list-style: none; margin: 2px 0 0; padding: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+  .steps li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--faint); font: 550 12px/1 var(--f-body, inherit); }
+  .steps li::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
+  .steps li.done { color: var(--ok); border-color: rgba(61, 220, 151, 0.3); }
+  .steps li.done::before { background: currentColor; }
+  .steps li.now { color: var(--ink); border-color: rgba(255, 77, 141, 0.55); background: var(--mask-soft); }
+  .steps li.now::before { border-color: rgba(255, 77, 141, 0.35); border-top-color: #ff4d8d; animation: spin 0.8s linear infinite; }
   .job-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: center; }
 
   .add-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; padding: 16px; border-radius: 18px; border: 1.5px dashed var(--line-2); color: var(--muted); font-size: 14px; }

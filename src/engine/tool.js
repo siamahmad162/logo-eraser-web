@@ -1372,7 +1372,7 @@ export function mountTool(root) {
   // Over this the sparkle is not there (the videos that have it measure under 1.2, the ones that don't over 17).
   const SPARKLE_ABSENT = 4;
   async function followModel(it, ref, onP) {
-    let rect = null, guess = null;
+    let rect = null, guess = null, vetted = false;
     if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
       const d = await detectLogo(it, (p) => onP(p * 0.3));
       if (d) { rect = d.rect; guess = d.tmpl; }
@@ -1394,12 +1394,12 @@ export function mountTool(root) {
           const d = await detectLogo(it, (p) => onP(0.15 + p * 0.15));
           if (!d) return { model: null, borrowed: false };
           rect = d.rect; guess = d.tmpl;
-        }
+        } else vetted = true;
       }
     }
     const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), guess);
-    if (!model.ok && ref.model && ref.model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) return { model: ref.model, borrowed: true };
-    return { model, borrowed: false };
+    if (!model.ok && ref.model && ref.model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) return { model: ref.model, borrowed: true, vetted };
+    return { model, borrowed: false, vetted };
   }
   // The one place a file's logo is measured: photos, the lead video, a video with a hand-drawn box, and followers.
   // A logo that was found is only kept when the sparkle is really in the video. A video that was cleaned
@@ -1418,7 +1418,7 @@ export function mountTool(root) {
     const ref = refItem();
     if (!manualRect && ref && it !== ref) {
       const r = await followModel(it, ref, onP);
-      if (r.model && !(await sparkleSeen(it, r.model))) return { model: null, borrowed: false, msg: 'No logo found automatically' };
+      if (r.model && !r.vetted && !(await sparkleSeen(it, r.model))) return { model: null, borrowed: false, msg: 'No logo found automatically' };
       return { model: r.model, borrowed: r.borrowed, msg: r.model ? '' : 'No logo found automatically' };
     }
     let rect = manualRect, det = null;
@@ -1450,7 +1450,7 @@ export function mountTool(root) {
   async function analyzeOne(it, manualRect, guess) {
     if (S.analyzing || S.busy || it.removed || !it.info) return;
     S.analyzing = true;
-    it.status = 'analyzing'; it.msg = ''; it.progress = 0; it.borrowed = false;
+    it.status = 'analyzing'; it.stage = 0; it.msg = ''; it.progress = 0; it.borrowed = false;
     updItem(it); renderBar(); rvRender();
     let r = null;
     try {
@@ -1568,7 +1568,7 @@ export function mountTool(root) {
     await stopPlay();
     keepAwake(true);
     render();
-    const t0 = performance.now();
+    const t0 = performance.now(), verifyJobs = [];
     try {
       await waitAnalyzing();
       for (;;) {
@@ -1583,7 +1583,7 @@ export function mountTool(root) {
         // a file the background queue hasn't reached yet is measured right here
         if (!it.model) {
           const rect = it.boxReq || null, guess = it.boxGuess || null; it.boxReq = null; it.boxGuess = null;
-          it.status = 'learning'; it.progress = 0; updItem(it); updTotal();
+          it.status = 'learning'; it.stage = 0; it.progress = 0; updItem(it); updTotal();
           try {
             applyMeasure(it, await measure(it, rect, progressTick((p) => { it.progress = p; updItem(it); }), guess), rect);
           } catch (e) {
@@ -1597,7 +1597,7 @@ export function mountTool(root) {
         }
         if (it.kind === 'video') {
           // see what the model would leave behind before spending the time to encode with it
-          it.status = 'learning'; it.progress = 0.1; updItem(it); updTotal();
+          it.status = 'learning'; it.stage = 1; it.progress = 0.1; updItem(it); updTotal();
           try {
             if (await vetModel(it)) await makeCloseups(it, 'preview');
           } catch (e) {
@@ -1605,7 +1605,7 @@ export function mountTool(root) {
             // a check that fails never stops the cleaning
           }
         } else { it.check = null; it.checkG = null; }
-        it.status = 'encoding'; it.progress = it.kind === 'image' ? 0.5 : 0; it.encT0 = performance.now(); it.fps = 0;
+        it.status = 'encoding'; it.stage = 2; it.progress = it.kind === 'image' ? 0.5 : 0; it.encT0 = performance.now(); it.fps = 0;
         const live = it.kind === 'video' ? liveFor(it) : null;
         updItem(it); render(); updTotal();
         try {
@@ -1614,10 +1614,13 @@ export function mountTool(root) {
           it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
           it.liveOn = false; it.verifying = it.kind === 'video' && !!it.checkG; updItem(it); updTotal();
           announce(it.name + ' is finished');
-          try { await verifyResult(it); } catch (e) { it.check = null; }
-          it.verifying = false; updItem(it); updTotal();
-          if (it.check && it.check.level !== 'ok') announce(it.name + ' needs a look');
-          await makeCloseups(it, 'result');
+          // looking at the finished file runs beside the next file, so it does not hold anything up
+          verifyJobs.push((async () => {
+            try { await verifyResult(it); } catch (e) { it.check = null; }
+            it.verifying = false; updItem(it); updTotal();
+            if (it.check && it.check.level !== 'ok') announce(it.name + ' needs a look');
+            await makeCloseups(it, 'result');
+          })());
         } catch (e) {
           it.liveOn = false;
           if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; it.result = null; it.stopped = true; updItem(it); break; }
@@ -1627,6 +1630,7 @@ export function mountTool(root) {
         updItem(it); updTotal();
       }
     } finally {
+      await Promise.all(verifyJobs);
       S.lastSecs = Math.round((performance.now() - t0) / 1000);
       S.busy = false; S.stopped = S.cancel; S.stopping = false;
       keepAwake(false);
@@ -1733,6 +1737,7 @@ export function mountTool(root) {
       '<div class="job-head"><span class="job-name"></span><button type="button" class="icon-btn" data-act="remove" aria-label="Remove from the list">' + ICON.x + '</button></div>' +
       '<div class="job-meta"></div>' +
       '<div class="job-status"><span class="js-ico"></span><span class="js-text"><b></b><span></span></span></div>' +
+      '<ol class="steps" hidden><li>Find</li><li>Check</li><li>Remove</li><li>Verify</li></ol>' +
       '<div class="job-bar" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>' +
       '<div class="job-foot">' +
         '<div class="cu" hidden><figure><canvas class="cu-b" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption class="cu-b-cap">Before</figcaption></figure>' +
@@ -1756,7 +1761,7 @@ export function mountTool(root) {
       el: li, img: q('.th-img'), ph: q('.th-ph'), live: q('.th-live'), badge: q('.th-badge'), liveTag: q('.th-live-tag'),
       name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stWrap: q('.js-text'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
       cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'), bCap: q('.cu-b-cap'),
-      thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
+      steps: [...li.querySelectorAll('.steps li')], stepsEl: q('.steps'), thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
       review: q('.job-actions [data-act="review"]'), yes: q('[data-act="yes"]'), skip: q('[data-act="skip"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'), downloadLabel: q('[data-act="download"] span'),
     };
     // the finished video's before and after at three moments, so it can be judged without opening anything
@@ -1786,13 +1791,15 @@ export function mountTool(root) {
   // The words for one file, the same everywhere: opening → in line → finding → logo found / no logo found →
   // waiting in line → removing → finished (or can't open / couldn't clean).
   // finding the logo, checking and removing it are one loading: 0-25% find, 25-30% check, 30-100% remove
-  const shownP = (it) => { const p = clamp(it.progress || 0, 0, 1); return it.status === 'analyzing' || (it.status === 'learning' && p < 0.1) ? p * 0.25 : it.status === 'learning' ? 0.25 + p * 0.05 : it.status === 'encoding' ? 0.3 + p * 0.7 : p; };
+  const shownP = (it) => { const p = clamp(it.progress || 0, 0, 1); return it.verifying ? 0.97 : it.stage === 1 ? 0.27 : it.stage === 2 || it.status === 'encoding' ? 0.3 + p * 0.65 : it.status === 'analyzing' || it.status === 'learning' ? p * 0.25 : p; };
+  const STAGE_TITLE = ['Finding the logo…', 'Checking before removing…', 'Removing the logo…', 'Checking the result…'];
+  const stageOf = (it) => (it.verifying ? 3 : it.status === 'encoding' ? 2 : it.stage || 0);
   function statusOf(it, ph) {
     const p = clamp(it.progress || 0, 0, 1);
     switch (ph) {
       case 'opening': return { tone: 'run', title: 'Opening the file…', sub: '' };
       case 'queued': return { tone: 'idle', title: 'In line to find the logo', sub: '' };
-      case 'finding': return { tone: 'run', title: 'Removing the logo…', sub: pct(shownP(it)) };
+      case 'finding': return { tone: 'run', title: STAGE_TITLE[0], sub: pct(shownP(it)) };
       case 'ready':
         if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
         if (it.stopped) return { tone: 'idle', icon: 'stop', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
@@ -1802,10 +1809,10 @@ export function mountTool(root) {
         if (it.manual) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'idle', icon: 'info', title: 'No logo found', sub: 'It may already be clean. If you can see a logo, point it out.' };
       case 'skipped': return { tone: 'idle', icon: 'info', title: 'Left as it is', sub: 'Nothing to remove. Draw a box if you change your mind.' };
-      case 'working': return { tone: 'run', title: S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(shownP(it)) };
+      case 'working': return { tone: 'run', title: S.stopping ? 'Stopping…' : STAGE_TITLE[it.kind === 'image' ? 2 : stageOf(it)], sub: it.kind === 'image' ? '' : pct(shownP(it)) };
       case 'done': {
         const size = fmtMB(it.result ? it.result.size : 0), tail = it.saved ? ' · downloaded' : ' · ready to download', ck = it.check;
-        if (it.verifying) return { tone: 'run', title: 'Checking the result…', sub: size };
+        if (it.verifying) return { tone: 'run', title: STAGE_TITLE[3], sub: size };
         if (ck && ck.level !== 'ok') {
           const bright = ck.core > 0;
           return {
@@ -1829,6 +1836,9 @@ export function mountTool(root) {
     setText(c.badge, it.kind === 'image' ? 'Photo' : it.info ? 'Video · ' + (it.info.dur - it.info.first).toFixed(1) + ' s' : 'Video');
     setHtml(c.ico, ICON[s.icon || (s.tone === 'run' ? 'spin' : s.tone === 'ok' ? 'ok' : s.tone === 'idle' ? 'clock' : 'warn')]);
     setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub; c.stWrap.title = s.tip || '';
+    const showSteps = ph === 'finding' || ph === 'working' || !!it.verifying;
+    c.stepsEl.hidden = !showSteps || it.kind === 'image';
+    if (showSteps) { const k = stageOf(it); c.steps.forEach((el, i) => { el.className = i < k ? 'done' : i === k ? 'now' : ''; }); }
     const barOn = ph === 'finding' || ph === 'working';
     c.bar.hidden = !barOn;
     if (barOn) { const v = (shownP(it) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
