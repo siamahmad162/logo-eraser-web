@@ -572,6 +572,8 @@ export function mountTool(root) {
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
     spin: '<span class="spin"></span>',
     stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
+    wand: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"></path><path d="M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"></path></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>',
     redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"></path></svg>',
   };
   const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
@@ -1702,7 +1704,7 @@ export function mountTool(root) {
       setBar({
         tone: S.stopped ? 'warn' : 'ok', icon: S.stopped ? ICON.stop : ICON.ok, title: S.stopped ? 'Stopped' : done + ' of ' + (done + todo) + ' files done',
         sub: S.stopped ? [plural(done, 'file', 'files') + ' finished and kept', todo + ' left', ...issues].join(' · ') : [todo + ' still to clean', ...issues].join(' · '),
-        primary: { act: 'run', label: (S.stopped ? 'Continue with ' : 'Remove logo from ') + (S.stopped ? plural(todo, 'file', 'files') : plural(todo, 'more file', 'more files')), icon: ICON.ok },
+        primary: { act: 'run', label: (S.stopped ? 'Continue with ' : 'Remove logo from ') + (S.stopped ? plural(todo, 'file', 'files') : plural(todo, 'more file', 'more files')), icon: S.stopped ? ICON.play : ICON.wand },
         secondary: { act: 'save', label: done === 1 ? 'Download the finished file' : 'Download ' + done + ' finished files', icon: ICON.save, disabled: S.zipping },
       });
       return;
@@ -1710,7 +1712,7 @@ export function mountTool(root) {
     if (todo) {
       const waiting = c.opening + c.queued + c.finding, label = todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo';
       if (S.stopped) {
-        setBar({ tone: 'warn', icon: ICON.stop, title: 'Stopped', sub: ['Nothing was lost', plural(todo, 'file', 'files') + ' left', ...issues].join(' · '), primary: { act: 'run', label: 'Continue with ' + plural(todo, 'file', 'files'), icon: ICON.ok } });
+        setBar({ tone: 'warn', icon: ICON.stop, title: 'Stopped', sub: ['Nothing was lost', plural(todo, 'file', 'files') + ' left', ...issues].join(' · '), primary: { act: 'run', label: 'Continue with ' + plural(todo, 'file', 'files'), icon: ICON.play } });
         return;
       }
       if (waiting && !c.ready) {
@@ -1718,7 +1720,7 @@ export function mountTool(root) {
         setBar({
           tone: 'run', icon: ICON.spin, title: 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…',
           sub: [c.opening && !c.finding && !c.queued ? 'Opening your ' + (todo === 1 ? 'file' : 'files') : 'Finding the logo in file ' + Math.min(n, checked + 1) + ' of ' + n, ...issues].join(' · '),
-          primary: { act: 'run', label, icon: ICON.ok, tip: 'Starts as soon as the logos are found' },
+          primary: { act: 'run', label, icon: ICON.wand, tip: 'Starts as soon as the logos are found' },
         });
         return;
       }
@@ -1728,14 +1730,14 @@ export function mountTool(root) {
         tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.ok,
         title: todo === 1 ? 'Ready to remove the logo' : todo + ' files ready',
         sub: [found, ...issues].join(' · '),
-        primary: { act: 'run', label, icon: ICON.ok },
+        primary: { act: 'run', label, icon: ICON.wand },
       });
       return;
     }
     setBar({
       tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to clean',
       sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
-      primary: { act: 'run', label: 'Remove logo', icon: ICON.ok, disabled: true },
+      primary: { act: 'run', label: 'Remove logo', icon: ICON.wand, disabled: true },
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
