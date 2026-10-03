@@ -574,6 +574,7 @@ export function mountTool(root) {
     stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
     wand: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1-5.1-1.9 5.1-1.9z"></path><path d="M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"></path></svg>',
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>',
+    found: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"></circle></svg>',
     redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"></path></svg>',
   };
   const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
@@ -1011,6 +1012,7 @@ export function mountTool(root) {
     const next = S.items[i];
     if (next) await showInReview(next);
   }
+  const stageTagR = $('.tag-r');
   function rvRender() {
     if (reviewEl.hidden) return;
     const it = reviewItem();
@@ -1029,6 +1031,8 @@ export function mountTool(root) {
     boxBtn2.textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
     viewSeg.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.view === mode)); b.disabled = !previewModel(it); });
     const ph = phase(it);
+    const afterName = it.status === 'done' && it.result ? 'Result' : 'Preview';
+    setText(viewSeg.querySelector('[data-view="result"]'), afterName); setText(stageTagR, afterName);
     stageMsg.hidden = P.has;
     stageMsg.innerHTML = it.status === 'error' ? '<b>Can’t show this file</b><span>' + esc(explain(it).text) + '</span>' : '<b>Opening the preview…</b>';
     pill(ph === 'finding' ? (it.progress < 0.3 ? 'Finding the logo…' : 'Measuring the logo…') : ph === 'queued' ? 'In line to find the logo…' : '');
@@ -1041,7 +1045,7 @@ export function mountTool(root) {
     renderLogo();
   }
   function logoState(tone, title, text) {
-    return '<div class="logo-state ' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : '<span class="ico">' + ICON[tone === 'ok' ? 'ok' : tone === 'warn' ? 'warn' : 'info'] + '</span>') +
+    return '<div class="logo-state ' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : '<span class="ico">' + ICON[tone === 'ok' ? 'found' : tone === 'warn' ? 'warn' : 'info'] + '</span>') +
       '<div><b>' + title + '</b>' + (text ? '<span>' + text + '</span>' : '') + '</div></div>';
   }
   function renderLogo() {
@@ -1528,7 +1532,7 @@ export function mountTool(root) {
       name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stWrap: q('.js-text'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
       cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'),
       thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
-      review: q('.job-actions [data-act="review"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'),
+      review: q('.job-actions [data-act="review"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'), downloadLabel: q('[data-act="download"] span'),
     };
     it.card.name.textContent = it.name; it.card.name.title = it.name;
     it.card.thumbBtn.setAttribute('aria-label', 'Review ' + it.name);
@@ -1553,9 +1557,9 @@ export function mountTool(root) {
       case 'finding': return { tone: 'run', title: p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', sub: pct(p) };
       case 'ready':
         if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
-        if (it.stopped) return { tone: 'idle', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
+        if (it.stopped) return { tone: 'idle', icon: 'stop', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
         if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s logo settings', sub: 'This video’s own check failed. If traces remain, clean it on its own.' };
-        return { tone: 'ok', title: logoName(it.model) + ' found', sub: 'Ready to remove' + (it.manual ? ' · your box' : '') };
+        return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: 'Ready to remove' + (it.manual ? ' · your box' : '') };
       case 'nologo':
         if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo to clean this file.' };
@@ -1572,7 +1576,7 @@ export function mountTool(root) {
     setText(c.meta, itemMeta(it));
     if (it.thumb && c.img.dataset.s !== '1') { c.img.src = it.thumb; c.img.dataset.s = '1'; c.img.hidden = false; c.ph.hidden = true; }
     setText(c.badge, it.kind === 'image' ? 'Photo' : it.info ? 'Video · ' + (it.info.dur - it.info.first).toFixed(1) + ' s' : 'Video');
-    setHtml(c.ico, ICON[s.tone === 'run' ? 'spin' : s.tone === 'ok' ? 'ok' : s.tone === 'idle' ? 'clock' : 'warn']);
+    setHtml(c.ico, ICON[s.icon || (s.tone === 'run' ? 'spin' : s.tone === 'ok' ? 'ok' : s.tone === 'idle' ? 'clock' : 'warn')]);
     setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub; c.stWrap.title = s.tip || '';
     const barOn = ph === 'finding' || ph === 'working';
     c.bar.hidden = !barOn;
@@ -1585,9 +1589,11 @@ export function mountTool(root) {
     c.box.hidden = ph !== 'nologo';
     c.box.classList.toggle('primary', ph === 'nologo');
     c.retry.hidden = !(ph === 'error' || ph === 'nologo' || (ph === 'ready' && it.borrowed));
+    setText(c.retry, ph === 'error' ? 'Try again' : 'Check again');
     c.download.hidden = ph !== 'done';
+    setText(c.downloadLabel, it.saved ? 'Download again' : 'Download');
     c.removeBtn.disabled = S.busy && (ph === 'working' || ph === 'queued' || ph === 'ready' || ph === 'opening');
-    c.removeBtn.title = S.busy ? 'Stop first to change the list' : 'Remove from the list';
+    c.removeBtn.title = c.removeBtn.disabled ? 'Stop first to change the list' : 'Remove from the list';
   }
   function reconcileCards() {
     for (const li of [...jobsEl.children]) if (!S.items.some((it) => it.card && it.card.el === li)) li.remove();
@@ -1618,7 +1624,9 @@ export function mountTool(root) {
     const videos = S.items.filter((i) => i.kind === 'video').length;
     sameRow.hidden = videos < 2;
     sameRectEl.disabled = S.busy;
-    optSum.textContent = (S.quality === 'max' ? 'Best quality' : 'Smaller files') + (videos > 1 && !S.sameRect ? ' · each video on its own' : '');
+    optSum.textContent = !videos ? 'Photos keep their format' : (S.quality === 'max' ? 'Best quality' : 'Smaller files') + (videos > 1 && !S.sameRect ? ' · each video on its own' : '');
+    qMax.title = qHigh.title = S.busy ? 'Available when no file is being processed' : !vid ? 'Applies to videos' : '';
+    clearBtn.title = S.busy ? 'Stop first to clear the list' : '';
     if (!vid) {
       qNote.textContent = S.items.length ? 'Photos keep their format: a PNG stays lossless and a JPEG stays a high-quality JPEG.' : '';
       return;
@@ -1694,7 +1702,7 @@ export function mountTool(root) {
       setBar({
         tone: 'ok', icon: ICON.ok, title: issues.length ? plural(done, 'file', 'files') + ' done' : done === 1 ? 'Your file is done' : 'All done',
         sub: [plural(done, 'file', 'files') + ' · ' + sizeDone, took, saved ? 'downloaded' : '', ...issues].filter(Boolean).join(' · '),
-        primary: { act: 'save', label: done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
+        primary: { act: 'save', label: saved ? (done === 1 ? 'Download again' : 'Download all again (ZIP)') : done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
         secondary: stale ? { act: 'redo', label: 'Redo in ' + (S.quality === 'max' ? 'best quality' : 'smaller files'), icon: ICON.redo } : { act: 'startover', label: 'Start over' },
       });
       if (S.zipping) setText(abPrimaryLabel, 'Building the ZIP…');
@@ -1727,7 +1735,7 @@ export function mountTool(root) {
       const first = S.items.find((i) => phase(i) === 'ready');
       const found = waiting ? 'Still checking ' + waiting + ' more' : todo === 1 ? logoName(first && first.model) + ' found' : issues.length ? 'Logo found in ' + todo + ' files' : 'Logo found in all ' + todo + ' files';
       setBar({
-        tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.ok,
+        tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.found,
         title: todo === 1 ? 'Ready to remove the logo' : todo + ' files ready',
         sub: [found, ...issues].join(' · '),
         primary: { act: 'run', label, icon: ICON.wand },
