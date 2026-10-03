@@ -1189,6 +1189,35 @@ export function mountTool(root) {
   // ---------- finding each file's logo (one file at a time, in the background) ----------
   // A video that follows the lead file: its own logo when "same spot" is off (or the lead is a photo
   // or a Veo clip), else the lead's spot and exact position, measured in this video.
+  // Is the sparkle really in this video? The engine's own test, run on a few frames at the given place:
+  // taking the logo away there must take the edge along its outline away (a ratio well under 1).
+  // Over 1 means nothing is there, and removing it would only leave a dark sparkle behind.
+  async function sparkleRatio(it, g, onP) {
+    const { w: W, h: H } = it.info, pr = C.placeTemplate(GEMINI, g.x, g.y, g.s, W, H).rect;
+    const x0 = Math.max(0, pr.x - 8), y0 = Math.max(0, pr.y - 8), rr = { x: x0, y: y0, w: Math.min(W, pr.x + pr.w + 8) - x0, h: Math.min(H, pr.y + pr.h + 8) - y0 };
+    return withTrack(it, async (track) => {
+      const sink = new MB.VideoSampleSink(track), holder = {}, ts = stamps(it.info, 8), vals = [];
+      let n = 0;
+      for await (const s of sink.samplesAtTimestamps(ts)) {
+        if (S.cancel) break;
+        if (!s) continue;
+        try {
+          const fr = await readFrame(s, rr, holder), p = fr.planes[fr.mode === 'yuv' ? 0 : 1];
+          const img = new Float32Array(rr.w * rr.h);
+          for (let j = 0; j < rr.h; j++) for (let i = 0; i < rr.w; i++) img[j * rr.w + i] = p.data[p.off + (rr.y + j) * p.stride + (rr.x + i) * p.step];
+          const Lw = p.white === 255 ? (GEMINI.L - 16) * 255 / 219 : GEMINI.L;
+          vals.push(C.logoPresence(img, rr.w, rr.h, GEMINI, g.x - rr.x, g.y - rr.y, g.s, Lw));
+        } finally { s.close(); }
+        if (onP) onP(++n / ts.length);
+      }
+      if (S.cancel) throw uerr('Stopped.');
+      if (!vals.length) return null;
+      vals.sort((a, b) => a - b);
+      return vals[vals.length >> 1];
+    });
+  }
+  // Over this the sparkle is not there (the videos that have it measure under 1.2, the ones that don't over 17).
+  const SPARKLE_ABSENT = 4;
   async function followModel(it, ref, onP) {
     let rect = null, guess = null;
     if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
@@ -1204,6 +1233,15 @@ export function mountTool(root) {
         const sx = it.info.w / ref.info.w, sy = it.info.h / ref.info.h;
         guess = { x: (ra.x + 0.5) * sx - 0.5, y: (ra.y + 0.5) * sy - 0.5, s: ra.s * Math.min(sx, sy), usual: !!(ref.detected && ref.detected.tmpl && ref.detected.tmpl.usual) };
         rect = C.placeTemplate(GEMINI, guess.x, guess.y, guess.s, it.info.w, it.info.h).rect;
+        // The first video's spot is only a good guess. A video that has no sparkle there (one that was
+        // cleaned already, or never had one) would be "cleaned" into a dark sparkle, so check first, and
+        // otherwise let the video look for its own logo.
+        const ratio = await sparkleRatio(it, guess, (p) => onP(p * 0.15));
+        if (ratio != null && ratio > SPARKLE_ABSENT && ratio < Infinity) {
+          const d = await detectLogo(it, (p) => onP(0.15 + p * 0.15));
+          if (!d) return { model: null, borrowed: false };
+          rect = d.rect; guess = d.tmpl;
+        }
       }
     }
     const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), guess);
@@ -1211,6 +1249,14 @@ export function mountTool(root) {
     return { model, borrowed: false };
   }
   // The one place a file's logo is measured: photos, the lead video, a video with a hand-drawn box, and followers.
+  // A logo that was found is only kept when the sparkle is really in the video. A video that was cleaned
+  // already (or never had one) can still fit the logo's shape faintly, and removing it would leave a dark sparkle.
+  // A box drawn by hand is taken as it is: the person says the logo is there.
+  async function sparkleSeen(it, model) {
+    if (!(model && model.ok && model.gemini && model.align && model.align.score >= 0)) return true;
+    const ratio = await sparkleRatio(it, { x: model.align.x, y: model.align.y, s: model.align.s });
+    return ratio == null || ratio === Infinity || ratio <= SPARKLE_ABSENT;
+  }
   async function measure(it, manualRect, onP) {
     if (it.kind === 'image') {
       const model = await analyzeImage(it, manualRect);
@@ -1219,6 +1265,7 @@ export function mountTool(root) {
     const ref = refItem();
     if (!manualRect && ref && it !== ref) {
       const r = await followModel(it, ref, onP);
+      if (r.model && !(await sparkleSeen(it, r.model))) return { model: null, borrowed: false, msg: 'No logo found automatically' };
       return { model: r.model, borrowed: r.borrowed, msg: r.model ? '' : 'No logo found automatically' };
     }
     let rect = manualRect, det = null;
@@ -1229,6 +1276,7 @@ export function mountTool(root) {
     }
     const detected = { rect, confidence: det ? det.confidence : null, manual: !!manualRect, gemini: !!(det && det.tmpl && !det.tmpl.veo), tmpl: det && det.tmpl };
     const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), det && det.tmpl);
+    if (!manualRect && !(await sparkleSeen(it, model))) return { model: null, msg: 'No logo found automatically' };
     return { model, msg: '', detected, rect };
   }
   function applyMeasure(it, r, manualRect) {
@@ -1569,7 +1617,7 @@ export function mountTool(root) {
         return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: (S.stopped ? 'Paused · press Continue to clean it' : 'Cleaning starts by itself') + (it.manual ? ' · your box' : '') };
       case 'nologo':
         if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
-        return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo to clean this file.' };
+        return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo, or leave this file out if it has none.' };
       case 'working': return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(p) };
       case 'done': return { tone: 'ok', title: 'Finished', sub: fmtMB(it.result ? it.result.size : 0) + (it.saved ? ' · downloaded' : ' · ready to download') };
       default: { const e = explain(it); return { tone: 'bad', title: it.info ? 'Couldn’t clean this file' : 'Can’t open this file', sub: e.text, tip: e.raw }; }
