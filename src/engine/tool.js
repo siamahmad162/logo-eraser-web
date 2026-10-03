@@ -9,28 +9,30 @@ export function mountTool(root) {
   const $ = (s) => root.querySelector(s);
   const stage = $('#stage'), stageWrap = $('#stageWrap'), view = $('#view'), vctx = view.getContext('2d');
   const overlay = $('#overlay'), octx = overlay.getContext('2d');
-  const stagePill = $('#stagePill'), stagePillText = $('#stagePillText');
+  const stagePill = $('#stagePill'), stagePillText = $('#stagePillText'), stageMsg = $('#stageMsg');
   const scrub = $('#scrub'), tcEl = $('#tc'), playBtn = $('#playBtn'), splitEl = $('#split');
   const boxHint = $('#boxHint'), boxHintText = $('#boxHintText'), viewSeg = $('#viewSeg'), boxBtn = $('#boxBtn'), boxBtn2 = $('#boxBtn2');
-  const loupes = $('#loupes'), loupeA = $('#loupeA'), loupeB = $('#loupeB'), viewerHint = $('#viewerHint');
-  const vName = $('#vName'), vMeta = $('#vMeta'), stageMsg = $('#stageMsg');
-  const fileEl = $('#file'), dropEl = $('#drop'), queueEl = $('#queue'), dropOverlay = $('#dropOverlay');
-  const welcomeEl = $('#welcome'), workspaceEl = $('#workspace'), stepperEl = $('#stepper');
-  const sampleCard = $('#sampleCard'), sampleBtn = $('#sampleBtn'), welcomeNote = $('#welcomeNote');
-  const fileCount = $('#fileCount'), filesTotal = $('#filesTotal'), clearBtn = $('#clearBtn');
-  const logoInfo = $('#logoInfo'), logoChip = $('#logoChip'), redetectBtn = $('#redetect'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
-  const qMax = $('#qMax'), qHigh = $('#qHigh'), qNote = $('#qNote');
-  const readyBox = $('#readyBox'), runBtn = $('#runBtn'), runLabel = $('#runLabel'), runWhy = $('#runWhy'), cancelBtn = $('#cancelBtn');
-  const totalEl = $('#total'), totalFill = $('#totalFill'), totalText = $('#totalText'), totalPct = $('#totalPct'), totalEta = $('#totalEta'), totalSub = $('#totalSub');
-  const doneBox = $('#doneBox'), doneTitle = $('#doneTitle'), doneSub = $('#doneSub'), saveBtn = $('#saveBtn'), saveLabel = $('#saveLabel');
-  const moreBtn = $('#moreBtn'), noteEl = $('#note');
+  const loupesEl = $('#loupes'), loupeA = $('#loupeA'), loupeB = $('#loupeB'), logoInfo = $('#logoInfo'), redetectBtn = $('#redetect');
+  const reviewEl = $('#review'), rvBackdrop = $('#rvBackdrop'), rvTitle = $('#rvTitle'), rvMeta = $('#rvMeta'), rvNav = $('#rvNav'), rvPrev = $('#rvPrev'), rvCount = $('#rvCount'), rvNext = $('#rvNext'), rvClose = $('#rvClose');
+  const confirmEl = $('#confirm'), cfTitle = $('#cfTitle'), cfText = $('#cfText'), cfYes = $('#cfYes'), cfNo = $('#cfNo'), cfBackdrop = $('#cfBackdrop');
+  const fileEl = $('#file'), folderEl = $('#folder'), dropEl = $('#drop'), dropOverlay = $('#dropOverlay');
+  const welcomeEl = $('#welcome'), welcomeNote = $('#welcomeNote'), sampleCard = $('#sampleCard'), sampleBtn = $('#sampleBtn'), chooseBtn = $('#chooseBtn'), chooseFolderBtn = $('#chooseFolderBtn');
+  const jobArea = $('#jobArea'), jobsEl = $('#jobs'), fileCount = $('#fileCount'), filesTotal = $('#filesTotal'), clearBtn = $('#clearBtn'), addFilesBtn = $('#addFilesBtn'), addFolderBtn = $('#addFolderBtn');
+  const optSum = $('#optSum'), qMax = $('#qMax'), qHigh = $('#qHigh'), qNote = $('#qNote'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
+  const barEl = $('#actionbar'), abProgress = $('#abProgress'), abFill = $('#abFill'), abIcon = $('#abIcon'), abTitle = $('#abTitle'), abPct = $('#abPct'), abSub = $('#abSub');
+  const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note');
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------- small helpers ----------
   const bn = (n) => String(n);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-  const idle = () => new Promise((r) => setTimeout(r, 0));
+  // Gives the page a moment to breathe. A message, not a timer: browsers slow timers in background tabs to one a second.
+  const idle = (() => {
+    const ch = new MessageChannel(), waiting = [];
+    ch.port1.onmessage = () => { const r = waiting.shift(); if (r) r(); };
+    return () => new Promise((r) => { waiting.push(r); ch.port2.postMessage(0); });
+  })();
   function tc(t) {
     if (!isFinite(t) || t < 0) t = 0;
     const m = Math.floor(t / 60); let s = (t - m * 60).toFixed(2);
@@ -47,25 +49,18 @@ export function mountTool(root) {
     if (/memory|allocation/i.test(m)) return 'Your browser ran out of memory. Process the videos a few at a time.';
     return 'Something went wrong: ' + m;
   }
-  function setNote(text, kind) {
-    for (const el of [noteEl, welcomeNote]) {
-      el.textContent = text || '';
-      el.className = 'msg' + (kind ? ' is-' + kind : '');
-      el.hidden = !text;
-    }
-  }
   const baseName = (n) => (n || 'video').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 90) || 'video';
 
   // ---------- state ----------
   const S = {
-    items: [], refId: null, selId: null, rectRel: null, sameRect: true, quality: 'max',
+    items: [], refId: null, reviewId: null, rectRel: null, sameRect: true, quality: 'max',
     busy: false, analyzing: false, cancel: false, frac: 0.25, conv: null, intake: false,
-    view: 'split', split: 0.5, splitSet: false, boxMode: false, runT0: 0, eta: null, lastSecs: 0,
+    view: 'split', split: 0.5, splitSet: false, boxMode: false,
+    runId: 0, runT0: 0, runDid: 0, eta: null, lastSecs: 0, stopped: false, zipping: false,
   };
   let nextId = 1;
   const getItem = (id) => S.items.find((i) => i.id === id) || null;
   const refItem = () => getItem(S.refId);
-  const selItem = () => getItem(S.selId);
 
   // ---------- media access ----------
   function openInput(file) {
@@ -519,7 +514,7 @@ export function mountTool(root) {
     const pps = info.w * info.h * info.fps, src = info.bitrate || pps * 0.1;
     return Math.round(q === 'max' ? clamp(src * 2.5, pps * 0.12, 150e6) : clamp(src * 1.5, pps * 0.07, 100e6));
   }
-  async function convert(item, model, onP) {
+  async function convert(item, model, onP, live) {
     const input = openInput(item.file);
     try {
       const target = new MB.BufferTarget();
@@ -528,9 +523,17 @@ export function mountTool(root) {
       const codec = await MB.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9', 'av1'], { width: item.info.w, height: item.info.h, quality });
       if (!codec) throw uerr('This browser cannot encode video at this resolution. Use a recent Chrome or Edge on a computer.');
       const holder = {};
+      let frameNo = 0;
       const conv = await MB.Conversion.init({
         input, output, showWarnings: false,
-        video: { codec, quality, forceTranscode: true, process: (s) => cleanSample(s, model, holder) },
+        video: {
+          codec, quality, forceTranscode: true,
+          process: async (s) => {
+            const out = await cleanSample(s, model, holder);
+            if (live && frameNo++ % 6 === 0) { try { live(s, out); } catch (e) { /* only a preview */ } }
+            return out;
+          },
+        },
       });
       if (!conv.isValid) {
         const why = conv.discardedTracks.map((d) => d.track.type + ': ' + d.reason).join(', ');
@@ -545,10 +548,134 @@ export function mountTool(root) {
     } finally { S.conv = null; try { input.dispose(); } catch (e) { /* closed */ } }
   }
 
-  // ---------- preview ----------
+  // =====================================================================================
+  // Everything below is the page around the engine: the file list, the review window, the
+  // queue that finds each file's logo, and the run that removes it. The engine above is untouched.
+  // =====================================================================================
+
+  // ---------- small helpers ----------
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let scrollLocks = 0;
+  function lockScroll(on) {
+    scrollLocks = Math.max(0, scrollLocks + (on ? 1 : -1));
+    document.documentElement.style.overflow = scrollLocks ? 'hidden' : '';
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const ICON = {
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M10 9.5v5l4-2.5z"></path></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M21 16l-5-5-8 8"></path></svg>',
+    save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"></path></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>',
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>',
+    warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"></path><circle cx="12" cy="12" r="9"></circle></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v5M12 7.5v.5"></path><circle cx="12" cy="12" r="9"></circle></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
+    spin: '<span class="spin"></span>',
+    stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
+    redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"></path></svg>',
+  };
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  // what the user should do about a failure, in plain words
+  function friendly(msg) {
+    if (/cannot decode this video format/i.test(msg)) return msg + ' You can also save the video as MP4 (H.264) first.';
+    return msg;
+  }
+  const isVideoFile = (f) => (f.type && f.type.startsWith('video/')) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(f.name);
+  const coverRect = (W, H, ar) => { let sw = W, sh = W / ar; if (sh > H) { sh = H; sw = H * ar; } return { sx: (W - sw) / 2, sy: (H - sh) / 2, sw, sh }; };
+
+  // ---------- where each file is in its journey ----------
+  // opening → queued → finding → ready | nologo → working → done        (or error at any point)
+  function phase(it) {
+    if (it.status === 'error') return 'error';
+    if (it.status === 'done') return 'done';
+    if (it.status === 'encoding' || it.status === 'learning') return 'working';
+    if (!it.info || it.status === 'new' || it.status === 'probing') return 'opening';
+    if (it.status === 'analyzing') return 'finding';
+    if (it.boxReq) return 'queued';
+    if (it.model && it.model.ok) return 'ready';
+    if (it.msg || it.model) return 'nologo';
+    return 'queued';
+  }
+  const TODO = new Set(['opening', 'queued', 'finding', 'ready']);
+  const isTodo = (it) => !it.removed && TODO.has(phase(it));
+  const doneItems = () => S.items.filter((i) => i.status === 'done' && i.result);
+  const unsavedItems = () => doneItems().filter((i) => !i.saved);
+  function counts() {
+    const c = { opening: 0, queued: 0, finding: 0, ready: 0, nologo: 0, working: 0, done: 0, error: 0 };
+    for (const it of S.items) c[phase(it)]++;
+    return c;
+  }
+  const weight = (it) => (it.kind === 'video' && it.info ? Math.max(1, (it.info.dur - it.info.first) * it.info.fps) : 24);
+  const logoName = (m) => (m && (m.kind === 'image' || m.gemini) ? 'Gemini sparkle' : m && m.veo ? 'Veo text mark' : 'Logo');
+
+  // ---------- close-ups of the logo (before and after) ----------
+  const CU_W = 224, CU_H = 168;
+  function cuGeom(rect, W, H) {
+    const ar = CU_W / CU_H, sh = Math.min(H, Math.round(Math.max(rect.h, rect.w / ar) * 1.7)), sw = Math.min(W, Math.round(sh * ar));
+    return { sx: clamp(Math.round(rect.x + rect.w / 2 - sw / 2), 0, W - sw), sy: clamp(Math.round(rect.y + rect.h / 2 - sh / 2), 0, H - sh), sw, sh };
+  }
+  function cuDraw(src, cv, g, isSample) {
+    const c = cv.getContext('2d');
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+    c.clearRect(0, 0, cv.width, cv.height);
+    if (isSample) src.draw(c, g.sx, g.sy, g.sw, g.sh, 0, 0, cv.width, cv.height);
+    else c.drawImage(src, g.sx, g.sy, g.sw, g.sh, 0, 0, cv.width, cv.height);
+  }
+  async function withSampleAt(source, t, fn) {
+    const input = new MB.Input({ source: new MB.BlobSource(source), formats: MB.ALL_FORMATS });
+    try {
+      const track = await input.getPrimaryVideoTrack();
+      if (!track) throw new Error('no video track');
+      const s = await new MB.VideoSampleSink(track).getSample(t);
+      if (!s) throw new Error('no frame');
+      try { return await fn(s); } finally { s.close(); }
+    } finally { try { input.dispose(); } catch (e) { /* closed */ } }
+  }
+  const thumbTime = (it) => it.info.first + Math.min(1, (it.info.dur - it.info.first) * 0.3);
+  // from = 'preview' (the original with the measured logo removed) or 'result' (read back from the finished file)
+  async function makeCloseups(it, from) {
+    const m = it.model, c = it.card;
+    if (!c || it.removed || !it.info || !m || !m.ok) return;
+    const g = cuGeom(m.rect, it.info.w, it.info.h);
+    try {
+      if (it.kind === 'image') {
+        cuDraw(it.bmp, c.b, g, false);
+        if (from === 'result' && it.result) {
+          const bmp = await createImageBitmap(it.result);
+          try { cuDraw(bmp, c.a, g, false); } finally { bmp.close(); }
+        } else cuDraw(m.out, c.a, g, false);
+      } else {
+        const t = thumbTime(it);
+        await withSampleAt(it.file, t, async (s) => {
+          cuDraw(s, c.b, g, true);
+          if (from === 'result' && it.result) return;
+          const out = await cleanSample(s, m, {});
+          try { cuDraw(out, c.a, g, true); } finally { if (out !== s) out.close(); }
+        });
+        if (from === 'result' && it.result) await withSampleAt(it.result, t, async (r) => cuDraw(r, c.a, g, true));
+      }
+      it.cuHas = true; it.cuKind = from;
+    } catch (e) { /* no close-ups for this file; the card still works */ }
+    updItem(it);
+  }
+  // A small picture of each file for its card.
+  async function makeThumb(it) {
+    try {
+      const TW = 320, TH = 180, cv = document.createElement('canvas');
+      cv.width = TW; cv.height = TH;
+      const cx = cv.getContext('2d'), { w, h } = it.info, k = Math.max(TW / w, TH / h);
+      const dw = w * k, dh = h * k, dx = (TW - dw) / 2, dy = (TH - dh) / 2;
+      if (it.kind === 'image') cx.drawImage(it.bmp, dx, dy, dw, dh);
+      else await withSampleAt(it.file, thumbTime(it), async (s) => { s.draw(cx, dx, dy, dw, dh); });
+      it.thumb = cv.toDataURL('image/jpeg', 0.82);
+    } catch (e) { /* the card shows an icon instead */ }
+    updItem(it);
+  }
+
+  // ---------- preview (in the review window) ----------
   const P = { item: null, input: null, sink: null, busy: false, pending: false, holder: {}, orig: null, proc: null, has: false, token: 0, playing: false, loop: null };
   function closePreview() {
-    P.playing = false;
+    P.token++; P.playing = false;
     if (P.input) { try { P.input.dispose(); } catch (e) { /* closed */ } }
     P.input = null; P.sink = null; P.item = null; P.has = false;
   }
@@ -560,14 +687,16 @@ export function mountTool(root) {
     await stopPlay();
     closePreview();
     if (!item || !item.info) return;
-    P.token++;
+    const tok = P.token;
     S.splitSet = false;
     const { w, h } = item.info;
     if (item.kind === 'image') {
       P.item = item; P.orig = makeCanvas(w, h); P.proc = makeCanvas(w, h);
     } else {
       const input = openInput(item.file);
-      const track = await input.getPrimaryVideoTrack();
+      let track;
+      try { track = await input.getPrimaryVideoTrack(); } catch (e) { try { input.dispose(); } catch (x) { /* closed */ } throw e; }
+      if (tok !== P.token || !track) { try { input.dispose(); } catch (e) { /* closed */ } return; }
       P.input = input; P.sink = new MB.VideoSampleSink(track); P.item = item;
       P.orig = makeCanvas(w, h); P.proc = makeCanvas(w, h);
     }
@@ -600,7 +729,7 @@ export function mountTool(root) {
       P.proc.getContext('2d').drawImage(item.model && item.model.ok ? item.model.out : item.bmp, 0, 0);
       P.has = true;
       tcEl.innerHTML = '<b>Photo</b>';
-      drawView();
+      drawView(); rvRender();
       return;
     }
     if (!P.sink || P.playing) return;
@@ -622,6 +751,7 @@ export function mountTool(root) {
     } catch (e) {
       setNote('Could not show the preview: ' + errText(e), 'warn');
     } finally { P.busy = false; }
+    rvRender();
   }
 
   // Plays the preview from the timeline position, cleaning each frame as it goes (slower than real
@@ -632,7 +762,7 @@ export function mountTool(root) {
     P.playing = true;
     renderTransport();
     P.loop = (async () => {
-      while (P.busy) await new Promise((r) => setTimeout(r, 16));
+      while (P.busy) await sleep(16);
       const tok = ++P.token, i = item.info, span = Math.max(0, i.dur - i.first - 1 / i.fps);
       if (S.frac >= 0.995) S.frac = 0;
       const t0 = previewTime(item), wall0 = performance.now();
@@ -682,7 +812,7 @@ export function mountTool(root) {
     stage.dataset.mode = mode;
     stage.style.setProperty('--split', (S.split * 100).toFixed(2) + '%');
     splitEl.setAttribute('aria-valuenow', String(Math.round(S.split * 100)));
-    loupes.hidden = !r; viewerHint.hidden = !!r;
+    loupesEl.dataset.empty = r ? '' : '1';
     if (!r) return;
     // close-ups of the same spot, before and after
     const ar = loupeA.width / loupeA.height, sh = Math.min(P.orig.height, Math.round(Math.max(r.h, r.w / ar) * 1.25)), sw = Math.min(P.orig.width, Math.round(sh * ar));
@@ -693,11 +823,9 @@ export function mountTool(root) {
       c.clearRect(0, 0, cv.width, cv.height);
       c.drawImage(src, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
     });
-    const shown = loupeA.getBoundingClientRect().width || cv0w;
-    const z = shown / sw;
+    const z = (loupeA.getBoundingClientRect().width || 480) / sw;
     $('#zoomA').textContent = $('#zoomB').textContent = z >= 1.05 ? z.toFixed(1) + '× zoom' : '';
   }
-  const cv0w = 480;
 
   // ---------- stage + overlay ----------
   let dpr = 1;
@@ -705,7 +833,7 @@ export function mountTool(root) {
     const avail = stageWrap.clientWidth;
     if (!avail) return;
     const W = view.width || 16, H = view.height || 9;
-    const maxH = clamp(window.innerHeight - 300, 260, 720);
+    const maxH = clamp(window.innerHeight - 290, 220, 720);
     let w = avail, h = w * H / W;
     if (h > maxH) { h = maxH; w = h * W / H; }
     stage.style.width = Math.floor(w) + 'px'; stage.style.height = Math.floor(h) + 'px';
@@ -715,6 +843,7 @@ export function mountTool(root) {
   const ro = new ResizeObserver(() => { layoutStage(); drawView(); });
   ro.observe(stageWrap);
   cleanups.push(() => ro.disconnect());
+  window.addEventListener('resize', () => { layoutStage(); drawView(); }, { signal });
 
   let tokens = {};
   function readTokens() {
@@ -724,13 +853,15 @@ export function mountTool(root) {
   readTokens();
 
   let drag = null;
-  const canDraw = () => P.has && !S.busy && !S.analyzing && P.item;
-  // a box is needed when the shown file has no logo to work with
-  const needsBox = (it) => !!(it && it.info && it.status === 'ready' && !previewModel(it) && (it.msg || (it.model && !it.model.ok)));
+  const canDraw = () => !!(P.has && !S.busy && P.item);
+  const needsBox = (it) => !!it && phase(it) === 'nologo';
   const boxOn = () => !!canDraw() && (S.boxMode || needsBox(P.item));
 
+  // the box animation runs only while the review window is open
+  let overlayRaf = 0;
   function drawOverlay(ts) {
-    if (!alive) return;
+    overlayRaf = 0;
+    if (!alive || reviewEl.hidden) return;
     octx.setTransform(1, 0, 0, 1, 0, 0);
     octx.clearRect(0, 0, overlay.width, overlay.height);
     // the logo box shows while drawing one and on the original; the result views stay unmarked
@@ -750,9 +881,10 @@ export function mountTool(root) {
       octx.fillStyle = tokens.mask; octx.fillRect(x - 0.5, ly, tw, th);
       octx.fillStyle = tokens.maskInk; octx.textBaseline = 'middle'; octx.fillText(label, x + 4.5 * dpr, ly + th / 2 + 0.5);
     }
-    requestAnimationFrame(drawOverlay);
+    overlayRaf = requestAnimationFrame(drawOverlay);
   }
-  requestAnimationFrame(drawOverlay);
+  const startOverlay = () => { if (!overlayRaf) overlayRaf = requestAnimationFrame(drawOverlay); };
+  const stopOverlay = () => { if (overlayRaf) cancelAnimationFrame(overlayRaf); overlayRaf = 0; };
 
   function toFrame(e) {
     const b = overlay.getBoundingClientRect();
@@ -777,7 +909,7 @@ export function mountTool(root) {
     const min = Math.max(10, view.width / 120);
     if (r.w < min || r.h < min) { drawView(); return; }
     S.boxMode = false;
-    analyze(P.item, evenRect(r, view.width, view.height));
+    requestBox(P.item, evenRect(r, view.width, view.height));
   }
   overlay.addEventListener('pointerup', endDrag);
   overlay.addEventListener('pointercancel', () => { drag = null; drawView(); });
@@ -817,122 +949,341 @@ export function mountTool(root) {
     scrub.value = String(Math.round(S.frac * 1000));
     stopPlay().then(renderPreview);
   }
+  function renderTransport() {
+    const it = P.item, video = !!(it && it.kind === 'video' && P.has);
+    scrub.disabled = !video;
+    playBtn.disabled = !video || S.busy;
+    playBtn.classList.toggle('is-playing', P.playing);
+    playBtn.setAttribute('aria-label', P.playing ? 'Pause preview' : 'Play preview');
+  }
 
-  // ---------- intake ----------
-  function addFiles(list) {
-    const isVideo = (f) => (f.type && f.type.startsWith('video/')) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(f.name);
-    const files = [...list].filter((f) => isVideo(f) || isImageFile(f));
-    const skipped = list.length - files.length;
-    if (!files.length) { setNote('No videos or photos found. Add MP4, MOV, WebM or PNG, JPG, WebP files.', 'warn'); return; }
-    files.forEach((file) => S.items.push({ id: nextId++, file, name: file.name, size: file.size, kind: isVideo(file) ? 'video' : 'image', status: 'new', progress: 0, info: null, model: null, detected: null, result: null, msg: '', thumb: null }));
-    setNote(skipped ? skipped + (skipped === 1 ? ' file is' : ' files are') + ' not a video or photo and ' + (skipped === 1 ? 'was' : 'were') + ' skipped.' : '', skipped ? 'warn' : '');
+  // ---------- the review window ----------
+  const reviewItem = () => getItem(S.reviewId);
+  let rvOpener = null;
+  async function openReview(it) {
+    if (!it || !it.info || it.removed) return;
+    S.reviewId = it.id; S.boxMode = false;
+    if (reviewEl.hidden) { rvOpener = document.activeElement; reviewEl.hidden = false; lockScroll(true); }
+    layoutStage(); rvRender(); startOverlay();
+    $('#rvCard').focus({ preventScroll: true });
+    try { await openPreview(it); } catch (e) { setNote('Could not open the preview: ' + errText(e), 'warn'); }
+    rvRender();
+  }
+  async function closeReview() {
+    if (reviewEl.hidden) return;
+    reviewEl.hidden = true; lockScroll(false); stopOverlay();
+    S.boxMode = false; drag = null; S.reviewId = null;
+    await stopPlay();
+    closePreview();
+    vctx.clearRect(0, 0, view.width, view.height);
+    if (rvOpener && rvOpener.isConnected) { try { rvOpener.focus(); } catch (e) { /* gone */ } }
+    rvOpener = null;
     render();
-    intake();
   }
-  // A small picture of each file for the list.
-  async function makeThumb(item) {
-    try {
-      const TW = 128, TH = 80, c = document.createElement('canvas');
-      c.width = TW; c.height = TH;
-      const cx = c.getContext('2d'), { w, h } = item.info, k = Math.max(TW / w, TH / h);
-      const dw = w * k, dh = h * k, dx = (TW - dw) / 2, dy = (TH - dh) / 2;
-      if (item.kind === 'image') cx.drawImage(item.bmp, dx, dy, dw, dh);
-      else {
-        await withTrack(item, async (track) => {
-          const sink = new MB.VideoSampleSink(track), i = item.info;
-          const s = await sink.getSample(i.first + Math.min(1, (i.dur - i.first) * 0.3));
-          if (s) { try { s.draw(cx, dx, dy, dw, dh); } finally { s.close(); } }
-        });
+  async function showInReview(next) {
+    await stopPlay();
+    S.reviewId = next.id; S.boxMode = false; S.splitSet = false;
+    rvRender();
+    try { await openPreview(next); } catch (e) { setNote('Could not open the preview: ' + errText(e), 'warn'); }
+    rvRender();
+  }
+  async function reviewStep(d) {
+    const cur = reviewItem();
+    if (!cur) return;
+    let i = S.items.indexOf(cur) + d;
+    while (S.items[i] && !S.items[i].info) i += d;
+    const next = S.items[i];
+    if (next) await showInReview(next);
+  }
+  function rvRender() {
+    if (reviewEl.hidden) return;
+    const it = reviewItem();
+    if (!it) return;
+    const mode = viewMode(), box = boxOn(), idx = S.items.indexOf(it);
+    rvTitle.textContent = it.name;
+    rvMeta.textContent = it.info ? itemMeta(it) : '';
+    rvNav.hidden = S.items.length < 2;
+    rvCount.textContent = (idx + 1) + ' / ' + S.items.length;
+    rvPrev.disabled = idx <= 0; rvNext.disabled = idx >= S.items.length - 1;
+    stage.classList.toggle('is-boxing', box);
+    boxHint.hidden = !box || !!drag;
+    boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found automatically. Drag a box around it.' : 'Drag a box around the logo';
+    for (const b of [boxBtn, boxBtn2]) { b.disabled = !canDraw(); b.setAttribute('aria-pressed', String(!!S.boxMode)); }
+    boxBtn.querySelector('span').textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
+    boxBtn2.textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
+    viewSeg.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.view === mode)); b.disabled = !previewModel(it); });
+    const ph = phase(it);
+    stageMsg.hidden = P.has;
+    stageMsg.innerHTML = it.status === 'error' ? '<b>This file can’t be opened here</b><span>' + esc(friendly(it.msg)) + '</span>' : '<b>Opening the preview…</b>';
+    pill(ph === 'finding' ? (it.progress < 0.3 ? 'Finding the logo…' : 'Measuring the logo…') : ph === 'queued' ? 'Waiting to find the logo…' : '');
+    redetectBtn.disabled = !it.info || S.busy || ph === 'finding';
+    renderTransport();
+    renderLogo();
+  }
+  function logoState(tone, title, text) {
+    return '<div class="logo-state ' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : '<span class="ico">' + ICON[tone === 'ok' ? 'ok' : tone === 'warn' ? 'warn' : 'info'] + '</span>') +
+      '<div><b>' + title + '</b>' + (text ? '<span>' + text + '</span>' : '') + '</div></div>';
+  }
+  function renderLogo() {
+    if (reviewEl.hidden) return;
+    const it = reviewItem();
+    if (!it) { logoInfo.innerHTML = ''; return; }
+    const m = it.model, ph = phase(it);
+    let html = '';
+    if (ph === 'opening' || ph === 'finding' || ph === 'queued') {
+      const p = it.progress || 0;
+      html = logoState('run', ph === 'queued' ? 'Waiting for its turn…' : ph === 'opening' ? 'Opening the file…' : p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', 'This takes a few seconds.') +
+        (ph === 'finding' ? '<div class="bar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' : '');
+    } else if (m && m.ok && it.borrowed) {
+      html = logoState('warn', 'Using the first video’s measurement', 'This video’s own measurement failed, so the first video’s is used. If traces remain, remove this video on its own, or draw a box around its logo.');
+    } else if (m && m.ok) {
+      const opaque = m.kind !== 'image' && m.max >= C.OPAQUE;
+      const kv = m.kind === 'image'
+        ? '<dt>Position</dt><dd>x ' + m.rect.x + ' · y ' + m.rect.y + ' · logo ' + Math.round(m.size) + ' px</dd>' +
+          '<dt>Opacity</dt><dd>max ' + Math.round(m.max * 100) + '%</dd>' +
+          '<dt>Method</dt><dd>known logo shape, fitted to this photo and reversed</dd>'
+        : '<dt>Position</dt><dd>x ' + m.rect.x + ' · y ' + m.rect.y + ' · ' + m.rect.w + '×' + m.rect.h + '</dd>' +
+          '<dt>Opacity</dt><dd>mean ' + Math.round(m.mean * 100) + '% · max ' + Math.round(m.max * 100) + '%</dd>' +
+          '<dt>Method</dt><dd>' + (m.method === 'template' ? (m.planeAlpha ? 'known logo shape, matched to this video pixel by pixel' : 'known logo shape (still background)') : 'learned from the video') + '</dd>' +
+          '<dt>Analysed</dt><dd>' + m.frames + ' frames · ' + (m.mode === 'yuv' ? 'YUV, no colour conversion' : 'RGB') + '</dd>' +
+          (m.resp ? '<dt>Dark scenes</dt><dd>extra correction on (from ' + m.resp.frames + ' frames)</dd>' : '');
+      html = logoState('ok', logoName(m) + ' found', (it.manual ? 'Your box. ' : '') + (opaque ? 'Parts of it are fully solid; those pixels are filled in from around them.' : 'It is see-through, so the real picture underneath is restored.')) +
+        '<details class="details"><summary>Technical details</summary><dl class="kv">' + kv + '</dl></details>';
+    } else if (m && !m.ok) {
+      html = logoState('warn', 'No steady logo in this box', 'Draw a slightly larger box around the logo.');
+    } else if (ph === 'error') {
+      html = logoState('warn', 'This file could not be opened', esc(friendly(it.msg)));
+    } else {
+      html = logoState('warn', esc(it.msg || 'No logo found automatically'), 'Click “Draw a box”, then drag around the logo, a little larger than the logo.');
+    }
+    logoInfo.innerHTML = html;
+  }
+
+  // ---------- questions before something is lost ----------
+  let askDone = null;
+  function ask({ title, text, yes, no = 'Cancel', danger = false }) {
+    return new Promise((res) => {
+      cfTitle.textContent = title; cfText.textContent = text; cfYes.textContent = yes; cfNo.textContent = no;
+      cfYes.classList.toggle('danger', danger);
+      const prev = document.activeElement;
+      confirmEl.hidden = false; lockScroll(true);
+      cfNo.focus();
+      askDone = (v) => {
+        askDone = null; confirmEl.hidden = true; lockScroll(false);
+        cfYes.onclick = cfNo.onclick = cfBackdrop.onclick = null;
+        if (prev && prev.isConnected) { try { prev.focus(); } catch (e) { /* gone */ } }
+        res(v);
+      };
+      cfYes.onclick = () => askDone(true); cfNo.onclick = () => askDone(false); cfBackdrop.onclick = () => askDone(false);
+    });
+  }
+  // true when it is fine to go on
+  async function okToLose(what) {
+    const n = unsavedItems().length;
+    if (!n) return true;
+    return ask({ title: 'Download your files first?', text: 'You have ' + plural(n, 'finished file', 'finished files') + ' that you haven’t downloaded yet. ' + what + ' will delete ' + (n === 1 ? 'it' : 'them') + '.', yes: 'Delete anyway', no: 'Go back', danger: true });
+  }
+  function leaveWarning() {
+    if (S.busy) return 'Files are still being processed. Leave and stop?';
+    const n = unsavedItems().length;
+    return n ? 'You have ' + plural(n, 'finished file', 'finished files') + ' that you haven’t downloaded yet. Leave anyway?' : '';
+  }
+
+  // ---------- adding files ----------
+  const isImgFile = (f) => isImageFile(f);
+  const keyOf = (f) => f.name + '|' + f.size + '|' + f.lastModified;
+  function addFiles(list, source) {
+    const all = [...list];
+    const files = all.filter((f) => isVideoFile(f) || isImgFile(f));
+    const ignored = all.length - files.length;
+    if (!files.length) { setNote(source === 'folder' ? 'There are no videos or photos in that folder.' : 'No videos or photos found. Add MP4, MOV, WebM or PNG, JPG, WebP files.', 'warn'); return; }
+    const have = new Set(S.items.map((i) => i.key)), fresh = [];
+    let dupes = 0;
+    for (const f of files) { const k = keyOf(f); if (have.has(k)) { dupes++; continue; } have.add(k); fresh.push(f); }
+    const notes = [];
+    if (ignored) notes.push(source === 'folder' ? plural(ignored, 'other file', 'other files') + ' in the folder ' + (ignored === 1 ? 'was' : 'were') + ' left out.' : plural(ignored, 'file is', 'files are') + ' not a video or photo and ' + (ignored === 1 ? 'was' : 'were') + ' left out.');
+    if (dupes) notes.push(plural(dupes, 'file was', 'files were') + ' already in the list.');
+    setNote(notes.filter(Boolean).join(' '), notes.some(Boolean) ? 'warn' : '');
+    for (const file of fresh) {
+      const it = { id: nextId++, key: keyOf(file), file, name: file.name, size: file.size, kind: isVideoFile(file) ? 'video' : 'image', status: 'new', progress: 0, info: null, model: null, detected: null, result: null, msg: '', thumb: null, runId: S.busy ? S.runId : 0, saved: false };
+      S.items.push(it);
+      ensureCard(it);
+    }
+    if (fresh.length) { render(); intake(); }
+  }
+  // files from a drop, folders included (the entries must be read before the event ends)
+  async function filesFromDrop(dt) {
+    const entries = [];
+    if (dt.items) for (const item of dt.items) { if (item.kind === 'file' && item.webkitGetAsEntry) { const e = item.webkitGetAsEntry(); if (e) entries.push(e); } }
+    if (!entries.some((e) => e.isDirectory)) return { files: [...dt.files], folder: false };
+    const out = [];
+    const walk = async (entry, depth) => {
+      if (entry.isFile) out.push(await new Promise((res, rej) => entry.file(res, rej)));
+      else if (entry.isDirectory && depth < 8) {
+        const reader = entry.createReader();
+        let batch;
+        do {
+          batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+          for (const e of batch) await walk(e, depth + 1);
+        } while (batch.length);
       }
-      item.thumb = c.toDataURL('image/jpeg', 0.8);
-      updItem(item);
-    } catch (e) { /* the list shows an icon instead */ }
+    };
+    for (const e of entries) { try { await walk(e, 0); } catch (err) { /* an unreadable item is skipped */ } }
+    out.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    return { files: out, folder: true };
   }
+
   async function intake() {
     if (S.intake) return;
     S.intake = true;
     try {
-      for (let k = 0; k < S.items.length; k++) {
-        const it = S.items[k];
-        if (it.info || it.status === 'error') continue;
-        it.status = 'probing'; updItem(it);
+      for (;;) {
+        const it = S.items.find((x) => !x.removed && !x.info && x.status === 'new');
+        if (!it) break;
+        it.status = 'probing'; updItem(it); renderBar();
         try { await (it.kind === 'image' ? probeImage(it) : probe(it)); it.status = 'ready'; } catch (e) { it.status = 'error'; it.msg = errText(e); }
         updItem(it);
-        if (it.info) await makeThumb(it);
-        if (!refItem() || refItem().status === 'error' || (refItem().kind === 'image' && it.kind === 'video' && it.info)) {
-          // a video leads when there is one (the others follow its logo box); else the first photo
-          const ref = S.items.find((i) => i.info && i.status !== 'error' && i.kind === 'video') || S.items.find((i) => i.info && i.status !== 'error');
-          if (ref && ref.id !== S.refId) { S.refId = ref.id; await select(ref); if (!ref.model) analyze(ref); }
-        }
-        if (it.kind === 'image' && it.info && it.id !== S.refId && !it.model) analyze(it);
+        if (it.info && !it.removed) await makeThumb(it);
+        ensureLead();
+        render();
+        pump();
       }
-    } finally { S.intake = false; render(); }
+    } finally { S.intake = false; }
+  }
+  // the first video is the lead: the others look for the logo where it found it
+  function ensureLead() {
+    const ok = (i) => i.info && i.status !== 'error' && !i.removed;
+    const cur = refItem();
+    const lead = (cur && ok(cur) && (cur.kind === 'video' || !S.items.some((i) => ok(i) && i.kind === 'video')) ? cur : null)
+      || S.items.find((i) => ok(i) && i.kind === 'video') || S.items.find(ok) || null;
+    const id = lead ? lead.id : null;
+    if (id === S.refId) return;
+    S.refId = id; S.rectRel = null;
+    for (const o of S.items) if (o !== lead && o.kind === 'video' && !o.manual && o.status === 'ready') { o.model = null; o.borrowed = false; o.msg = ''; o.cuHas = false; updItem(o); }
   }
 
-  async function select(item) {
-    if (!item || !item.info) return;
-    S.selId = item.id; S.boxMode = false;
-    render();
-    try { await openPreview(item); } catch (e) { setNote('Could not open the preview: ' + errText(e), 'warn'); }
-    render();
-    prepareFollower(item);
+  // ---------- finding each file's logo (one file at a time, in the background) ----------
+  // A video that follows the lead file: its own logo when "same spot" is off (or the lead is a photo
+  // or a Veo clip), else the lead's spot and exact position, measured in this video.
+  async function followModel(it, ref, onP) {
+    let rect = null, guess = null;
+    if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
+      const d = await detectLogo(it, (p) => onP(p * 0.3));
+      if (d) { rect = d.rect; guess = d.tmpl; }
+    }
+    if (!rect && !S.rectRel) return { model: null, borrowed: false };
+    if (!rect) {
+      rect = fromRel(S.rectRel, it.info.w, it.info.h);
+      // the first video's exact logo position, carried over to this frame size
+      const ra = ref.model && ref.model.gemini && ref.model.align;
+      if (ra) {
+        const sx = it.info.w / ref.info.w, sy = it.info.h / ref.info.h;
+        guess = { x: (ra.x + 0.5) * sx - 0.5, y: (ra.y + 0.5) * sy - 0.5, s: ra.s * Math.min(sx, sy), usual: !!(ref.detected && ref.detected.tmpl && ref.detected.tmpl.usual) };
+        rect = C.placeTemplate(GEMINI, guess.x, guess.y, guess.s, it.info.w, it.info.h).rect;
+      }
+    }
+    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), guess);
+    if (!model.ok && ref.model && ref.model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) return { model: ref.model, borrowed: true };
+    return { model, borrowed: false };
   }
-
-  function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
-
-  async function analyze(item, manualRect) {
-    if (!item || !item.info || S.busy) return;
-    if (S.analyzing) { if (!manualRect && !item.model) item.waiting = true; return; }
-    S.analyzing = true;
-    item.status = 'analyzing'; item.msg = ''; item.progress = 0; item.borrowed = false;
-    render();
-    try {
-      if (item.kind === 'image') {
-        pill(manualRect ? 'Fitting the logo inside your box…' : 'Looking for the logo…');
-        item.model = await analyzeImage(item, manualRect);
-        item.manual = !!manualRect; item.status = 'ready';
-        if (!item.model) item.msg = manualRect ? 'No sparkle logo fits inside this box' : 'No logo found automatically';
-        return;
-      }
-      let rect = manualRect, det = null;
-      if (!rect) {
-        pill('Looking for the logo…');
-        det = await detectLogo(item, (p) => { item.progress = p * 0.3; updItem(item); renderLogo(); });
-        if (!det) {
-          item.model = null; item.detected = null; item.status = 'ready';
-          item.msg = 'No logo found automatically';
-          return;
-        }
-        rect = det.rect;
-      }
-      item.detected = { rect, confidence: det ? det.confidence : null, manual: !!manualRect, gemini: !!(det && det.tmpl && !det.tmpl.veo), tmpl: det && det.tmpl };
-      pill('Measuring the logo’s transparency…');
-      drawView();
-      item.model = await learn(item, rect, (p) => { item.progress = 0.3 + p * 0.7; updItem(item); renderLogo(); }, det && det.tmpl);
-      item.manual = !!manualRect;
-      item.status = 'ready';
-      if (item.id === S.refId) {
-        S.rectRel = toRel(rect, item.info.w, item.info.h);
-        // other videos follow the reference box, so drop what they learned for the old one
-        S.items.forEach((o) => { if (o !== item && o.kind !== 'image' && !o.manual && o.status !== 'done') { o.model = null; o.borrowed = false; } });
-      }
-    } catch (e) {
-      item.status = 'ready'; item.msg = errText(e);
-    } finally {
-      S.analyzing = false; S.cancel = false;
-      pill('');
-      render();
-      if (P.item === item) { S.splitSet = false; renderPreview(); }
-      // files that arrived while this was busy (the lead video first)
-      const ref = refItem(), next = ref && ref.waiting ? ref : S.items.find((i) => i.waiting);
-      if (next) { next.waiting = false; if (!next.model) analyze(next); }
-      else if (selItem() && selItem() !== ref) prepareFollower(selItem());
+  // The one place a file's logo is measured: photos, the lead video, a video with a hand-drawn box, and followers.
+  async function measure(it, manualRect, onP) {
+    if (it.kind === 'image') {
+      const model = await analyzeImage(it, manualRect);
+      return { model, msg: model ? '' : manualRect ? 'No sparkle logo fits inside this box' : 'No logo found automatically' };
+    }
+    const ref = refItem();
+    if (!manualRect && ref && it !== ref) {
+      const r = await followModel(it, ref, onP);
+      return { model: r.model, borrowed: r.borrowed, msg: r.model ? '' : 'No logo found automatically' };
+    }
+    let rect = manualRect, det = null;
+    if (!rect) {
+      det = await detectLogo(it, (p) => onP(p * 0.3));
+      if (!det) return { model: null, msg: 'No logo found automatically' };
+      rect = det.rect;
+    }
+    const detected = { rect, confidence: det ? det.confidence : null, manual: !!manualRect, gemini: !!(det && det.tmpl && !det.tmpl.veo), tmpl: det && det.tmpl };
+    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), det && det.tmpl);
+    return { model, msg: '', detected, rect };
+  }
+  function applyMeasure(it, r, manualRect) {
+    it.manual = !!manualRect;
+    it.model = r.model; it.msg = r.msg || ''; it.detected = r.detected || null; it.borrowed = !!r.borrowed;
+    if (!(it.model && it.model.ok)) it.cuHas = false;
+    if (it.kind === 'video' && it.id === S.refId && r.rect) {
+      S.rectRel = toRel(r.rect, it.info.w, it.info.h);
+      // the others follow the lead's box, so drop what they measured for the old one
+      for (const o of S.items) if (o !== it && o.kind === 'video' && !o.manual && o.status === 'ready' && !o.removed) { o.model = null; o.borrowed = false; o.msg = ''; o.cuHas = false; updItem(o); }
     }
   }
+  const idleWaiters = [];
+  const waitAnalyzing = () => (S.analyzing ? new Promise((r) => idleWaiters.push(r)) : Promise.resolve());
+  const progressTick = (fn) => { let last = 0; return (p) => { const now = performance.now(); if (p < 1 && now - last < 90) return; last = now; fn(p); }; };
 
-  // ---------- batch ----------
-  // the screen stays on while files are processed, so a laptop doesn't fall asleep mid-way
+  async function analyzeOne(it, manualRect) {
+    if (S.analyzing || S.busy || it.removed || !it.info) return;
+    S.analyzing = true;
+    it.status = 'analyzing'; it.msg = ''; it.progress = 0; it.borrowed = false;
+    updItem(it); renderBar(); rvRender();
+    let r = null;
+    try {
+      r = await measure(it, manualRect, progressTick((p) => { it.progress = p; updItem(it); renderLogo(); }));
+    } catch (e) {
+      if (!(e && e.userMsg === 'Stopped.')) it.msg = errText(e);
+    }
+    it.status = 'ready'; S.cancel = false;
+    if (!it.removed) {
+      if (r) applyMeasure(it, r, manualRect);
+      else { it.model = null; it.detected = null; }
+    }
+    // the card shows the outcome at once; its close-up pictures follow a moment later
+    updItem(it); render();
+    if (P.item === it && !it.removed) { S.splitSet = false; renderPreview(); }
+    if (!it.removed && it.model && it.model.ok) await makeCloseups(it, 'preview');
+    S.analyzing = false;
+    render();
+    while (idleWaiters.length) idleWaiters.shift()();
+  }
+  function nextToAnalyze() {
+    const ok = (it) => !it.removed && it.info && it.status === 'ready';
+    const mine = S.items.find((it) => ok(it) && it.boxReq);
+    if (mine) return mine;
+    const lead = refItem();
+    if (lead && ok(lead) && !lead.model && !lead.msg) return lead;
+    return S.items.find((it) => ok(it) && !it.model && !it.msg) || null;
+  }
+  let pumping = false;
+  async function pump() {
+    if (pumping) return;
+    pumping = true;
+    try {
+      while (alive && !S.busy && !S.analyzing) {
+        const it = nextToAnalyze();
+        if (!it) break;
+        const rect = it.boxReq || null; it.boxReq = null;
+        await analyzeOne(it, rect);
+      }
+    } finally { pumping = false; }
+  }
+  // a hand-drawn box for one file; it is measured as soon as its turn comes
+  function requestBox(it, rect) {
+    if (!it || !it.info || S.busy || it.removed) return;
+    it.model = null; it.msg = ''; it.borrowed = false; it.cuHas = false; it.boxReq = rect;
+    updItem(it); render(); pump();
+  }
+  function retryItem(it) {
+    if (!it || S.busy || it.removed) return;
+    it.msg = ''; it.model = null; it.detected = null; it.borrowed = false; it.manual = false; it.cuHas = false; it.boxReq = null;
+    if (!it.info) { it.status = 'new'; updItem(it); render(); intake(); return; }
+    if (it.status === 'done' || it.status === 'error') { it.result = null; it.saved = false; }
+    it.status = 'ready';
+    updItem(it); render(); pump();
+  }
+
+  // ---------- removing the logo ----------
   let wake = null;
+  // the screen stays on while files are processed, so a laptop doesn't fall asleep mid-way
   async function keepAwake(on) {
     try {
       if (on && !wake && 'wakeLock' in navigator && document.visibilityState === 'visible') {
@@ -947,108 +1298,100 @@ export function mountTool(root) {
   function setTitle(prefix) { document.title = prefix + plainTitle(); }
   function restoreTitle() { if (OUR_TITLE.test(document.title)) document.title = plainTitle(); }
 
-  // The logo model of a video that follows the lead file: its own logo when "same spot" is off (or
-  // the lead is a photo or a Veo clip), else the lead's spot and exact position, measured in this video.
-  async function followModel(it, ref, onP) {
-    let rect = null, guess = null;
-    if ((!S.sameRect || !S.rectRel || ref.kind === 'image' || (ref.model && ref.model.veo)) && it !== ref) {
-      const d = await detectLogo(it, (p) => onP(p * 0.3));
-      if (d) { rect = d.rect; guess = d.tmpl; }
+  const isRunnable = (it) => !it.removed && it.info && it.status === 'ready' && (it.model ? it.model.ok : !it.msg);
+  function runProgress() {
+    let W = 0, D = 0;
+    for (const it of S.items) {
+      if (it.runId !== S.runId || it.removed) continue;
+      if (it.status === 'error' || phase(it) === 'nologo') continue;
+      const w = weight(it);
+      W += w;
+      D += w * (it.status === 'done' ? 1 : it.status === 'encoding' ? clamp(it.progress, 0, 1) : 0);
     }
-    if (!rect && !S.rectRel) return null;
-    if (!rect) {
-      rect = fromRel(S.rectRel, it.info.w, it.info.h);
-      // the first video's exact logo position, carried over to this frame size
-      const ra = ref.model && ref.model.gemini && ref.model.align;
-      if (ra) {
-        const sx = it.info.w / ref.info.w, sy = it.info.h / ref.info.h;
-        guess = { x: (ra.x + 0.5) * sx - 0.5, y: (ra.y + 0.5) * sy - 0.5, s: ra.s * Math.min(sx, sy), usual: !!(ref.detected && ref.detected.tmpl && ref.detected.tmpl.usual) };
-        rect = C.placeTemplate(GEMINI, guess.x, guess.y, guess.s, it.info.w, it.info.h).rect;
-      }
-    }
-    const model = await learn(it, rect, (p) => onP(0.3 + p * 0.7), guess);
-    it.borrowed = false;
-    if (!model.ok && ref.model.W === it.info.w && ref.model.H === it.info.h && S.sameRect) { it.borrowed = true; return ref.model; }
-    return model;
+    return W ? D / W : 0;
   }
-  // measures a following video when it is picked, so its preview shows its own result
-  async function prepareFollower(it) {
-    const ref = refItem();
-    if (!it || !ref || it === ref || it.kind !== 'video' || !it.info || it.model || it.status !== 'ready' || it.msg || S.busy || S.analyzing || !(ref.model && ref.model.ok)) return;
-    S.analyzing = true;
-    it.status = 'analyzing'; it.progress = 0;
-    render();
-    pill('Measuring this video’s logo…');
-    try {
-      const m = await followModel(it, ref, (p) => { it.progress = p; updItem(it); renderLogo(); });
-      if (m) it.model = m; else it.msg = 'No logo found automatically';
-    } catch (e) { it.msg = errText(e); }
-    finally {
-      it.status = 'ready'; S.analyzing = false;
-      pill('');
-      render();
-      if (P.item === it) { S.splitSet = false; renderPreview(); }
-    }
+  // frames being cleaned, drawn into the card as they go (a preview only: the output never depends on it)
+  function liveFor(it) {
+    const c = it.card;
+    if (!c || !it.model) return null;
+    const g = cuGeom(it.model.rect, it.info.w, it.info.h), lctx = c.live.getContext('2d'), cr = coverRect(it.info.w, it.info.h, c.live.width / c.live.height);
+    it.liveOn = true;
+    return (s, out) => {
+      if (it.removed) return;
+      cuDraw(s, c.b, g, true); cuDraw(out, c.a, g, true);
+      out.draw(lctx, cr.sx, cr.sy, cr.sw, cr.sh, 0, 0, c.live.width, c.live.height);
+      it.cuHas = true;
+    };
   }
 
   async function runAll() {
-    const ref = refItem();
-    if (S.busy || S.analyzing || !ref || !ref.model || !ref.model.ok) return;
+    if (S.busy) return;
+    S.busy = true; S.cancel = false; S.stopped = false; S.runId++; S.runT0 = performance.now(); S.eta = null; S.lastSecs = 0; S.runDid = 0;
+    for (const it of S.items) if (isTodo(it)) it.runId = S.runId;
     await stopPlay();
-    S.busy = true; S.cancel = false; S.runT0 = performance.now(); S.eta = null;
     keepAwake(true);
     setNote('');
     render();
     const t0 = performance.now();
     try {
-      for (let k = 0; k < S.items.length; k++) {
-        const it = S.items[k];
+      await waitAnalyzing();
+      for (;;) {
         if (S.cancel) break;
-        if (it.status === 'done' || !it.info || it.status === 'error') continue;
-        if (it.kind === 'image') {
-          try {
-            if (!it.model || !it.model.ok) { it.status = 'learning'; it.progress = 0.5; updItem(it); it.model = await analyzeImage(it); }
-            if (!it.model || !it.model.ok) { it.status = 'skipped'; it.msg = 'No logo found in this photo. Select it, draw a box around the logo and run again.'; updItem(it); continue; }
-            it.status = 'encoding'; it.progress = 0.5; updItem(it);
-            it.result = await encodeImage(it);
-            it.status = 'done'; it.msg = '';
-          } catch (e) { it.status = 'error'; it.msg = errText(e); }
-          updItem(it); updTotal();
-          continue;
+        const it = S.items.find(isRunnable);
+        if (!it) {
+          // files that were still being opened when the run got to the end of the list
+          if (S.items.some((x) => !x.removed && (x.status === 'new' || x.status === 'probing'))) { await sleep(120); continue; }
+          break;
         }
-        try {
-          if (!it.model || !it.model.ok) {
-            it.status = 'learning'; it.progress = 0; updItem(it); updTotal();
-            const m = await followModel(it, ref, (p) => { it.progress = p; updItem(it); });
-            if (!m) { it.status = 'skipped'; it.msg = 'No logo found automatically in this video. Select it and draw a box around the logo.'; updItem(it); continue; }
-            it.model = m;
+        it.runId = S.runId;
+        // a file the background queue hasn't reached yet is measured right here
+        if (!it.model) {
+          const rect = it.boxReq || null; it.boxReq = null;
+          it.status = 'learning'; it.progress = 0; updItem(it); updTotal();
+          try {
+            applyMeasure(it, await measure(it, rect, progressTick((p) => { it.progress = p; updItem(it); })), rect);
+          } catch (e) {
+            if (S.cancel || (e && e.userMsg === 'Stopped.')) { it.status = 'ready'; it.progress = 0; updItem(it); break; }
+            it.status = 'error'; it.msg = errText(e); updItem(it); updTotal();
+            continue;
           }
-          if (S.cancel) break;
-          if (!it.model.ok) { it.status = 'skipped'; it.msg = 'No logo at that spot in this video. Select it, draw a box around the logo and run again.'; updItem(it); continue; }
-          it.status = 'encoding'; it.progress = 0; it.encT0 = performance.now(); updItem(it); updTotal();
-          it.result = await convert(it, it.model, (p) => { it.progress = p; updItem(it); updTotal(); });
-          it.status = 'done'; it.msg = '';
+          it.status = 'ready';
+          if (!(it.model && it.model.ok)) { updItem(it); updTotal(); continue; }
+          await makeCloseups(it, 'preview');
+        }
+        it.status = 'encoding'; it.progress = it.kind === 'image' ? 0.5 : 0; it.encT0 = performance.now(); it.fps = 0;
+        const live = it.kind === 'video' ? liveFor(it) : null;
+        updItem(it); render(); updTotal();
+        try {
+          if (it.kind === 'image') it.result = await encodeImage(it);
+          else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live);
+          it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
+          it.liveOn = false; updItem(it); updTotal();
+          await makeCloseups(it, 'result');
         } catch (e) {
-          if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; break; }
-          it.status = 'error'; it.msg = errText(e);
+          it.liveOn = false;
+          if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; it.result = null; updItem(it); break; }
+          it.status = 'error'; it.msg = errText(e); it.result = null;
         }
         updItem(it); updTotal();
       }
     } finally {
-      const done = S.items.filter((i) => i.status === 'done').length;
       S.lastSecs = Math.round((performance.now() - t0) / 1000);
-      S.busy = false;
+      S.busy = false; S.stopped = S.cancel;
       keepAwake(false);
       if (S.cancel) setNote('Stopped. Files that finished can still be downloaded.');
-      if (done && document.visibilityState === 'hidden') setTitle('✓ Done · '); else restoreTitle();
+      else if (!S.runDid && !counts().error) setNote('No file could be processed. Open a file and draw a box around its logo.', 'warn');
+      if (S.runDid && document.visibilityState === 'hidden') setTitle('✓ Done · '); else restoreTitle();
       S.cancel = false;
+      for (const it of S.items) it.liveOn = false;
       render();
+      pump();
     }
   }
   function cancelAll() {
     S.cancel = true;
     if (S.conv) S.conv.cancel().catch(() => {});
-    cancelBtn.disabled = true;
+    abSecondary.disabled = true;
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
@@ -1105,327 +1448,373 @@ export function mountTool(root) {
     end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
     return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
   }
-  const doneItems = () => S.items.filter((i) => i.status === 'done' && i.result);
   async function saveAll() {
     const done = doneItems();
-    if (!done.length) return;
-    if (done.length === 1) { saveBlob(done[0].result, outName(done[0])); return; }
+    if (!done.length || S.zipping) return;
+    if (done.length === 1) { saveBlob(done[0].result, outName(done[0])); done[0].saved = true; updItem(done[0]); renderBar(); return; }
     const total = done.reduce((s, i) => s + i.result.size, 0);
-    if (total > 3.9 * 1073741824) { setNote('Together the files are over 4 GB, too big for one ZIP. Download them one by one from the list.', 'warn'); return; }
-    saveBtn.disabled = true; saveLabel.textContent = 'Building the ZIP…';
-    try { await saveBlob(await makeZip(done.map((i) => ({ name: outName(i), blob: i.result }))), 'clearframe-files.zip'); }
-    finally { saveBtn.disabled = false; render(); }
+    if (total > 3.9 * 1073741824) { setNote('Together the files are over 4 GB, too big for one ZIP. Download them one by one from their cards.', 'warn'); return; }
+    S.zipping = true; renderBar();
+    try {
+      await saveBlob(await makeZip(done.map((i) => ({ name: outName(i), blob: i.result }))), 'clearframe-files.zip');
+      done.forEach((i) => { i.saved = true; updItem(i); });
+    } catch (e) { setNote('The ZIP could not be built: ' + errText(e), 'warn'); }
+    finally { S.zipping = false; renderBar(); }
+  }
+  // redo the finished files, e.g. after the quality was changed
+  function redoDone() {
+    if (S.busy) return;
+    for (const it of S.items) if (it.status === 'done') { it.status = 'ready'; it.result = null; it.saved = false; it.progress = 0; it.cuKind = 'preview'; }
+    render();
+    runAll();
   }
 
-  // ---------- rendering ----------
-  const STATUS = {
-    new: 'Waiting', probing: 'Opening…', ready: 'Ready', analyzing: 'Finding the logo…', learning: 'Measuring the logo…',
-    encoding: 'Removing the logo…', done: 'Done', skipped: 'Skipped', error: 'Can’t open',
-  };
-  const WORKING = ['probing', 'analyzing', 'learning', 'encoding'];
-  const ICON = {
-    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M10 9.5v5l4-2.5z"></path></svg>',
-    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M21 16l-5-5-8 8"></path></svg>',
-    save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"></path></svg>',
-    del: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>',
-    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>',
-    warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5"></path><circle cx="12" cy="12" r="9"></circle></svg>',
-    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v5M12 7.5v.5"></path><circle cx="12" cy="12" r="9"></circle></svg>',
-  };
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  // ---------- the file cards ----------
+  const CARD_HTML =
+    '<div class="job-media"><button type="button" class="job-thumb" data-act="review" aria-label="Review this file">' +
+      '<img class="th-img" alt="" hidden><span class="th-ph"></span><canvas class="th-live" width="320" height="180" hidden></canvas>' +
+      '<span class="th-badge"></span><span class="th-live-tag" hidden>Live</span><span class="th-hover">Review</span></button></div>' +
+    '<div class="job-body">' +
+      '<div class="job-head"><span class="job-name"></span><button type="button" class="icon-btn" data-act="remove" aria-label="Remove from the list">' + ICON.x + '</button></div>' +
+      '<div class="job-meta"></div>' +
+      '<div class="job-status"><span class="js-ico"></span><span class="js-text"><b></b><span></span></span></div>' +
+      '<div class="job-bar" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>' +
+      '<div class="job-foot">' +
+        '<div class="cu" hidden><figure><canvas class="cu-b" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption>Before</figcaption></figure>' +
+          '<span class="cu-arrow">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>' + '</span>' +
+          '<figure><canvas class="cu-a" width="' + CU_W + '" height="' + CU_H + '"></canvas><figcaption class="cu-a-cap">After</figcaption></figure></div>' +
+        '<div class="job-actions">' +
+          '<button type="button" class="btn-soft sm" data-act="review">Review</button>' +
+          '<button type="button" class="btn-soft sm" data-act="box">Draw a box</button>' +
+          '<button type="button" class="btn-soft sm" data-act="retry">Try again</button>' +
+          '<button type="button" class="cta cta-sm" data-act="download">' + ICON.save + '<span>Download</span></button>' +
+        '</div></div></div>';
+  function ensureCard(it) {
+    if (it.card) return it.card;
+    const li = document.createElement('li');
+    li.className = 'job'; li.dataset.id = it.id;
+    li.innerHTML = CARD_HTML;
+    const q = (s) => li.querySelector(s);
+    it.card = {
+      el: li, img: q('.th-img'), ph: q('.th-ph'), live: q('.th-live'), badge: q('.th-badge'), liveTag: q('.th-live-tag'),
+      name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
+      cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'),
+      thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
+      review: q('.job-actions [data-act="review"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'),
+    };
+    it.card.name.textContent = it.name; it.card.name.title = it.name;
+    it.card.thumbBtn.setAttribute('aria-label', 'Review ' + it.name);
+    it.card.ph.innerHTML = ICON[it.kind];
+    return it.card;
+  }
+  const setText = (el, t) => { if (el._t !== t) { el._t = t; el.textContent = t; } };
+  const setHtml = (el, h) => { if (el._h !== h) { el._h = h; el.innerHTML = h; } };
   function itemMeta(it) {
     if (!it.info) return fmtMB(it.size);
     const i = it.info;
     if (it.kind === 'image') return i.w + '×' + i.h + ' · ' + fmtMB(it.size);
     return i.w + '×' + i.h + ' · ' + (i.dur - i.first).toFixed(1) + 's · ' + Math.round(i.fps) + 'fps · ' + fmtMB(it.size);
   }
-  const fmtEta = (s) => (s < 8 ? 'Almost done' : s < 60 ? 'About ' + Math.max(10, Math.round(s / 5) * 5) + ' s left' : s < 5400 ? 'About ' + Math.round(s / 60) + ' min left' : 'About ' + (s / 3600).toFixed(1) + ' h left');
-
-  function render() {
-    const has = S.items.length > 0;
-    welcomeEl.hidden = has; workspaceEl.hidden = !has;
-    const it = P.item, mode = viewMode(), box = boxOn();
-    stage.classList.toggle('is-boxing', box);
-    boxHint.hidden = !box || !!drag;
-    boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found automatically. Drag a box around it.' : 'Drag a box around the logo';
-    for (const b of [boxBtn, boxBtn2]) { b.disabled = !canDraw(); b.setAttribute('aria-pressed', String(!!S.boxMode)); }
-    boxBtn2.textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
-    viewSeg.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.view === mode)); b.disabled = !(it && previewModel(it)); });
-    // what the empty preview says
-    const allBad = has && S.items.every((x) => x.status === 'error');
-    stageMsg.hidden = P.has || !has;
-    stageMsg.innerHTML = allBad ? '<b>This file can’t be opened here</b><span>' + esc(S.items[0].msg) + '</span>'
-      : S.items.some((x) => x.status === 'new' || x.status === 'probing') ? '<b>Opening your file…</b>' : '<b>Select a file to preview it</b>';
-    vName.textContent = it ? it.name : '';
-    vMeta.textContent = it && it.info ? itemMeta(it) : '';
-    renderTransport();
-
-    // file list (keeps keyboard focus on the same button across redraws)
-    const focus = document.activeElement && queueEl.contains(document.activeElement) ? [document.activeElement.closest('[data-id]')?.dataset.id, document.activeElement.dataset.act] : null;
-    queueEl.innerHTML = '';
-    S.items.forEach((x) => {
-      const li = document.createElement('li');
-      li.className = 'file' + (x.id === S.selId ? ' is-sel' : '');
-      li.dataset.id = x.id;
-      li.innerHTML =
-        '<button type="button" class="file-pick" data-act="pick"><span class="thumb"></span><span class="file-text"><span class="file-name"></span><span class="file-meta"></span></span></button>' +
-        '<div class="file-acts"><button type="button" class="icon-btn" data-act="save" title="Download" aria-label="Download">' + ICON.save + '</button>' +
-        '<button type="button" class="icon-btn" data-act="del" title="Remove from list" aria-label="Remove from list">' + ICON.del + '</button></div>' +
-        '<div class="file-status"></div><div class="bar"><i></i></div>';
-      li.querySelector('.file-name').textContent = x.name;
-      li.querySelector('.file-pick').setAttribute('aria-label', 'Show ' + x.name);
-      queueEl.appendChild(li);
-      updItem(x);
-    });
-    if (focus && focus[0]) queueEl.querySelector('[data-id="' + focus[0] + '"] [data-act="' + focus[1] + '"]')?.focus();
-    fileCount.textContent = has ? String(S.items.length) : '';
-    filesTotal.textContent = has ? S.items.length + (S.items.length === 1 ? ' file' : ' files') + ' · ' + fmtMB(S.items.reduce((s, x) => s + x.size, 0)) : '';
-    clearBtn.disabled = S.busy || S.analyzing;
-
-    renderLogo();
-    renderQuality();
-    renderAction();
-    renderStepper();
-    redetectBtn.disabled = !selItem() || !selItem().info || S.busy || S.analyzing;
-    sameRow.hidden = S.items.filter((x) => x.kind === 'video').length < 2;
-    sameRectEl.disabled = S.busy;
-  }
-  function renderTransport() {
-    const it = P.item, video = !!(it && it.kind === 'video' && P.has);
-    scrub.disabled = !video;
-    playBtn.disabled = !video || S.busy;
-    playBtn.classList.toggle('is-playing', P.playing);
-    playBtn.setAttribute('aria-label', P.playing ? 'Pause preview' : 'Play preview');
+  function statusOf(it, ph) {
+    const p = clamp(it.progress || 0, 0, 1);
+    switch (ph) {
+      case 'opening': return { tone: 'run', title: it.status === 'new' ? 'Waiting…' : 'Opening the file…', sub: '' };
+      case 'queued': return { tone: 'idle', title: 'Waiting for its turn', sub: 'The logo is found automatically, one file at a time.' };
+      case 'finding': return { tone: 'run', title: p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', sub: pct(p) };
+      case 'ready':
+        if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s measurement', sub: 'This video’s own measurement failed. If traces remain, process it on its own.' };
+        return { tone: 'ok', title: logoName(it.model) + ' found', sub: it.manual ? 'Using your box' : 'Found automatically' };
+      case 'nologo': return { tone: 'warn', title: it.model && !it.model.ok && !it.msg ? 'No steady logo in this box' : it.msg || 'No logo found automatically', sub: 'Draw a box around the logo to continue.' };
+      case 'working': {
+        let sub = it.kind === 'image' ? '' : pct(p);
+        if (it.fps) sub += ' · ' + it.fps + ' frames/s';
+        return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : 'Removing the logo…', sub };
+      }
+      case 'done': return { tone: 'ok', title: 'Done', sub: fmtMB(it.result ? it.result.size : 0) + (it.saved ? ' · downloaded' : '') };
+      default: return { tone: 'bad', title: it.info ? 'Something went wrong' : 'This file can’t be opened', sub: friendly(it.msg) };
+    }
   }
   function updItem(it) {
-    const li = queueEl.querySelector('[data-id="' + it.id + '"]');
-    if (!li) return;
-    li.querySelector('.file-meta').textContent = itemMeta(it);
-    const th = li.querySelector('.thumb');
-    if (th.dataset.src !== (it.thumb || it.kind)) {
-      th.dataset.src = it.thumb || it.kind;
-      th.innerHTML = (it.thumb ? '<img alt="" src="' + it.thumb + '">' : ICON[it.kind]) + '<span class="kind">' + (it.kind === 'image' ? 'Photo' : 'Video') + '</span>';
-    }
-    const working = WORKING.includes(it.status);
-    const tone = it.status === 'done' ? (it.borrowed ? 'warn' : 'ok') : it.status === 'error' || it.status === 'skipped' || (it.msg && !working) ? 'warn' : working ? 'run' : 'idle';
-    li.dataset.tone = tone;
-    let text = it.status === 'analyzing' && it.progress >= 0.3 ? 'Measuring the logo…' : STATUS[it.status] || '';
-    if (working && it.progress) text += ' ' + pct(it.progress);
-    if (it.status === 'done' && it.result) text = 'Done · ' + fmtMB(it.result.size) + (it.borrowed ? ' · used the lead video’s logo measurement; if you see traces, process it on its own' : '');
-    if (it.msg && !working) text = it.msg;
-    const st = li.querySelector('.file-status');
-    st.innerHTML = '<span class="st st-' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : tone === 'ok' ? ICON.ok : tone === 'warn' ? ICON.warn : '') + '<span></span></span>' + (it.id === S.refId && S.items.length > 1 ? '<span class="lead" title="The other videos follow this file’s logo spot">Lead</span>' : '');
-    st.querySelector('.st > span:last-child').textContent = text;
-    if (it.status === 'encoding' && !it.encT0) it.encT0 = performance.now();
-    const bar = li.querySelector('.bar');
-    bar.hidden = !working;
-    bar.querySelector('i').style.width = (clamp(it.progress, 0, 1) * 100).toFixed(1) + '%';
-    li.querySelector('[data-act="save"]').hidden = it.status !== 'done';
-    li.querySelector('[data-act="del"]').disabled = S.busy || S.analyzing;
+    const c = it.card;
+    if (!c || it.removed) return;
+    const ph = phase(it), s = statusOf(it, ph);
+    c.el.dataset.phase = ph; c.el.dataset.tone = s.tone;
+    setText(c.meta, itemMeta(it));
+    if (it.thumb && c.img.dataset.s !== '1') { c.img.src = it.thumb; c.img.dataset.s = '1'; c.img.hidden = false; c.ph.hidden = true; }
+    setText(c.badge, it.kind === 'image' ? 'Photo' : it.info ? 'Video · ' + (it.info.dur - it.info.first).toFixed(1) + ' s' : 'Video');
+    setHtml(c.ico, ICON[s.tone === 'run' ? 'spin' : s.tone === 'ok' ? 'ok' : s.tone === 'idle' ? 'clock' : 'warn']);
+    setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub;
+    const barOn = ph === 'finding' || ph === 'working';
+    c.bar.hidden = !barOn;
+    if (barOn) { const v = (clamp(it.progress, 0, 1) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
+    c.cuWrap.hidden = !(it.cuHas && (ph === 'ready' || ph === 'working' || ph === 'done'));
+    setText(c.aCap, ph === 'working' ? 'After (live)' : ph === 'done' && it.cuKind === 'result' ? 'After (result)' : 'After (preview)');
+    const live = !!it.liveOn && ph === 'working';
+    c.live.hidden = !live; c.liveTag.hidden = !live;
+    c.review.hidden = !it.info || ph === 'error';
+    c.box.hidden = ph !== 'nologo';
+    c.box.classList.toggle('primary', ph === 'nologo');
+    c.retry.hidden = !(ph === 'error' || ph === 'nologo' || (ph === 'ready' && it.borrowed));
+    c.download.hidden = ph !== 'done';
+    c.removeBtn.disabled = S.busy && (ph === 'working' || ph === 'queued' || ph === 'ready' || ph === 'opening');
+    c.removeBtn.title = S.busy ? 'Stop first to change the list' : 'Remove from the list';
   }
-  function updTotal() {
-    const items = S.items.filter((i) => i.info && i.status !== 'error');
-    if (!S.busy || !items.length) return;
-    let sum = 0;
-    for (const i of items) sum += i.status === 'done' || i.status === 'skipped' ? 1 : i.status === 'encoding' ? 0.15 + 0.85 * i.progress : i.status === 'learning' ? 0.15 * i.progress : 0;
-    const p = sum / items.length;
-    totalFill.style.width = (p * 100).toFixed(1) + '%';
-    totalPct.textContent = pct(p);
-    const n = items.filter((i) => i.status === 'done' || i.status === 'skipped').length;
-    const cur = items.find((i) => i.status === 'learning' || i.status === 'encoding');
-    totalText.textContent = cur ? (items.length > 1 ? 'File ' + (items.indexOf(cur) + 1) + ' of ' + items.length + ' · ' : '') + cur.name : n + ' of ' + items.length + ' finished';
-    let sub = cur ? STATUS[cur.status] + ' ' + pct(cur.progress) : '';
-    if (cur && cur.kind === 'video' && cur.status === 'encoding' && cur.encT0 && cur.progress > 0.02) {
-      const secs = (performance.now() - cur.encT0) / 1000, frames = (cur.info.dur - cur.info.first) * cur.info.fps;
-      if (secs > 0.5) sub += ' · ' + Math.round((cur.progress * frames) / secs) + ' frames/s';
-    }
-    totalSub.textContent = sub;
-    const el = (performance.now() - S.runT0) / 1000;
-    if (p > 0.02 && el > 3) {
-      const raw = (el * (1 - p)) / p;
-      S.eta = S.eta == null ? raw : S.eta * 0.85 + raw * 0.15;
-      totalEta.textContent = fmtEta(S.eta);
-    } else totalEta.textContent = 'Estimating time…';
-    setTitle(pct(p) + ' · ');
-  }
-  function renderAction() {
-    const ref = refItem(), done = doneItems();
-    const todo = S.items.filter((i) => i.info && i.status !== 'done' && i.status !== 'error').length;
-    const showDone = !S.busy && done.length > 0;
-    totalEl.hidden = !S.busy;
-    cancelBtn.disabled = false;
-    doneBox.hidden = !showDone;
-    readyBox.hidden = S.busy || (showDone && !todo);
-    runBtn.disabled = !(ref && ref.model && ref.model.ok) || S.analyzing || !todo;
-    runLabel.textContent = showDone ? 'Remove logo from ' + todo + ' more ' + (todo === 1 ? 'file' : 'files') : todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo';
-    let why = '', wait = false;
-    if (S.items.length && !ref && S.items.some((i) => i.status === 'new' || i.status === 'probing')) { why = 'Opening your files…'; wait = true; }
-    else if (S.items.length && !ref) why = 'None of these files could be opened.';
-    else if (ref && (S.analyzing || ref.status === 'analyzing' || ref.status === 'probing')) { why = 'Checking the logo first…'; wait = true; }
-    else if (ref && !(ref.model && ref.model.ok)) why = 'Draw a box around the logo on the preview first.';
-    else if (todo) why = S.items.some((i) => i.kind === 'video' && i.info && i.status !== 'done') ? 'Same resolution, frame rate and audio as the original.' : 'Photos keep their format and size.';
-    runWhy.textContent = why;
-    runWhy.classList.toggle('is-wait', wait);
-    if (showDone) {
-      const total = done.reduce((s, i) => s + i.result.size, 0), skipped = S.items.filter((i) => i.status === 'skipped' || i.status === 'error').length;
-      doneTitle.textContent = done.length === 1 ? 'Your file is ready' : done.length + ' files are ready';
-      doneSub.textContent = fmtMB(total) + (S.lastSecs ? ' · took ' + (S.lastSecs < 90 ? S.lastSecs + ' s' : Math.round(S.lastSecs / 60) + ' min') : '') + (skipped ? ' · ' + skipped + ' not done, see the list' : '');
-      saveLabel.textContent = done.length === 1 ? 'Download' : 'Download all (ZIP)';
-      saveBtn.title = done.length === 1 ? outName(done[0]) : 'One ZIP with ' + done.length + ' files';
-      moreBtn.hidden = false; moreBtn.textContent = 'Start over with new files';
-    }
-  }
-  function renderStepper() {
-    const ref = refItem(), has = S.items.length > 0, logoOk = !!(ref && ref.model && ref.model.ok), anyDone = doneItems().length > 0;
-    const doneMap = { add: has, check: logoOk, remove: anyDone && !S.busy, save: false };
-    let cur = ['add', 'check', 'remove', 'save'].find((k) => !doneMap[k]);
-    if (S.busy) cur = 'remove';
-    stepperEl.querySelectorAll('li').forEach((li) => {
-      const k = li.dataset.step;
-      li.dataset.state = k === cur ? 'cur' : doneMap[k] ? 'done' : 'todo';
-      if (k === cur) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+  function reconcileCards() {
+    for (const li of [...jobsEl.children]) if (!S.items.some((it) => it.card && it.card.el === li)) li.remove();
+    S.items.forEach((it, idx) => {
+      const c = ensureCard(it), at = jobsEl.children[idx];
+      if (at !== c.el) jobsEl.insertBefore(c.el, at || null);
+      updItem(it);
     });
   }
-  function logoState(tone, title, text) {
-    return '<div class="logo-state ' + tone + '">' + (tone === 'run' ? '<span class="spin"></span>' : '<span class="ico">' + ICON[tone === 'ok' ? 'ok' : tone === 'warn' ? 'warn' : 'info'] + '</span>') +
-      '<div><b>' + title + '</b>' + (text ? '<span>' + text + '</span>' : '') + '</div></div>';
+
+  // ---------- the page ----------
+  function render() {
+    const has = S.items.length > 0;
+    welcomeEl.hidden = has; jobArea.hidden = !has; barEl.hidden = !has;
+    reconcileCards();
+    fileCount.textContent = has ? String(S.items.length) : '';
+    filesTotal.textContent = has ? fmtMB(S.items.reduce((s, x) => s + x.size, 0)) : '';
+    clearBtn.disabled = S.busy;
+    renderOptions();
+    renderBar();
+    rvRender();
   }
-  function renderLogo() {
-    const it = selItem();
-    let html = '', chip = '';
-    if (!it) {
-      const bad = S.items.length && S.items.every((x) => x.status === 'error');
-      logoInfo.innerHTML = bad ? logoState('warn', 'No file could be opened', 'Use a recent Chrome or Edge on a computer, and the original MP4, MOV or WebM file.') : '<p class="help">Add a file and the logo is found automatically.</p>';
-      logoChip.innerHTML = ''; return;
-    }
-    const m = it.model, ref = refItem(), isRef = it.id === S.refId;
-    if (it.status === 'analyzing' || it.status === 'probing' || it.status === 'new') {
-      const p = it.progress || 0;
-      html = logoState('run', it.status !== 'analyzing' ? 'Opening the file…' : p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', 'This takes a few seconds.') +
-        (it.status === 'analyzing' ? '<div class="bar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' : '');
-    } else if (m && m.ok && it.borrowed) {
-      html = logoState('warn', 'Using the lead video’s measurement', 'This video’s own measurement failed, so the lead file’s is used. If traces remain, remove this video on its own, or draw a box around its logo.');
-    } else if (m && m.ok) {
-      const name = m.kind === 'image' || m.gemini ? 'Gemini sparkle' : m.veo ? 'Veo text mark' : 'Logo';
-      chip = it.manual ? 'Your box' : 'Automatic';
-      const opaque = m.kind !== 'image' && m.max >= C.OPAQUE;
-      const kv = m.kind === 'image'
-        ? '<dt>Position</dt><dd>x ' + m.rect.x + ' · y ' + m.rect.y + ' · logo ' + Math.round(m.size) + ' px</dd>' +
-          '<dt>Opacity</dt><dd>max ' + Math.round(m.max * 100) + '%</dd>' +
-          '<dt>Method</dt><dd>known logo shape, fitted to this photo and reversed</dd>'
-        : '<dt>Position</dt><dd>x ' + m.rect.x + ' · y ' + m.rect.y + ' · ' + m.rect.w + '×' + m.rect.h + '</dd>' +
-          '<dt>Opacity</dt><dd>mean ' + Math.round(m.mean * 100) + '% · max ' + Math.round(m.max * 100) + '%</dd>' +
-          '<dt>Method</dt><dd>' + (m.method === 'template' ? (m.planeAlpha ? 'known logo shape, matched to this video pixel by pixel' : 'known logo shape (still background)') : 'learned from the video') + '</dd>' +
-          '<dt>Analysed</dt><dd>' + m.frames + ' frames · ' + (m.mode === 'yuv' ? 'YUV, no colour conversion' : 'RGB') + '</dd>' +
-          (m.resp ? '<dt>Dark scenes</dt><dd>extra correction on (from ' + m.resp.frames + ' frames)</dd>' : '');
-      html = logoState('ok', name + ' found', opaque ? 'Parts of it are fully solid; those pixels are filled in from around them.' : 'It is see-through, so the real picture underneath is restored.') +
-        '<details class="details"><summary>Technical details</summary><dl class="kv">' + kv + '</dl></details>';
-    } else if (m && !m.ok) {
-      html = logoState('warn', 'No steady logo in this box', 'Draw a slightly larger box around the logo.');
-    } else if (it.status === 'error') {
-      html = logoState('warn', 'This file could not be opened', esc(it.msg));
-    } else if (!isRef && ref && ref.model && ref.model.ok && S.sameRect && it.kind !== 'image') {
-      html = logoState('info', 'Same spot as the lead file', 'This video’s logo is measured when you pick it or when it is processed. Until then the preview shows the original.');
-    } else if (it.msg || (isRef && it.status === 'ready')) {
-      html = logoState('warn', esc(it.msg || 'No logo found automatically'), 'Click “Draw a box”, then drag around the logo on the preview, a little larger than the logo.');
-    } else {
-      html = logoState('info', 'Waiting for its turn…', '');
-    }
-    logoInfo.innerHTML = html;
-    logoChip.innerHTML = chip ? '<span class="chip">' + chip + '</span>' : '';
-  }
-  function renderQuality() {
+  function renderOptions() {
     qMax.setAttribute('aria-pressed', String(S.quality === 'max'));
     qHigh.setAttribute('aria-pressed', String(S.quality === 'high'));
     const vid = refItem() && refItem().kind === 'video' && refItem().info ? refItem() : S.items.find((i) => i.kind === 'video' && i.info);
     qMax.disabled = qHigh.disabled = S.busy || !vid;
+    const videos = S.items.filter((i) => i.kind === 'video').length;
+    sameRow.hidden = videos < 2;
+    sameRectEl.disabled = S.busy;
+    optSum.textContent = (S.quality === 'max' ? 'Best quality' : 'Smaller files') + (videos > 1 && !S.sameRect ? ' · each video on its own' : '');
     if (!vid) {
-      qNote.textContent = S.items.length ? 'Photos keep their format: a PNG stays lossless and a JPEG stays a high-quality JPEG.' : 'Resolution, frame rate and every frame stay the same, and the audio is copied untouched.';
-      qNote.title = '';
+      qNote.textContent = S.items.length ? 'Photos keep their format: a PNG stays lossless and a JPEG stays a high-quality JPEG.' : '';
       return;
     }
     const b = targetBitrate(vid.info, S.quality), d = vid.info.dur - vid.info.first;
-    qNote.textContent = 'About ' + fmtMB((b + 192000) * d / 8) + (S.items.filter((i) => i.kind === 'video').length > 1 ? ' for the lead video' : '') + '. Every frame, the frame rate and the audio stay as they were.';
+    qNote.textContent = 'About ' + fmtMB((b + 192000) * d / 8) + (videos > 1 ? ' for the first video' : '') + '. Every frame, the frame rate and the audio stay as they were.';
     qNote.title = 'Changing pixels means re-encoding the video; extra bitrate keeps the difference invisible. ' + fmtMbps(vid.info.bitrate) + ' now → about ' + fmtMbps(b) + ' after.';
+  }
+  const fmtEta = (s) => (s < 8 ? 'Almost done' : s < 60 ? 'About ' + Math.max(10, Math.round(s / 5) * 5) + ' s left' : s < 5400 ? 'About ' + Math.round(s / 60) + ' min left' : 'About ' + (s / 3600).toFixed(1) + ' h left');
+  function updTotal() {
+    if (!S.busy) return;
+    const p = runProgress();
+    abFill.style.width = (p * 100).toFixed(1) + '%';
+    setText(abPct, pct(p));
+    const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && !i.removed);
+    const cur = S.items.find((i) => i.status === 'encoding' || i.status === 'learning');
+    let sub = cur ? (runItems.length > 1 ? 'File ' + Math.min(runItems.length, runItems.filter((i) => i.status === 'done').length + 1) + ' of ' + runItems.length + ' · ' : '') + cur.name : '';
+    if (cur && cur.kind === 'video' && cur.status === 'encoding' && cur.encT0 && cur.progress > 0.02) {
+      const secs = (performance.now() - cur.encT0) / 1000, frames = (cur.info.dur - cur.info.first) * cur.info.fps;
+      if (secs > 0.5) { cur.fps = Math.round((cur.progress * frames) / secs); sub += ' · ' + cur.fps + ' frames/s'; }
+    }
+    const el = (performance.now() - S.runT0) / 1000;
+    let eta = 'Estimating time…';
+    if (p > 0.02 && el > 3) {
+      const raw = (el * (1 - p)) / p;
+      S.eta = S.eta == null ? raw : S.eta * 0.85 + raw * 0.15;
+      eta = fmtEta(S.eta);
+    }
+    setText(abSub, (sub ? sub + ' · ' : '') + eta);
+    setTitle(pct(p) + ' · ');
+  }
+  function setBar(o) {
+    barEl.dataset.state = o.live ? 'running' : o.primary && o.primary.act === 'run' ? 'ready' : o.primary && o.primary.act === 'save' ? 'done' : 'idle';
+    abIcon.className = 'ab-icon ' + (o.tone || ''); setHtml(abIcon, o.icon || '');
+    setText(abTitle, o.title); abPct.hidden = !o.pct;
+    if (!o.live) setText(abSub, o.sub || '');
+    abProgress.hidden = !o.live;
+    abPrimary.hidden = !o.primary;
+    if (o.primary) {
+      abPrimary.disabled = !!o.primary.disabled; abPrimary.dataset.act = o.primary.act; abPrimary.classList.toggle('is-busy', !!o.primary.busy);
+      setText(abPrimaryLabel, o.primary.label); setHtml($('#abPrimaryIcon'), o.primary.icon || '');
+    }
+    abSecondary.hidden = !o.secondary;
+    if (o.secondary) { abSecondary.dataset.act = o.secondary.act; abSecondary.disabled = !!o.secondary.disabled; abSecondary.innerHTML = (o.secondary.icon || '') + '<span></span>'; abSecondary.lastChild.textContent = o.secondary.label; }
+  }
+  function renderBar() {
+    if (!S.items.length) return;
+    const c = counts(), done = c.done, todo = c.opening + c.queued + c.finding + c.ready, attention = c.nologo + c.error;
+    if (S.busy) {
+      setBar({ tone: 'run', icon: ICON.spin, title: 'Removing the logo', pct: true, live: true, secondary: { act: 'stop', label: 'Stop', icon: ICON.stop } });
+      updTotal();
+      return;
+    }
+    const stale = S.items.some((i) => i.status === 'done' && i.doneQuality && i.doneQuality !== S.quality);
+    const sizeDone = fmtMB(doneItems().reduce((s, i) => s + i.result.size, 0));
+    const unsaved = unsavedItems().length;
+    const attn = attention ? plural(attention, 'file needs', 'files need') + ' attention and will be skipped.' : '';
+    if (done && !todo) {
+      setBar({
+        tone: 'ok', icon: ICON.ok, title: done === 1 ? 'Your file is ready' : plural(done, 'file is', 'files are') + ' ready',
+        sub: [sizeDone, S.lastSecs ? 'took ' + (S.lastSecs < 90 ? S.lastSecs + ' s' : Math.round(S.lastSecs / 60) + ' min') : '', unsaved ? '' : 'downloaded', attn].filter(Boolean).join(' · '),
+        primary: { act: 'save', label: done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
+        secondary: stale ? { act: 'redo', label: 'Redo in ' + (S.quality === 'max' ? 'best quality' : 'smaller files'), icon: ICON.redo } : { act: 'startover', label: 'Start over' },
+      });
+      if (S.zipping) setText(abPrimaryLabel, 'Building the ZIP…');
+      return;
+    }
+    if (done && todo) {
+      setBar({
+        tone: 'ok', icon: ICON.ok, title: plural(done, 'file done', 'files done') + ' · ' + todo + ' left', sub: S.stopped ? 'Stopped. Continue whenever you like.' : attn,
+        primary: { act: 'run', label: 'Remove logo from ' + plural(todo, 'more file', 'more files'), icon: ICON.ok },
+        secondary: { act: 'save', label: done === 1 ? 'Download the finished file' : 'Download ' + done + ' finished files', icon: ICON.save, disabled: S.zipping },
+      });
+      return;
+    }
+    if (todo) {
+      const waiting = c.opening + c.queued + c.finding;
+      setBar({
+        tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.ok,
+        title: waiting && !c.ready ? 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…' : plural(todo, 'file is', 'files are') + ' ready',
+        sub: [waiting ? 'Finding the logo in each file.' : 'Review a file first if you like.', attn].filter(Boolean).join(' '),
+        primary: { act: 'run', label: todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo', icon: ICON.ok },
+      });
+      return;
+    }
+    setBar({
+      tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to process',
+      sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
+      primary: { act: 'run', label: 'Remove logo', icon: ICON.ok, disabled: true },
+    });
+  }
+  function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
+  function setNote(text, kind) {
+    for (const el of [noteEl, welcomeNote]) {
+      el.textContent = text || '';
+      el.className = 'msg' + (kind ? ' is-' + kind : '');
+      el.hidden = !text;
+    }
   }
 
   // ---------- events ----------
-  queueEl.addEventListener('click', async (e) => {
+  jobsEl.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
     const it = getItem(+btn.closest('[data-id]').dataset.id);
     if (!it) return;
-    const act = btn.dataset.act;
-    if (act === 'pick') { if (it.id !== S.selId) select(it); }
-    else if (act === 'save' && it.result) saveBlob(it.result, outName(it));
-    else if (act === 'del' && !S.busy && !S.analyzing) {
-      S.items = S.items.filter((i) => i !== it);
-      if (S.selId === it.id) { S.selId = null; await stopPlay(); closePreview(); vctx.clearRect(0, 0, view.width, view.height); loupes.hidden = true; }
-      if (S.refId === it.id) {
-        S.refId = null;
-        const ref = S.items.find((i) => i.info && i.status !== 'error');
-        if (ref) { S.refId = ref.id; await select(ref); if (!ref.model) analyze(ref); }
-      } else if (!S.selId && S.items.length) { const r = refItem(); if (r) select(r); }
-      render();
+    switch (btn.dataset.act) {
+      case 'review': openReview(it); break;
+      case 'download': if (it.result) { saveBlob(it.result, outName(it)); it.saved = true; updItem(it); renderBar(); } break;
+      case 'retry': retryItem(it); break;
+      case 'box': await openReview(it); if (canDraw()) { S.boxMode = true; rvRender(); } break;
+      case 'remove': removeItem(it); break;
     }
   });
+  async function removeItem(it) {
+    if (S.busy && ['working', 'queued', 'ready', 'opening'].includes(phase(it))) return;
+    if (it.status === 'done' && !it.saved && !(await ask({ title: 'Remove this file?', text: it.name + ' is finished but not downloaded yet. Removing it deletes the result.', yes: 'Remove', no: 'Keep it', danger: true }))) return;
+    if (!S.items.includes(it)) return;
+    it.removed = true; // a search for its logo that is already under way just finishes; the result is dropped
+    S.items = S.items.filter((i) => i !== it);
+    if (it.card) it.card.el.remove();
+    if (it.bmp && it.bmp.close) { try { it.bmp.close(); } catch (e) { /* closed */ } }
+    if (S.reviewId === it.id) { const near = S.items.find((i) => i.info); if (near) await showInReview(near); else await closeReview(); }
+    ensureLead();
+    render(); pump();
+  }
   async function clearAll() {
-    if (S.busy || S.analyzing) return;
-    await stopPlay();
-    S.items = []; S.refId = null; S.selId = null; S.rectRel = null; S.boxMode = false;
-    closePreview();
-    vctx.clearRect(0, 0, view.width, view.height); loupes.hidden = true;
+    if (S.busy || !S.items.length) return;
+    if (!(await okToLose('Clearing the list'))) return;
+    await closeReview();
+    for (const it of S.items) it.removed = true;
+    S.items = []; S.refId = null; S.rectRel = null; S.boxMode = false; S.lastSecs = 0; S.stopped = false;
+    jobsEl.innerHTML = '';
     setNote('');
+    restoreTitle();
     render();
   }
   clearBtn.addEventListener('click', clearAll);
-  moreBtn.addEventListener('click', clearAll);
-  redetectBtn.addEventListener('click', () => { const it = selItem(); if (it) analyze(it, null); });
-  const toggleBox = () => { if (!canDraw()) return; S.boxMode = !S.boxMode; render(); };
+  barEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn || btn.disabled) return;
+    switch (btn.dataset.act) {
+      case 'run': runAll(); break;
+      case 'save': saveAll(); break;
+      case 'stop': cancelAll(); break;
+      case 'redo': redoDone(); break;
+      case 'startover': clearAll(); break;
+    }
+  });
+  const toggleBox = () => { if (!canDraw()) return; S.boxMode = !S.boxMode; rvRender(); };
   boxBtn.addEventListener('click', toggleBox);
   boxBtn2.addEventListener('click', toggleBox);
+  redetectBtn.addEventListener('click', () => { const it = reviewItem(); if (it) retryItem(it); });
   viewSeg.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-view]');
     if (!b || b.disabled) return;
-    S.view = b.dataset.view; drawView(); render();
+    S.view = b.dataset.view; drawView(); rvRender();
   });
-  sameRectEl.addEventListener('change', () => { S.sameRect = sameRectEl.checked; render(); renderPreview(); });
   qMax.addEventListener('click', () => { S.quality = 'max'; render(); });
   qHigh.addEventListener('click', () => { S.quality = 'high'; render(); });
-  runBtn.addEventListener('click', runAll);
-  cancelBtn.addEventListener('click', cancelAll);
-  saveBtn.addEventListener('click', saveAll);
-  fileEl.addEventListener('change', () => { if (fileEl.files && fileEl.files.length) addFiles(fileEl.files); fileEl.value = ''; });
+  sameRectEl.addEventListener('change', () => {
+    S.sameRect = sameRectEl.checked;
+    for (const o of S.items) if (o.kind === 'video' && o !== refItem() && !o.manual && o.status === 'ready') { o.model = null; o.borrowed = false; o.msg = ''; o.cuHas = false; }
+    render(); pump();
+  });
+  rvClose.addEventListener('click', closeReview);
+  rvBackdrop.addEventListener('click', closeReview);
+  rvPrev.addEventListener('click', () => reviewStep(-1));
+  rvNext.addEventListener('click', () => reviewStep(1));
 
-  // drop files anywhere on the page
+  // adding files: buttons, drops (folders too), paste
+  const pickFiles = () => { if (!fatal) fileEl.click(); };
+  const pickFolder = () => { if (!fatal) folderEl.click(); };
+  chooseBtn.addEventListener('click', pickFiles);
+  chooseFolderBtn.addEventListener('click', pickFolder);
+  addFilesBtn.addEventListener('click', pickFiles);
+  addFolderBtn.addEventListener('click', pickFolder);
+  dropEl.addEventListener('click', (e) => { if (!e.target.closest('button')) pickFiles(); });
+  fileEl.addEventListener('change', () => { if (fileEl.files && fileEl.files.length) addFiles(fileEl.files); fileEl.value = ''; });
+  folderEl.addEventListener('change', () => { if (folderEl.files && folderEl.files.length) addFiles(folderEl.files, 'folder'); folderEl.value = ''; });
   let dragDepth = 0;
   const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-  document.addEventListener('dragenter', (e) => { if (hasFiles(e) && !fatal) { dragDepth++; dropOverlay.hidden = false; } }, { signal });
+  document.addEventListener('dragenter', (e) => { if (hasFiles(e) && !fatal && reviewEl.hidden) { dragDepth++; dropOverlay.hidden = false; } }, { signal });
   document.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) dropOverlay.hidden = true; }, { signal });
   document.addEventListener('dragover', (e) => e.preventDefault(), { signal });
-  document.addEventListener('drop', (e) => {
+  document.addEventListener('drop', async (e) => {
     e.preventDefault(); dragDepth = 0; dropOverlay.hidden = true;
-    if (!fatal && e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+    if (fatal || !e.dataTransfer || !reviewEl.hidden) return;
+    const { files, folder } = await filesFromDrop(e.dataTransfer);
+    if (files.length) addFiles(files, folder ? 'folder' : undefined);
   }, { signal });
   // paste a copied photo or file
   document.addEventListener('paste', (e) => {
     const t = e.target;
-    if (fatal || (t && t.closest && t.closest('input, textarea, [contenteditable]'))) return;
+    if (fatal || !reviewEl.hidden || (t && t.closest && t.closest('input, textarea, [contenteditable]'))) return;
     const files = e.clipboardData && e.clipboardData.files;
     if (files && files.length) { e.preventDefault(); addFiles(files); }
   }, { signal });
-  // keyboard: space plays, arrows step a frame, C cycles the view, B draws a box, Esc cancels it
+
+  // keyboard: in the review window space plays, arrows step a frame, C cycles the view, B draws a box,
+  // [ and ] switch files, Esc closes
+  function focusables(root) { return [...root.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"]), summary')].filter((el) => !el.disabled && !el.hidden && el.offsetParent !== null); }
   document.addEventListener('keydown', (e) => {
-    if (workspaceEl.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!confirmEl.hidden) {
+      if (e.key === 'Escape') { e.preventDefault(); askDone && askDone(false); }
+      else if (e.key === 'Tab') { const f = focusables(confirmEl); if (f.length) { const i = f.indexOf(document.activeElement); const n = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1); e.preventDefault(); f[n].focus(); } }
+      return;
+    }
+    if (reviewEl.hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); if (S.boxMode) { S.boxMode = false; drag = null; rvRender(); } else closeReview(); return; }
+    if (e.key === 'Tab') {
+      const f = focusables(reviewEl);
+      if (f.length) { const i = f.indexOf(document.activeElement); const n = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1); e.preventDefault(); f[n].focus(); }
+      return;
+    }
     const t = e.target;
     if (t && t.closest && t.closest('input, textarea, select, button, a, [contenteditable], [role="slider"], summary')) return;
     if (e.key === ' ') { e.preventDefault(); if (P.playing) stopPlay(); else play(); }
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); stepFrame(e.key === 'ArrowLeft' ? -1 : 1); }
-    else if (e.key === 'c' || e.key === 'C') { if (P.item && previewModel(P.item)) { const o = ['split', 'result', 'original']; S.view = o[(o.indexOf(S.view) + 1) % o.length]; drawView(); render(); } }
+    else if (e.key === 'c' || e.key === 'C') { if (P.item && previewModel(P.item)) { const o = ['split', 'result', 'original']; S.view = o[(o.indexOf(S.view) + 1) % o.length]; drawView(); rvRender(); } }
     else if (e.key === 'b' || e.key === 'B') toggleBox();
-    else if (e.key === 'Escape' && S.boxMode) { S.boxMode = false; drag = null; render(); }
+    else if (e.key === '[') reviewStep(-1);
+    else if (e.key === ']') reviewStep(1);
   }, { signal });
-  window.addEventListener('beforeunload', (e) => { if (S.busy) { e.preventDefault(); e.returnValue = ''; } }, { signal });
+  window.addEventListener('beforeunload', (e) => { if (leaveWarning()) { e.preventDefault(); e.returnValue = ''; } }, { signal });
 
   // a short Gemini clip to try the tool without a file of one's own
   if (import.meta.env.MODE === 'file') sampleCard.hidden = true;
@@ -1435,7 +1824,7 @@ export function mountTool(root) {
     try {
       const r = await fetch('/samples/gemini-sample.mp4');
       if (!r.ok) throw new Error(String(r.status));
-      addFiles([new File([await r.blob()], 'gemini-sample.mp4', { type: 'video/mp4' })]);
+      addFiles([new File([await r.blob()], 'gemini-sample.mp4', { type: 'video/mp4', lastModified: 1 })]);
     } catch (e) {
       setNote('The sample could not be loaded. Check your connection and try again.', 'warn');
     } finally { sampleBtn.disabled = false; label.textContent = was; }
@@ -1447,20 +1836,24 @@ export function mountTool(root) {
     : null;
   if (fatal) {
     const f = $('#fatal'); f.textContent = fatal; f.hidden = false;
-    dropEl.classList.add('is-off'); fileEl.disabled = true; sampleBtn.disabled = true;
+    for (const b of [chooseBtn, chooseFolderBtn, sampleBtn]) b.disabled = true;
+    dropEl.classList.add('is-off');
   }
   layoutStage();
   render();
-  window.__tool = { S, P };
+  window.__tool = { S, P, leaveWarning };
 
   return {
     isBusy: () => S.busy,
+    leaveWarning,
     destroy() {
       alive = false;
       S.cancel = true; P.playing = false;
       if (S.conv) S.conv.cancel().catch(() => {});
       keepAwake(false);
       restoreTitle();
+      stopOverlay();
+      scrollLocks = 0; document.documentElement.style.overflow = '';
       ac.abort();
       cleanups.forEach((f) => f());
       closePreview();

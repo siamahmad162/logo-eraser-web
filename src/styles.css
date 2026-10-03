@@ -480,7 +480,7 @@ button { font: inherit; }
 
 /* Tool page */
 .tool-page { padding-block: 24px 44px; display: grid; gap: 18px; }
-.wrap.tool-page, .wrap.wrap-app { max-width: 1480px; }
+.wrap.tool-page { max-width: 1104px; }
 .tool-head h1 { font-size: clamp(28px, 3vw, 38px); font-weight: 650; letter-spacing: -0.045em; }
 .tool-head p { color: var(--muted); margin-top: 6px; max-width: 75ch; }
 .main-tool { background: radial-gradient(900px 400px at 50% -100px, rgba(219, 20, 104, 0.12), transparent 70%); }

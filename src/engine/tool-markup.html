@@ -1,150 +1,163 @@
 <p class="fatal" id="fatal" hidden></p>
 
-<div class="topbar">
-  <ol class="stepper" id="stepper" aria-label="Progress">
-    <li data-step="add"><span class="dot">1</span><span class="lbl">Add files</span></li>
-    <li data-step="check"><span class="dot">2</span><span class="lbl">Check the logo</span></li>
-    <li data-step="remove"><span class="dot">3</span><span class="lbl">Remove</span></li>
-    <li data-step="save"><span class="dot">4</span><span class="lbl">Download</span></li>
-  </ol>
-  <span class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Private: your files never leave this device</span>
-</div>
+<input type="file" id="file" class="file-input" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple tabindex="-1" aria-hidden="true">
+<input type="file" id="folder" class="file-input" webkitdirectory multiple tabindex="-1" aria-hidden="true">
 
-<input type="file" id="file" class="file-input" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple>
-
-<section class="welcome" id="welcome" aria-label="Add files">
-  <label class="hero-drop" id="drop" for="file">
+<!-- before any file -->
+<section class="welcome" id="welcome" aria-label="Add your files">
+  <div class="hero-drop" id="drop">
     <span class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg></span>
-    <strong>Drop videos or photos here</strong>
-    <span class="hero-sub">or click to choose files. Add as many as you like.</span>
-    <span class="hero-btn">Choose files</span>
-    <span class="formats"><b>MP4</b><b>MOV</b><b>WebM</b><b>PNG</b><b>JPG</b><b>WebP</b></span>
-  </label>
-  <div class="welcome-side">
-    <div class="sample-card" id="sampleCard">
-      <span class="eyebrow-sm">No file handy?</span>
-      <p>Try it on a short Gemini clip with the sparkle logo.</p>
-      <button type="button" class="btn-soft" id="sampleBtn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg><span>Try a sample video</span></button>
+    <h2>Drop your videos or photos here</h2>
+    <p class="hero-sub">Gemini and Veo clips, one at a time or a whole folder. Everything stays on your device.</p>
+    <div class="hero-buttons">
+      <button type="button" class="cta cta-inline" id="chooseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Choose files</button>
+      <button type="button" class="btn-soft" id="chooseFolderBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Choose a folder</button>
     </div>
-    <ol class="how">
-      <li><b>Drop your files</b><span>Videos or photos, one or fifty.</span></li>
-      <li><b>The logo is found</b><span>The Gemini sparkle or Veo mark, located automatically.</span></li>
-      <li><b>Download clean files</b><span>Same resolution, frame rate and audio.</span></li>
-    </ol>
-    <p class="tip-line">Best results come from the original download, not a screen recording or a re-upload.</p>
-    <p class="msg" id="welcomeNote" hidden></p>
+    <span class="formats"><b>MP4</b><b>MOV</b><b>WebM</b><b>PNG</b><b>JPG</b><b>WebP</b></span>
   </div>
+  <ul class="trust-row">
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Original size, frame rate and sound</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Nothing is uploaded</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Works on a whole batch</li>
+  </ul>
+  <div class="sample-line" id="sampleCard">
+    <span>No file handy?</span>
+    <button type="button" class="link-btn strong" id="sampleBtn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg><span>Try a sample video</span></button>
+  </div>
+  <p class="msg" id="welcomeNote" hidden></p>
 </section>
 
-<div class="workspace" id="workspace" hidden>
-  <aside class="card files" aria-label="Files">
-    <div class="card-head">
-      <h2>Files <span class="count" id="fileCount"></span></h2>
-      <label class="mini-btn" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add</label>
-    </div>
-    <ul class="queue" id="queue"></ul>
-    <div class="files-foot"><span id="filesTotal"></span><button type="button" class="link-btn" id="clearBtn">Clear all</button></div>
-  </aside>
+<!-- with files: one card per file -->
+<section class="job-area" id="jobArea" aria-label="Your files" hidden>
+  <div class="job-toolbar">
+    <div class="job-title"><h2>Your files</h2><span class="count" id="fileCount"></span><span class="job-total" id="filesTotal"></span></div>
+    <button type="button" class="link-btn" id="clearBtn">Clear all</button>
+  </div>
 
-  <section class="card viewer" aria-label="Preview">
-    <div class="viewer-bar">
-      <div class="viewer-title"><b id="vName"></b><span id="vMeta"></span></div>
-      <div class="viewer-tools">
-        <div class="seg-sm" role="group" aria-label="What the preview shows" id="viewSeg">
-          <button type="button" data-view="split" aria-pressed="true" title="Compare (C)">Compare</button>
-          <button type="button" data-view="result" aria-pressed="false">Result</button>
-          <button type="button" data-view="original" aria-pressed="false">Original</button>
+  <details class="options" id="options">
+    <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>Options<span class="opt-sum" id="optSum"></span></summary>
+    <div class="opt-body">
+      <div class="opt">
+        <b>Video quality</b>
+        <div class="seg" role="group" aria-label="Video quality">
+          <button type="button" id="qMax" aria-pressed="true">Best quality<small>Recommended</small></button>
+          <button type="button" id="qHigh" aria-pressed="false">Smaller files<small>Still high quality</small></button>
         </div>
-        <button type="button" class="tool-btn" id="boxBtn" aria-pressed="false" title="Draw a box around the logo (B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect></svg><span>Draw box</span></button>
-      </div>
-    </div>
-
-    <div class="stage-wrap" id="stageWrap">
-      <div class="stage" id="stage" data-mode="original">
-        <canvas id="view"></canvas>
-        <div class="stage-msg" id="stageMsg" hidden></div>
-        <div class="split" id="split" role="slider" tabindex="0" aria-label="Compare original and result" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="split-knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"></path></svg></span></div>
-        <span class="stage-tag tag-l">Original</span>
-        <span class="stage-tag tag-r">Result</span>
-        <canvas id="overlay" aria-label="Drag here to draw a box around the logo"></canvas>
-        <div class="box-hint" id="boxHint" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect></svg><span id="boxHintText">Drag a box around the logo</span></div>
-        <div class="stage-pill" id="stagePill" hidden><span class="spin"></span><span id="stagePillText"></span></div>
-      </div>
-    </div>
-
-    <div class="transport">
-      <button type="button" class="play-btn" id="playBtn" aria-label="Play preview" title="Play / pause (Space)" disabled>
-        <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>
-        <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></svg>
-      </button>
-      <input type="range" id="scrub" min="0" max="1000" step="1" value="250" aria-label="Preview time" disabled>
-      <span class="tc" id="tc"><b>00:00.00</b> / 00:00.00</span>
-    </div>
-
-    <div class="loupes" id="loupes" hidden>
-      <figure class="loupe"><canvas id="loupeA" width="480" height="360"></canvas><figcaption><b>Before</b><span class="zoom" id="zoomA"></span></figcaption></figure>
-      <figure class="loupe"><canvas id="loupeB" width="480" height="360"></canvas><figcaption><b>After</b><span class="zoom" id="zoomB"></span></figcaption></figure>
-    </div>
-    <p class="viewer-hint" id="viewerHint">Close-ups of the logo before and after appear here once it is found. Move the timeline or press play to check other moments.</p>
-  </section>
-
-  <div class="inspector">
-    <section class="card insp action" id="actionCard" aria-live="polite">
-      <div class="ready-box" id="readyBox">
-        <button class="cta" id="runBtn" type="button" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
-          <span id="runLabel">Remove logo</span>
-        </button>
-        <p class="why" id="runWhy"></p>
-      </div>
-
-      <div class="busy-box" id="total" hidden>
-        <div class="busy-top"><span class="big-pct" id="totalPct">0%</span><span class="busy-eta" id="totalEta"></span></div>
-        <div class="bar big"><i id="totalFill"></i></div>
-        <p class="busy-line" id="totalText"></p>
-        <p class="busy-sub" id="totalSub"></p>
-        <button class="btn-soft wide" id="cancelBtn" type="button">Stop</button>
-        <p class="busy-note">Keep this tab open. You can switch to other tabs while it works.</p>
-      </div>
-
-      <div class="done-box" id="doneBox" hidden>
-        <div class="done-head"><span class="done-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><div><b id="doneTitle"></b><span id="doneSub"></span></div></div>
-        <button class="cta" id="saveBtn" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"></path></svg>
-          <span id="saveLabel">Download</span>
-        </button>
-        <button class="btn-soft wide" id="moreBtn" type="button" hidden></button>
-      </div>
-
-      <p class="msg" id="note" hidden></p>
-    </section>
-
-    <section class="card insp" aria-labelledby="logoTitle">
-      <div class="card-head"><h2 id="logoTitle">Logo</h2><span id="logoChip"></span></div>
-      <div id="logoInfo"></div>
-      <div class="insp-actions">
-        <button class="btn-soft sm" id="redetect" type="button" disabled>Detect again</button>
-        <button class="btn-soft sm" id="boxBtn2" type="button" disabled>Draw a box</button>
+        <p class="help" id="qNote"></p>
       </div>
       <label class="switch" for="sameRect" id="sameRow" hidden>
         <input type="checkbox" id="sameRect" checked>
         <span class="knob"></span>
-        <span>Same logo spot for all videos</span>
+        <span>Use the first video’s logo position for all videos <small>Turn off if the logo sits in a different place in some videos.</small></span>
       </label>
-    </section>
+    </div>
+  </details>
 
-    <section class="card insp" aria-labelledby="qTitle">
-      <div class="card-head"><h2 id="qTitle">Quality</h2></div>
-      <div class="seg" role="group" aria-label="Video quality">
-        <button type="button" id="qMax" aria-pressed="true">Best quality<small>Recommended</small></button>
-        <button type="button" id="qHigh" aria-pressed="false">Smaller file<small>Still high quality</small></button>
-      </div>
-      <p class="help" id="qNote">Resolution, frame rate and every frame stay the same, and the audio is copied untouched.</p>
-    </section>
+  <ul class="jobs" id="jobs"></ul>
 
+  <div class="add-row" id="addRow">
+    <span>Drop more files anywhere on this page, or</span>
+    <button type="button" class="link-btn strong" id="addFilesBtn">add files</button>
+    <span>·</span>
+    <button type="button" class="link-btn strong" id="addFolderBtn">add a folder</button>
   </div>
+</section>
+
+<!-- progress and the next action: always in view -->
+<div class="actionbar" id="actionbar" role="region" aria-label="Progress and actions" hidden>
+  <div class="ab-progress" id="abProgress" hidden><i id="abFill"></i></div>
+  <div class="ab-main">
+    <div class="ab-left">
+      <span class="ab-icon" id="abIcon" aria-hidden="true"></span>
+      <div class="ab-text">
+        <div class="ab-line"><b id="abTitle" aria-live="polite"></b><span class="ab-pct" id="abPct" hidden></span></div>
+        <span class="ab-sub" id="abSub"></span>
+      </div>
+    </div>
+    <div class="ab-right">
+      <button type="button" class="btn-soft" id="abSecondary" hidden></button>
+      <button type="button" class="cta cta-inline" id="abPrimary" disabled>
+        <span class="cta-ico" id="abPrimaryIcon" aria-hidden="true"></span><span id="abPrimaryLabel">Remove logo</span>
+      </button>
+    </div>
+  </div>
+  <p class="msg" id="note" hidden></p>
 </div>
 
 <p class="foot">Only use it on videos and photos you made or have the right to edit. AI-generated media can also carry invisible watermarks such as SynthID; this tool does not touch them, so keep labelling AI content where platforms or laws ask for it. See-through logos are restored mathematically; any fully opaque part is filled in from its surroundings.</p>
 
-<div class="drop-overlay" id="dropOverlay" hidden><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg><strong>Drop to add your files</strong><span>Videos and photos</span></div></div>
+<!-- review window: a closer look at one file -->
+<div class="modal" id="review" role="dialog" aria-modal="true" aria-labelledby="rvTitle" hidden>
+  <div class="modal-backdrop" id="rvBackdrop"></div>
+  <div class="modal-card rv-card" id="rvCard" tabindex="-1">
+    <header class="rv-head">
+      <div class="rv-title"><b id="rvTitle"></b><span id="rvMeta"></span></div>
+      <div class="rv-nav" id="rvNav">
+        <button type="button" class="icon-btn" id="rvPrev" aria-label="Previous file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+        <span id="rvCount"></span>
+        <button type="button" class="icon-btn" id="rvNext" aria-label="Next file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+      </div>
+      <button type="button" class="icon-btn lg" id="rvClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </header>
+    <div class="rv-body">
+      <div class="rv-main">
+        <div class="rv-tools">
+          <div class="seg-sm" role="group" aria-label="What the preview shows" id="viewSeg">
+            <button type="button" data-view="split" aria-pressed="true">Compare</button>
+            <button type="button" data-view="result" aria-pressed="false">Result</button>
+            <button type="button" data-view="original" aria-pressed="false">Original</button>
+          </div>
+          <button type="button" class="tool-btn" id="boxBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect></svg><span>Draw a box</span></button>
+        </div>
+        <div class="stage-wrap" id="stageWrap">
+          <div class="stage" id="stage" data-mode="original">
+            <canvas id="view"></canvas>
+            <div class="stage-msg" id="stageMsg" hidden></div>
+            <div class="split" id="split" role="slider" tabindex="0" aria-label="Compare original and result" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="split-knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"></path></svg></span></div>
+            <span class="stage-tag tag-l">Original</span>
+            <span class="stage-tag tag-r">Result</span>
+            <canvas id="overlay" aria-label="Drag here to draw a box around the logo"></canvas>
+            <div class="box-hint" id="boxHint" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"></rect></svg><span id="boxHintText">Drag a box around the logo</span></div>
+            <div class="stage-pill" id="stagePill" hidden><span class="spin"></span><span id="stagePillText"></span></div>
+          </div>
+        </div>
+        <div class="transport">
+          <button type="button" class="play-btn" id="playBtn" aria-label="Play preview" disabled>
+            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>
+            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></svg>
+          </button>
+          <input type="range" id="scrub" min="0" max="1000" step="1" value="250" aria-label="Preview time" disabled>
+          <span class="tc" id="tc"><b>00:00.00</b> / 00:00.00</span>
+        </div>
+      </div>
+      <aside class="rv-side">
+        <div class="loupes" id="loupes" data-empty="1">
+          <figure class="loupe"><canvas id="loupeA" width="480" height="360"></canvas><figcaption><b>Before</b><span class="zoom" id="zoomA"></span></figcaption></figure>
+          <figure class="loupe"><canvas id="loupeB" width="480" height="360"></canvas><figcaption><b>After</b><span class="zoom" id="zoomB"></span></figcaption></figure>
+          <p class="loupes-empty">Close-ups of the logo appear here once it is found.</p>
+        </div>
+        <div id="logoInfo"></div>
+        <div class="rv-actions">
+          <button class="btn-soft sm" id="redetect" type="button" disabled>Detect again</button>
+          <button class="btn-soft sm" id="boxBtn2" type="button" disabled>Draw a box</button>
+        </div>
+        <p class="rv-keys"><kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> step · <kbd>C</kbd> compare · <kbd>B</kbd> box · <kbd>[</kbd><kbd>]</kbd> files · <kbd>Esc</kbd> close</p>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- a question before something is lost -->
+<div class="modal modal-sm" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText" hidden>
+  <div class="modal-backdrop" id="cfBackdrop"></div>
+  <div class="modal-card">
+    <h2 id="cfTitle"></h2>
+    <p id="cfText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-soft" id="cfNo"></button>
+      <button type="button" class="cta cta-inline" id="cfYes"></button>
+    </div>
+  </div>
+</div>
+
+<div class="drop-overlay" id="dropOverlay" hidden><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg><strong>Drop to add your files</strong><span>Videos, photos or whole folders</span></div></div>

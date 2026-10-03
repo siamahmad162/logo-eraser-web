@@ -11,13 +11,13 @@ const ToolShell = memo(function ToolShell() {
 export function Tool() {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    let tool: { destroy(): void; isBusy(): boolean } | null = null;
+    let tool: { destroy(): void; isBusy(): boolean; leaveWarning(): string } | null = null;
     let gone = false;
     const root = host.current!.firstElementChild as HTMLElement;
     import('../engine/tool.js').then(({ mountTool }) => {
       if (gone) return;
       tool = mountTool(root);
-      setLeaveGuard(() => !tool?.isBusy() || confirm('Files are still being processed. Leave and stop?'));
+      setLeaveGuard(() => { const w = tool?.leaveWarning(); return !w || confirm(w); });
     });
     return () => {
       gone = true;
