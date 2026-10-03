@@ -70,7 +70,7 @@
     <div class="ab-left">
       <span class="ab-icon" id="abIcon" aria-hidden="true"></span>
       <div class="ab-text">
-        <div class="ab-line"><b id="abTitle" aria-live="polite"></b><span class="ab-pct" id="abPct" hidden></span></div>
+        <div class="ab-line"><b id="abTitle" aria-live="polite"></b><span class="ab-pct" id="abPct" title="Overall progress" hidden></span></div>
         <span class="ab-sub" id="abSub"></span>
       </div>
     </div>
@@ -81,8 +81,10 @@
       </button>
     </div>
   </div>
-  <p class="msg" id="note" hidden></p>
+  <div class="note" id="noteBox" hidden><span id="note"></span><button type="button" class="icon-btn" id="noteClose" aria-label="Dismiss this message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
 </div>
+
+<p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>
 
 <p class="foot">Only use it on videos and photos you made or have the right to edit. AI-generated media can also carry invisible watermarks such as SynthID; this tool does not touch them, so keep labelling AI content where platforms or laws ask for it. See-through logos are restored mathematically; any fully opaque part is filled in from its surroundings.</p>
 
@@ -129,6 +131,7 @@
           <input type="range" id="scrub" min="0" max="1000" step="1" value="250" aria-label="Preview time" disabled>
           <span class="tc" id="tc"><b>00:00.00</b> / 00:00.00</span>
         </div>
+        <p class="rv-hint" id="rvHint" hidden></p>
       </div>
       <aside class="rv-side">
         <div class="loupes" id="loupes" data-empty="1">

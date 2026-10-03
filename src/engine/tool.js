@@ -20,7 +20,7 @@ export function mountTool(root) {
   const jobArea = $('#jobArea'), jobsEl = $('#jobs'), fileCount = $('#fileCount'), filesTotal = $('#filesTotal'), clearBtn = $('#clearBtn'), addFilesBtn = $('#addFilesBtn'), addFolderBtn = $('#addFolderBtn');
   const optSum = $('#optSum'), qMax = $('#qMax'), qHigh = $('#qHigh'), qNote = $('#qNote'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
   const barEl = $('#actionbar'), abProgress = $('#abProgress'), abFill = $('#abFill'), abIcon = $('#abIcon'), abTitle = $('#abTitle'), abPct = $('#abPct'), abSub = $('#abSub');
-  const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note');
+  const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note'), noteBox = $('#noteBox'), noteClose = $('#noteClose'), srStatus = $('#srStatus'), rvHint = $('#rvHint');
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -56,7 +56,7 @@ export function mountTool(root) {
     items: [], refId: null, reviewId: null, rectRel: null, sameRect: true, quality: 'max',
     busy: false, analyzing: false, cancel: false, frac: 0.25, conv: null, intake: false,
     view: 'split', split: 0.5, splitSet: false, boxMode: false,
-    runId: 0, runT0: 0, runDid: 0, eta: null, lastSecs: 0, stopped: false, zipping: false,
+    runId: 0, runT0: 0, runDid: 0, eta: null, lastSecs: 0, stopped: false, stopping: false, zipping: false,
   };
   let nextId = 1;
   const getItem = (id) => S.items.find((i) => i.id === id) || null;
@@ -575,10 +575,24 @@ export function mountTool(root) {
     redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"></path></svg>',
   };
   const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
-  // what the user should do about a failure, in plain words
-  function friendly(msg) {
-    if (/cannot decode this video format/i.test(msg)) return msg + ' You can also save the video as MP4 (H.264) first.';
-    return msg;
+  // The reason a file failed, in plain words. The raw message stays available as a tooltip.
+  function explain(it) {
+    const raw = it.msg || '';
+    let m, text = raw;
+    if (/unsupported or unrecognizable|not recognized|invalid data/i.test(raw)) text = 'This browser can’t read this file. It may be damaged, or not a video or photo.';
+    else if (/No video track/i.test(raw)) text = 'There is no video in this file.';
+    else if ((m = raw.match(/cannot decode this video format \(([^)]+)\)/i))) {
+      const c = m[1].toLowerCase();
+      const name = { avc: 'H.264', hevc: 'H.265 (HEVC)', vp8: 'VP8', vp9: 'VP9', av1: 'AV1' }[c] || c.toUpperCase();
+      text = 'This browser can’t play ' + name + ' video. ' + (c === 'avc' ? 'Use a recent Chrome or Edge on a computer.' : 'Try Chrome or Edge, or save it as MP4 (H.264) first.');
+    }
+    else if (/image could not be opened/i.test(raw)) text = 'This image can’t be opened. It may be damaged.';
+    else if (/Not enough frames/i.test(raw)) text = 'This video is too short to find the logo in.';
+    else if (/cannot encode video/i.test(raw)) text = 'This browser can’t save a video this large. Use a recent Chrome or Edge on a computer.';
+    else if (/cannot be converted/i.test(raw)) text = 'This browser can’t convert this video. Try Chrome or Edge on a computer.';
+    else if (/could not be saved/i.test(raw)) text = 'The cleaned image could not be saved. Try again.';
+    else if (/^Something went wrong:/i.test(raw)) text = 'Something unexpected happened. Try again, or clean this file on its own.';
+    return { text, raw };
   }
   const isVideoFile = (f) => (f.type && f.type.startsWith('video/')) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(f.name);
   const coverRect = (W, H, ar) => { let sw = W, sh = W / ar; if (sh > H) { sh = H; sw = H * ar; } return { sx: (W - sw) / 2, sy: (H - sh) / 2, sw, sh }; };
@@ -1007,15 +1021,19 @@ export function mountTool(root) {
     rvPrev.disabled = idx <= 0; rvNext.disabled = idx >= S.items.length - 1;
     stage.classList.toggle('is-boxing', box);
     boxHint.hidden = !box || !!drag;
-    boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found automatically. Drag a box around it.' : 'Drag a box around the logo';
+    boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found. Drag a box around it.' : 'Drag a box around the logo';
     for (const b of [boxBtn, boxBtn2]) { b.disabled = !canDraw(); b.setAttribute('aria-pressed', String(!!S.boxMode)); }
     boxBtn.querySelector('span').textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
     boxBtn2.textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
     viewSeg.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.view === mode)); b.disabled = !previewModel(it); });
     const ph = phase(it);
     stageMsg.hidden = P.has;
-    stageMsg.innerHTML = it.status === 'error' ? '<b>This file can’t be opened here</b><span>' + esc(friendly(it.msg)) + '</span>' : '<b>Opening the preview…</b>';
-    pill(ph === 'finding' ? (it.progress < 0.3 ? 'Finding the logo…' : 'Measuring the logo…') : ph === 'queued' ? 'Waiting to find the logo…' : '');
+    stageMsg.innerHTML = it.status === 'error' ? '<b>Can’t show this file</b><span>' + esc(explain(it).text) + '</span>' : '<b>Opening the preview…</b>';
+    pill(ph === 'finding' ? (it.progress < 0.3 ? 'Finding the logo…' : 'Measuring the logo…') : ph === 'queued' ? 'In line to find the logo…' : '');
+    // controls that are off say why
+    const paused = S.busy ? 'Paused while files are being processed' : '';
+    playBtn.title = paused; boxBtn.title = paused; boxBtn2.title = paused; redetectBtn.title = paused;
+    rvHint.hidden = !S.busy; rvHint.textContent = S.busy ? 'Playback and drawing are paused while files are being processed.' : '';
     redetectBtn.disabled = !it.info || S.busy || ph === 'finding';
     renderTransport();
     renderLogo();
@@ -1032,10 +1050,10 @@ export function mountTool(root) {
     let html = '';
     if (ph === 'opening' || ph === 'finding' || ph === 'queued') {
       const p = it.progress || 0;
-      html = logoState('run', ph === 'queued' ? 'Waiting for its turn…' : ph === 'opening' ? 'Opening the file…' : p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', 'This takes a few seconds.') +
+      html = logoState('run', ph === 'queued' ? 'In line to find the logo…' : ph === 'opening' ? 'Opening the file…' : p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', ph === 'queued' ? 'It starts after the files above.' : 'This takes a few seconds.') +
         (ph === 'finding' ? '<div class="bar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' : '');
     } else if (m && m.ok && it.borrowed) {
-      html = logoState('warn', 'Using the first video’s measurement', 'This video’s own measurement failed, so the first video’s is used. If traces remain, remove this video on its own, or draw a box around its logo.');
+      html = logoState('warn', 'Using the first video’s logo settings', 'This video’s own check failed, so the first video’s settings are used. If traces remain, clean this video on its own, or draw a box around its logo.');
     } else if (m && m.ok) {
       const opaque = m.kind !== 'image' && m.max >= C.OPAQUE;
       const kv = m.kind === 'image'
@@ -1050,11 +1068,11 @@ export function mountTool(root) {
       html = logoState('ok', logoName(m) + ' found', (it.manual ? 'Your box. ' : '') + (opaque ? 'Parts of it are fully solid; those pixels are filled in from around them.' : 'It is see-through, so the real picture underneath is restored.')) +
         '<details class="details"><summary>Technical details</summary><dl class="kv">' + kv + '</dl></details>';
     } else if (m && !m.ok) {
-      html = logoState('warn', 'No steady logo in this box', 'Draw a slightly larger box around the logo.');
+      html = logoState('warn', 'No logo in that box', 'Draw a slightly bigger box around it.');
     } else if (ph === 'error') {
-      html = logoState('warn', 'This file could not be opened', esc(friendly(it.msg)));
+      html = logoState('warn', it.info ? 'Couldn’t clean this file' : 'Can’t open this file', esc(explain(it).text));
     } else {
-      html = logoState('warn', esc(it.msg || 'No logo found automatically'), 'Click “Draw a box”, then drag around the logo, a little larger than the logo.');
+      html = logoState('warn', it.manual ? 'No logo in that box' : 'No logo found', 'Click “Draw a box”, then drag a rectangle around it, a little bigger than the logo.');
     }
     logoInfo.innerHTML = html;
   }
@@ -1109,7 +1127,7 @@ export function mountTool(root) {
       S.items.push(it);
       ensureCard(it);
     }
-    if (fresh.length) { render(); intake(); }
+    if (fresh.length) { S.stopped = false; render(); intake(); announce(plural(fresh.length, 'file', 'files') + ' added'); }
   }
   // files from a drop, folders included (the entries must be read before the event ends)
   async function filesFromDrop(dt) {
@@ -1239,6 +1257,7 @@ export function mountTool(root) {
     }
     // the card shows the outcome at once; its close-up pictures follow a moment later
     updItem(it); render();
+    if (!it.removed) announce(it.name + ': ' + (it.model && it.model.ok ? logoName(it.model) + ' found' : it.msg && !it.model ? 'could not be checked' : 'no logo found'));
     if (P.item === it && !it.removed) { S.splitSet = false; renderPreview(); }
     if (!it.removed && it.model && it.model.ok) await makeCloseups(it, 'preview');
     S.analyzing = false;
@@ -1326,8 +1345,9 @@ export function mountTool(root) {
 
   async function runAll() {
     if (S.busy) return;
-    S.busy = true; S.cancel = false; S.stopped = false; S.runId++; S.runT0 = performance.now(); S.eta = null; S.lastSecs = 0; S.runDid = 0;
-    for (const it of S.items) if (isTodo(it)) it.runId = S.runId;
+    S.busy = true; S.cancel = false; S.stopped = false; S.stopping = false; S.runId++; S.runT0 = performance.now(); S.eta = null; S.lastSecs = 0; S.runDid = 0;
+    for (const it of S.items) { it.stopped = false; if (isTodo(it)) it.runId = S.runId; }
+    announce('Removing the logo from ' + plural(S.items.filter((i) => i.runId === S.runId).length, 'file', 'files'));
     await stopPlay();
     keepAwake(true);
     setNote('');
@@ -1351,7 +1371,7 @@ export function mountTool(root) {
           try {
             applyMeasure(it, await measure(it, rect, progressTick((p) => { it.progress = p; updItem(it); })), rect);
           } catch (e) {
-            if (S.cancel || (e && e.userMsg === 'Stopped.')) { it.status = 'ready'; it.progress = 0; updItem(it); break; }
+            if (S.cancel || (e && e.userMsg === 'Stopped.')) { it.status = 'ready'; it.progress = 0; it.stopped = true; updItem(it); break; }
             it.status = 'error'; it.msg = errText(e); updItem(it); updTotal();
             continue;
           }
@@ -1367,20 +1387,23 @@ export function mountTool(root) {
           else it.result = await convert(it, it.model, progressTick((p) => { it.progress = p; updItem(it); updTotal(); }), live);
           it.status = 'done'; it.msg = ''; it.doneQuality = S.quality; it.saved = false; it.progress = 1; S.runDid++;
           it.liveOn = false; updItem(it); updTotal();
+          announce(it.name + ' is finished');
           await makeCloseups(it, 'result');
         } catch (e) {
           it.liveOn = false;
-          if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; it.result = null; updItem(it); break; }
+          if (S.cancel || (MB.ConversionCanceledError && e instanceof MB.ConversionCanceledError)) { it.status = 'ready'; it.msg = ''; it.progress = 0; it.result = null; it.stopped = true; updItem(it); break; }
           it.status = 'error'; it.msg = errText(e); it.result = null;
+          announce(it.name + ' could not be cleaned');
         }
         updItem(it); updTotal();
       }
     } finally {
       S.lastSecs = Math.round((performance.now() - t0) / 1000);
-      S.busy = false; S.stopped = S.cancel;
+      S.busy = false; S.stopped = S.cancel; S.stopping = false;
       keepAwake(false);
-      if (S.cancel) setNote('Stopped. Files that finished can still be downloaded.');
-      else if (!S.runDid && !counts().error) setNote('No file could be processed. Open a file and draw a box around its logo.', 'warn');
+      if (S.cancel) announce('Stopped. ' + plural(S.runDid, 'file', 'files') + ' finished and kept.');
+      else if (!S.runDid && !counts().error) setNote('No file could be cleaned. Open a file and draw a box around its logo.', 'warn');
+      else if (S.runDid) announce('All done. ' + plural(S.runDid, 'file', 'files') + ' ready to download.');
       if (S.runDid && document.visibilityState === 'hidden') setTitle('✓ Done · '); else restoreTitle();
       S.cancel = false;
       for (const it of S.items) it.liveOn = false;
@@ -1389,9 +1412,12 @@ export function mountTool(root) {
     }
   }
   function cancelAll() {
-    S.cancel = true;
+    if (S.stopping) return;
+    S.cancel = true; S.stopping = true;
     if (S.conv) S.conv.cancel().catch(() => {});
-    abSecondary.disabled = true;
+    renderBar();
+    for (const it of S.items) if (it.status === 'encoding' || it.status === 'learning') updItem(it);
+    announce('Stopping');
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
@@ -1497,7 +1523,7 @@ export function mountTool(root) {
     const q = (s) => li.querySelector(s);
     it.card = {
       el: li, img: q('.th-img'), ph: q('.th-ph'), live: q('.th-live'), badge: q('.th-badge'), liveTag: q('.th-live-tag'),
-      name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
+      name: q('.job-name'), meta: q('.job-meta'), ico: q('.js-ico'), stWrap: q('.js-text'), stT: q('.js-text b'), stS: q('.js-text span'), bar: q('.job-bar'), barI: q('.job-bar i'),
       cuWrap: q('.cu'), b: q('.cu-b'), a: q('.cu-a'), aCap: q('.cu-a-cap'),
       thumbBtn: q('.job-thumb'), removeBtn: q('[data-act="remove"]'),
       review: q('.job-actions [data-act="review"]'), box: q('[data-act="box"]'), retry: q('[data-act="retry"]'), download: q('[data-act="download"]'),
@@ -1515,23 +1541,25 @@ export function mountTool(root) {
     if (it.kind === 'image') return i.w + '×' + i.h + ' · ' + fmtMB(it.size);
     return i.w + '×' + i.h + ' · ' + (i.dur - i.first).toFixed(1) + 's · ' + Math.round(i.fps) + 'fps · ' + fmtMB(it.size);
   }
+  // The words for one file, the same everywhere: opening → in line → finding → logo found / no logo found →
+  // waiting in line → removing → finished (or can't open / couldn't clean).
   function statusOf(it, ph) {
     const p = clamp(it.progress || 0, 0, 1);
     switch (ph) {
-      case 'opening': return { tone: 'run', title: it.status === 'new' ? 'Waiting…' : 'Opening the file…', sub: '' };
-      case 'queued': return { tone: 'idle', title: 'Waiting for its turn', sub: 'The logo is found automatically, one file at a time.' };
+      case 'opening': return { tone: 'run', title: 'Opening the file…', sub: '' };
+      case 'queued': return { tone: 'idle', title: 'In line to find the logo', sub: '' };
       case 'finding': return { tone: 'run', title: p < 0.3 ? 'Finding the logo…' : 'Measuring the logo…', sub: pct(p) };
       case 'ready':
-        if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s measurement', sub: 'This video’s own measurement failed. If traces remain, process it on its own.' };
-        return { tone: 'ok', title: logoName(it.model) + ' found', sub: it.manual ? 'Using your box' : 'Found automatically' };
-      case 'nologo': return { tone: 'warn', title: it.model && !it.model.ok && !it.msg ? 'No steady logo in this box' : it.msg || 'No logo found automatically', sub: 'Draw a box around the logo to continue.' };
-      case 'working': {
-        let sub = it.kind === 'image' ? '' : pct(p);
-        if (it.fps) sub += ' · ' + it.fps + ' frames/s';
-        return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : 'Removing the logo…', sub };
-      }
-      case 'done': return { tone: 'ok', title: 'Done', sub: fmtMB(it.result ? it.result.size : 0) + (it.saved ? ' · downloaded' : '') };
-      default: return { tone: 'bad', title: it.info ? 'Something went wrong' : 'This file can’t be opened', sub: friendly(it.msg) };
+        if (S.busy && it.runId === S.runId) return { tone: 'idle', title: 'Waiting in line', sub: 'Starts after the file above' };
+        if (it.stopped) return { tone: 'idle', title: 'Stopped before it finished', sub: 'It will start again from the beginning' };
+        if (it.borrowed) return { tone: 'warn', title: 'Using the first video’s logo settings', sub: 'This video’s own check failed. If traces remain, clean it on its own.' };
+        return { tone: 'ok', title: logoName(it.model) + ' found', sub: 'Ready to remove' + (it.manual ? ' · your box' : '') };
+      case 'nologo':
+        if (it.manual || (it.model && !it.model.ok)) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
+        return { tone: 'warn', title: 'No logo found', sub: 'Draw a box around the logo to clean this file.' };
+      case 'working': return { tone: 'run', title: it.status === 'learning' ? 'Measuring the logo…' : S.stopping ? 'Stopping…' : 'Removing the logo…', sub: it.kind === 'image' ? '' : pct(p) };
+      case 'done': return { tone: 'ok', title: 'Finished', sub: fmtMB(it.result ? it.result.size : 0) + (it.saved ? ' · downloaded' : ' · ready to download') };
+      default: { const e = explain(it); return { tone: 'bad', title: it.info ? 'Couldn’t clean this file' : 'Can’t open this file', sub: e.text, tip: e.raw }; }
     }
   }
   function updItem(it) {
@@ -1543,7 +1571,7 @@ export function mountTool(root) {
     if (it.thumb && c.img.dataset.s !== '1') { c.img.src = it.thumb; c.img.dataset.s = '1'; c.img.hidden = false; c.ph.hidden = true; }
     setText(c.badge, it.kind === 'image' ? 'Photo' : it.info ? 'Video · ' + (it.info.dur - it.info.first).toFixed(1) + ' s' : 'Video');
     setHtml(c.ico, ICON[s.tone === 'run' ? 'spin' : s.tone === 'ok' ? 'ok' : s.tone === 'idle' ? 'clock' : 'warn']);
-    setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub;
+    setText(c.stT, s.title); setText(c.stS, s.sub); c.stS.hidden = !s.sub; c.stWrap.title = s.tip || '';
     const barOn = ph === 'finding' || ph === 'working';
     c.bar.hidden = !barOn;
     if (barOn) { const v = (clamp(it.progress, 0, 1) * 100).toFixed(1); c.barI.style.width = v + '%'; c.bar.setAttribute('aria-valuenow', String(Math.round(+v))); }
@@ -1603,21 +1631,26 @@ export function mountTool(root) {
     const p = runProgress();
     abFill.style.width = (p * 100).toFixed(1) + '%';
     setText(abPct, pct(p));
-    const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && !i.removed);
+    const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && phase(i) !== 'nologo' && !i.removed);
     const cur = S.items.find((i) => i.status === 'encoding' || i.status === 'learning');
-    let sub = cur ? (runItems.length > 1 ? 'File ' + Math.min(runItems.length, runItems.filter((i) => i.status === 'done').length + 1) + ' of ' + runItems.length + ' · ' : '') + cur.name : '';
     if (cur && cur.kind === 'video' && cur.status === 'encoding' && cur.encT0 && cur.progress > 0.02) {
       const secs = (performance.now() - cur.encT0) / 1000, frames = (cur.info.dur - cur.info.first) * cur.info.fps;
-      if (secs > 0.5) { cur.fps = Math.round((cur.progress * frames) / secs); sub += ' · ' + cur.fps + ' frames/s'; }
+      if (secs > 0.5) cur.fps = Math.round((cur.progress * frames) / secs);
     }
     const el = (performance.now() - S.runT0) / 1000;
-    let eta = 'Estimating time…';
+    let eta = 'Estimating the time…';
     if (p > 0.02 && el > 3) {
       const raw = (el * (1 - p)) / p;
       S.eta = S.eta == null ? raw : S.eta * 0.85 + raw * 0.15;
       eta = fmtEta(S.eta);
     }
-    setText(abSub, (sub ? sub + ' · ' : '') + eta);
+    const n = runItems.length, k = Math.min(n, runItems.filter((i) => i.status === 'done').length + 1);
+    let title = 'Removing the logo', sub;
+    if (S.stopping) { title = 'Stopping…'; sub = 'Finishing the file in progress'; }
+    else if (!cur && S.analyzing) { title = 'Starting…'; sub = 'Finishing the logo search first'; }
+    else sub = (n > 1 ? 'File ' + k + ' of ' + n + ' · ' : '') + eta;
+    setText(abTitle, title); setText(abSub, sub);
+    abTitle.title = cur && cur.fps ? 'Speed: about ' + cur.fps + ' frames a second' : '';
     setTitle(pct(p) + ' · ');
   }
   function setBar(o) {
@@ -1629,27 +1662,36 @@ export function mountTool(root) {
     abPrimary.hidden = !o.primary;
     if (o.primary) {
       abPrimary.disabled = !!o.primary.disabled; abPrimary.dataset.act = o.primary.act; abPrimary.classList.toggle('is-busy', !!o.primary.busy);
-      setText(abPrimaryLabel, o.primary.label); setHtml($('#abPrimaryIcon'), o.primary.icon || '');
+      setText(abPrimaryLabel, o.primary.label); setHtml($('#abPrimaryIcon'), o.primary.icon || ''); abPrimary.title = o.primary.tip || '';
     }
     abSecondary.hidden = !o.secondary;
     if (o.secondary) { abSecondary.dataset.act = o.secondary.act; abSecondary.disabled = !!o.secondary.disabled; abSecondary.innerHTML = (o.secondary.icon || '') + '<span></span>'; abSecondary.lastChild.textContent = o.secondary.label; }
   }
+  // what is wrong with the files that will not be cleaned, in a few words
+  function issueParts(c) {
+    const out = [], open = S.items.filter((i) => i.status === 'error' && !i.info && !i.removed).length, clean = c.error - open;
+    if (c.nologo) out.push(c.nologo === 1 ? '1 file needs a box' : c.nologo + ' files need a box');
+    if (open) out.push(open === 1 ? '1 file can’t be opened' : open + ' files can’t be opened');
+    if (clean) out.push(clean === 1 ? '1 file couldn’t be cleaned' : clean + ' files couldn’t be cleaned');
+    return out;
+  }
+  const spanText = (s) => (s < 90 ? s + ' s' : Math.round(s / 60) + ' min');
   function renderBar() {
     if (!S.items.length) return;
-    const c = counts(), done = c.done, todo = c.opening + c.queued + c.finding + c.ready, attention = c.nologo + c.error;
+    const c = counts(), done = c.done, todo = c.opening + c.queued + c.finding + c.ready, issues = issueParts(c);
     if (S.busy) {
-      setBar({ tone: 'run', icon: ICON.spin, title: 'Removing the logo', pct: true, live: true, secondary: { act: 'stop', label: 'Stop', icon: ICON.stop } });
+      setBar({ tone: 'run', icon: ICON.spin, title: 'Removing the logo', pct: true, live: true, secondary: { act: 'stop', label: S.stopping ? 'Stopping…' : 'Stop', icon: ICON.stop, disabled: S.stopping } });
       updTotal();
       return;
     }
     const stale = S.items.some((i) => i.status === 'done' && i.doneQuality && i.doneQuality !== S.quality);
     const sizeDone = fmtMB(doneItems().reduce((s, i) => s + i.result.size, 0));
-    const unsaved = unsavedItems().length;
-    const attn = attention ? plural(attention, 'file needs', 'files need') + ' attention and will be skipped.' : '';
+    const saved = unsavedItems().length === 0;
+    const took = S.lastSecs ? 'took ' + spanText(S.lastSecs) : '';
     if (done && !todo) {
       setBar({
-        tone: 'ok', icon: ICON.ok, title: done === 1 ? 'Your file is ready' : plural(done, 'file is', 'files are') + ' ready',
-        sub: [sizeDone, S.lastSecs ? 'took ' + (S.lastSecs < 90 ? S.lastSecs + ' s' : Math.round(S.lastSecs / 60) + ' min') : '', unsaved ? '' : 'downloaded', attn].filter(Boolean).join(' · '),
+        tone: 'ok', icon: ICON.ok, title: issues.length ? plural(done, 'file', 'files') + ' done' : done === 1 ? 'Your file is done' : 'All done',
+        sub: [plural(done, 'file', 'files') + ' · ' + sizeDone, took, saved ? 'downloaded' : '', ...issues].filter(Boolean).join(' · '),
         primary: { act: 'save', label: done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
         secondary: stale ? { act: 'redo', label: 'Redo in ' + (S.quality === 'max' ? 'best quality' : 'smaller files'), icon: ICON.redo } : { act: 'startover', label: 'Start over' },
       });
@@ -1658,35 +1700,63 @@ export function mountTool(root) {
     }
     if (done && todo) {
       setBar({
-        tone: 'ok', icon: ICON.ok, title: plural(done, 'file done', 'files done') + ' · ' + todo + ' left', sub: S.stopped ? 'Stopped. Continue whenever you like.' : attn,
-        primary: { act: 'run', label: 'Remove logo from ' + plural(todo, 'more file', 'more files'), icon: ICON.ok },
+        tone: S.stopped ? 'warn' : 'ok', icon: S.stopped ? ICON.stop : ICON.ok, title: S.stopped ? 'Stopped' : done + ' of ' + (done + todo) + ' files done',
+        sub: S.stopped ? [plural(done, 'file', 'files') + ' finished and kept', todo + ' left', ...issues].join(' · ') : [todo + ' still to clean', ...issues].join(' · '),
+        primary: { act: 'run', label: (S.stopped ? 'Continue with ' : 'Remove logo from ') + (S.stopped ? plural(todo, 'file', 'files') : plural(todo, 'more file', 'more files')), icon: ICON.ok },
         secondary: { act: 'save', label: done === 1 ? 'Download the finished file' : 'Download ' + done + ' finished files', icon: ICON.save, disabled: S.zipping },
       });
       return;
     }
     if (todo) {
-      const waiting = c.opening + c.queued + c.finding;
+      const waiting = c.opening + c.queued + c.finding, label = todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo';
+      if (S.stopped) {
+        setBar({ tone: 'warn', icon: ICON.stop, title: 'Stopped', sub: ['Nothing was lost', plural(todo, 'file', 'files') + ' left', ...issues].join(' · '), primary: { act: 'run', label: 'Continue with ' + plural(todo, 'file', 'files'), icon: ICON.ok } });
+        return;
+      }
+      if (waiting && !c.ready) {
+        const checked = c.ready + c.nologo, n = todo + c.nologo;
+        setBar({
+          tone: 'run', icon: ICON.spin, title: 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…',
+          sub: [c.opening && !c.finding && !c.queued ? 'Opening your ' + (todo === 1 ? 'file' : 'files') : 'Finding the logo in file ' + Math.min(n, checked + 1) + ' of ' + n, ...issues].join(' · '),
+          primary: { act: 'run', label, icon: ICON.ok, tip: 'Starts as soon as the logos are found' },
+        });
+        return;
+      }
+      const first = S.items.find((i) => phase(i) === 'ready');
+      const found = waiting ? 'Still checking ' + waiting + ' more' : todo === 1 ? logoName(first && first.model) + ' found' : issues.length ? 'Logo found in ' + todo + ' files' : 'Logo found in all ' + todo + ' files';
       setBar({
         tone: waiting ? 'run' : 'ok', icon: waiting ? ICON.spin : ICON.ok,
-        title: waiting && !c.ready ? 'Getting your ' + (todo === 1 ? 'file' : 'files') + ' ready…' : plural(todo, 'file is', 'files are') + ' ready',
-        sub: [waiting ? 'Finding the logo in each file.' : 'Review a file first if you like.', attn].filter(Boolean).join(' '),
-        primary: { act: 'run', label: todo > 1 ? 'Remove logo from ' + todo + ' files' : 'Remove logo', icon: ICON.ok },
+        title: todo === 1 ? 'Ready to remove the logo' : todo + ' files ready',
+        sub: [found, ...issues].join(' · '),
+        primary: { act: 'run', label, icon: ICON.ok },
       });
       return;
     }
     setBar({
-      tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to process',
+      tone: 'warn', icon: ICON.warn, title: c.nologo ? 'No logo found yet' : 'Nothing to clean',
       sub: c.nologo ? 'Open a file marked in amber and draw a box around the logo.' : 'Remove the files that can’t be opened, or add others.',
       primary: { act: 'run', label: 'Remove logo', icon: ICON.ok, disabled: true },
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }
+  // A message under the bar (or on the start page). It dismisses itself after a few seconds and has a close button.
+  let noteTimer = 0;
   function setNote(text, kind) {
-    for (const el of [noteEl, welcomeNote]) {
-      el.textContent = text || '';
-      el.className = 'msg' + (kind ? ' is-' + kind : '');
-      el.hidden = !text;
-    }
+    clearTimeout(noteTimer);
+    noteEl.textContent = text || '';
+    noteBox.className = 'note' + (kind ? ' is-' + kind : '');
+    noteBox.hidden = !text;
+    welcomeNote.textContent = text || '';
+    welcomeNote.className = 'msg' + (kind ? ' is-' + kind : '');
+    welcomeNote.hidden = !text;
+    if (text) noteTimer = setTimeout(() => setNote(''), kind === 'warn' ? 12000 : 7000);
+  }
+  // what a screen reader should hear when something changes that is not focused
+  let announceTimer = 0;
+  function announce(text) {
+    srStatus.textContent = '';
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => { srStatus.textContent = text; }, 80);
   }
 
   // ---------- events ----------
@@ -1727,6 +1797,7 @@ export function mountTool(root) {
     render();
   }
   clearBtn.addEventListener('click', clearAll);
+  noteClose.addEventListener('click', () => setNote(''));
   barEl.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
     if (!btn || btn.disabled) return;

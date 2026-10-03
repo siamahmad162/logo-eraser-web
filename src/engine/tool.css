@@ -204,9 +204,13 @@
   .ab-line { display: flex; align-items: baseline; gap: 12px; }
   .ab-line b { font: 650 16.5px/1.25 var(--f-display); letter-spacing: -0.02em; }
   .ab-pct { font: 650 22px/1 var(--f-display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-  .ab-sub { color: var(--muted); font-size: 13px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ab-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
   .ab-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .actionbar .msg { padding: 0 16px 12px; margin: -4px 0 0; }
+  .note { display: flex; align-items: center; gap: 8px; margin: 0 12px 12px; padding: 6px 6px 6px 14px; border-radius: 12px; font-size: 13px; line-height: 1.4; color: var(--muted); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); animation: rise 0.2s ease-out; }
+  .note span { flex: 1; min-width: 0; }
+  .note.is-warn { color: var(--warn); background: var(--warn-soft); border-color: rgba(245, 165, 91, 0.35); }
+  .note .icon-btn { width: 28px; height: 28px; }
+  .rv-hint { margin: 0; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--muted); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
 
   /* ---------- windows ---------- */
   .modal { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 16px; }
@@ -360,9 +364,9 @@
     .th-badge, .th-hover { display: none; }
     .th-live-tag { top: 4px; left: 4px; padding: 2px 6px; font-size: 9px; }
     .job-name { font-size: 14.5px; }
+    .job-meta { white-space: normal; }
     .js-text span { font-size: 12.5px; }
     .cu canvas { width: 100px; height: 75px; }
-    .actionbar[data-state="ready"] .ab-sub { display: none; }
     .ab-icon { width: 36px; height: 36px; border-radius: 11px; }
     .job-actions { margin-left: 0; width: 100%; }
     .job-actions .btn-soft, .job-actions .cta { flex: 1 1 auto; justify-content: center; }
