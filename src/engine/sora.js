@@ -119,7 +119,10 @@ export function makeSora(E, env, extra = {}) {
     return withTrack(item, async (track) => {
       const sink = new MB.VideoSampleSink(track), holder = {}, whole = { x: 0, y: 0, w: W, h: H };
       // 1. a few frames, the whole picture: where could it be, and how big?
-      const ts = stamps(info, 12), samples = [], scales = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.4];
+      // Sizes to look for. How big the mark is drawn does not follow the video's shape in any fixed way -
+      // it depends on what Sora made and on whatever resized it since - so the small end matters: on a wide
+      // 720x396 download the cloud measures about 0.45, which a search starting at 0.5 walks straight past.
+      const ts = stamps(info, 12), samples = [], scales = [0.4, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.4];
       let k = 0;
       for await (const s of sink.samplesAtTimestamps(ts)) {
         if (env.cancel) throw uerr('Stopped.');
@@ -136,7 +139,7 @@ export function makeSora(E, env, extra = {}) {
       // the frames where each slot was seen, both ways round, and the better side wins. Sora does not keep the
       // cloud and the word in step (newer videos pair a small cloud with the same big lettering), so the
       // measurement, not the cloud's size, decides how much is covered.
-      const slots = cl.slots.map((p) => ({ wx: p.x, wy: p.y, x: p.x / r, y: p.y / r, layout: 'L', fit: null }));
+      let slots = cl.slots.map((p) => ({ wx: p.x, wy: p.y, x: p.x / r, y: p.y / r, layout: 'L', fit: null }));
       {
         const seen = new Map();
         for (const h of cl.hits) { const sl = slots.findIndex((q) => Math.abs(q.wx - h.x) < 12 * sw && Math.abs(q.wy - h.y) < 12 * sw); if (sl >= 0) { if (!seen.has(sl)) seen.set(sl, []); seen.get(sl).push(h); } }
@@ -162,6 +165,18 @@ export function makeSora(E, env, extra = {}) {
             slots[si].fit = { ws: mid('ws') / r, wx: mid('wx') / r, wy: mid('wy') / r, score: mid('score') };
           }
         }
+      }
+      // The mark is a cloud and the word "Sora" together. A cloud-shaped patch of white with no lettering
+      // beside it is something in the picture, not the mark, so such a spot is dropped - unless the word
+      // would have fallen outside the frame, where there was nothing to look at.
+      {
+        const wd0 = SC.wordAt(sw);
+        slots = slots.filter((sl) => {
+          if (sl.fit) return true;
+          const g = SC.geometry(sw, sl.layout), wx = Math.round(sl.wx + g.wx), wy = Math.round(sl.wy + g.wy);
+          return wx < 0 || wy < 0 || wx + wd0.w > ww || wy + wd0.h > wh;
+        });
+        if (!slots.length) return { ok: false, engine: 'sora' };
       }
       // 2. every frame: how strongly is the mark at each slot? Meanwhile keep pictures of each slot from frames
       // where it is not there (to copy from later).
