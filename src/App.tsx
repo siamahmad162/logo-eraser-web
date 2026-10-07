@@ -65,13 +65,13 @@ export function App() {
     <>
       <a className="skip" href="#main">Skip to content</a>
       <Header />
-      {rails.on && <style>{`@media (min-width:${rails.need}px){.page-frame.has-rails{display:grid;grid-template-columns:${rails.width}px minmax(0,1fr) ${rails.width}px;column-gap:16px;padding-inline:16px}.page-frame.has-rails>.rail{display:block}}`}</style>}
+      {rails.on && <style>{`@media (min-width:${rails.one}px){.page-frame.has-rails{display:grid;grid-template-columns:minmax(0,1fr) ${rails.width}px;column-gap:12px;padding-inline:16px}.page-frame.has-rails>.rail-right{display:block}}@media (min-width:${rails.both}px){.page-frame.has-rails{grid-template-columns:${rails.width}px minmax(0,1fr) ${rails.width}px}.page-frame.has-rails>.rail-left{display:block}}`}</style>}
       <div className={rails.on ? 'page-frame has-rails' : 'page-frame'}>
-        {rails.on && <AdRail side="left" width={rails.width} need={rails.need} preview={rails.preview} />}
+        {rails.on && <AdRail side="left" width={rails.width} one={rails.one} both={rails.both} preview={rails.preview} />}
         <main id="main" className={TOOL_PATHS.has(path) ? 'main main-tool' : 'main'}>
           <Fragment key={path}>{renderPage(path)}</Fragment>
         </main>
-        {rails.on && <AdRail side="right" width={rails.width} need={rails.need} preview={rails.preview} />}
+        {rails.on && <AdRail side="right" width={rails.width} one={rails.one} both={rails.both} preview={rails.preview} />}
       </div>
       <Footer />
       <ConsentBar />

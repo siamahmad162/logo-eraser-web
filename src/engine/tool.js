@@ -35,7 +35,17 @@ export function mountTool(root, opts = {}) {
   const jobArea = $('#jobArea'), jobsEl = $('#jobs'), fileCount = $('#fileCount'), filesTotal = $('#filesTotal'), clearBtn = $('#clearBtn'), addFilesBtn = $('#addFilesBtn'), addFolderBtn = $('#addFolderBtn');
   const optSum = $('#optSum'), qMax = $('#qMax'), qHigh = $('#qHigh'), wqMax = $('#wqMax'), wqHigh = $('#wqHigh'), qNote = $('#qNote'), sameRectEl = $('#sameRect'), sameRow = $('#sameRow');
   const barEl = $('#actionbar'), abProgress = $('#abProgress'), abFill = $('#abFill'), abIcon = $('#abIcon'), abTitle = $('#abTitle'), abPct = $('#abPct'), abSub = $('#abSub');
-  const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), noteEl = $('#note'), noteBox = $('#noteBox'), noteClose = $('#noteClose'), srStatus = $('#srStatus'), rvHint = $('#rvHint');
+  const abPrimary = $('#abPrimary'), abPrimaryLabel = $('#abPrimaryLabel'), abSecondary = $('#abSecondary'), abMore = $('#abMore'), noteEl = $('#note'), noteBox = $('#noteBox'), noteClose = $('#noteClose'), srStatus = $('#srStatus'), rvHint = $('#rvHint');
+
+  // the three steps, and what to do in each, for this remover
+  const GUIDE = {
+    gemini: { steps: ['Add files', 'Cleaned by itself', 'Download'], how: ['Drop in your <b>videos or photos</b>.', 'The logo is <b>found and removed</b> by itself.', '<b>Download</b> the clean files, or all of them as one ZIP.'] },
+    sora: { steps: ['Add videos', 'Cleaned by itself', 'Download'], how: ['Drop in your <b>Sora videos</b>.', 'The moving watermark is <b>found and removed</b> by itself.', '<b>Download</b> the clean videos, or all of them as one ZIP.'] },
+    logo: { steps: ['Add videos', 'Mark the logo', 'Download'], how: ['Drop in your <b>videos</b>.', '<b>Drag a box</b> around the logo.', '<b>Download</b> the clean videos, or all of them as one ZIP.'] },
+    photo: { steps: ['Add photos', 'Mark the logo', 'Download'], how: ['Drop in your <b>photos</b>.', '<b>Drag a box</b> around each logo or watermark.', '<b>Download</b> the clean photos, or all of them as one ZIP.'] },
+  }[MODE];
+  root.querySelectorAll('#stepper .st-l').forEach((el, i) => { el.textContent = GUIDE.steps[i]; });
+  $('#howList').innerHTML = GUIDE.how.map((h) => '<li><span>' + h + '</span></li>').join('');
 
   // the start page says what this remover is for
   if (OTHER) {
@@ -54,8 +64,14 @@ export function mountTool(root, opts = {}) {
   }
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // on a wide screen the review window is docked beside the queue (an inspector); elsewhere it is a window
-  const dockMq = matchMedia('(min-width: 1180px)'), studioEl = $('#studio'), pipeEl = $('#pipe');
-  const docked = () => dockMq.matches;
+  // the inspector docks beside the file list when the page has the room for both: the width the page really has, which is
+  // less than the window's when ads stand beside it
+  const DOCK_MIN = 960, studioEl = $('#studio'), pipeEl = $('#pipe');
+  const pageBox = root.closest('main') || document.body;
+  const roomNow = () => pageBox.clientWidth || window.innerWidth;
+  let dockOn = roomNow() >= DOCK_MIN;
+  const docked = () => dockOn;
+  root.dataset.room = dockOn ? 'wide' : 'narrow';
 
   // ---------- small helpers ----------
   const bn = (n) => String(n);
@@ -1596,7 +1612,14 @@ export function mountTool(root, opts = {}) {
 
   // ---------- the page ----------
   let autoOpening = false;
-  dockMq.addEventListener('change', () => { if (!docked() && !reviewEl.hidden) closeReview(); else render(); }, { signal });
+  const dockWatch = new ResizeObserver(() => {
+    const on = roomNow() >= DOCK_MIN;
+    if (on === dockOn) return;
+    dockOn = on; root.dataset.room = on ? 'wide' : 'narrow';
+    if (!docked() && !reviewEl.hidden) closeReview(); else render();
+  });
+  dockWatch.observe(pageBox);
+  cleanups.push(() => dockWatch.disconnect());
   // where the files are, at a glance
   function renderPipe() {
     const c = counts(), fin = doneItems(), flagged = fin.filter((i) => i.check && i.check.level !== 'ok').length;
@@ -1649,6 +1672,7 @@ export function mountTool(root, opts = {}) {
     const p = runProgress();
     abFill.style.width = (p * 100).toFixed(1) + '%';
     setText(abPct, pct(p));
+    renderStepper();
     const runItems = S.items.filter((i) => i.runId === S.runId && i.status !== 'error' && phase(i) !== 'nologo' && phase(i) !== 'skipped' && !i.removed);
     const cur = S.items.find((i) => i.status === 'encoding' || i.status === 'learning');
     if (cur && cur.kind === 'video' && cur.status === 'encoding' && cur.encT0 && cur.progress > 0.02) {
@@ -1682,6 +1706,7 @@ export function mountTool(root, opts = {}) {
       abPrimary.disabled = !!o.primary.disabled; abPrimary.dataset.act = o.primary.act; abPrimary.classList.toggle('is-busy', !!o.primary.busy);
       setText(abPrimaryLabel, o.primary.label); setHtml($('#abPrimaryIcon'), o.primary.icon || ''); abPrimary.title = o.primary.tip || '';
     }
+    abMore.hidden = !o.more; abMore.disabled = !!S.zipping;
     abSecondary.hidden = !o.secondary;
     if (o.secondary) { abSecondary.dataset.act = o.secondary.act; abSecondary.disabled = !!o.secondary.disabled; abSecondary.innerHTML = (o.secondary.icon || '') + '<span></span>'; abSecondary.lastChild.textContent = o.secondary.label; }
   }
@@ -1694,7 +1719,28 @@ export function mountTool(root, opts = {}) {
     return out;
   }
   const spanText = (s) => (s < 90 ? s + ' s' : Math.round(s / 60) + ' min');
-  function renderBar() {
+  function renderBar() { renderBarCore(); renderStepper(); }
+  // where the visitor is (add files, clean, download) and the one thing to do next
+  function renderStepper() {
+    const has = S.items.length > 0, c = counts(), todo = c.opening + c.queued + c.finding + c.ready;
+    let n = 1, hint = 'Drop your files anywhere on this page.', all = false;
+    if (has) {
+      const fin = doneItems(), flagged = fin.filter((i) => i.check && i.check.level !== 'ok').length;
+      if (c.done && !todo && !S.busy) { n = 3; all = true; hint = flagged ? '<b>Done.</b> Have a look at the amber ' + (flagged === 1 ? 'card' : 'cards') + ' before you download.' : c.done > 1 ? '<b>All done.</b> Download your files, all together as one ZIP.' : '<b>Done.</b> Download your file.'; }
+      else if (S.busy) { n = 2; hint = '<b>Cleaning</b> · ' + pct(runProgress()) + ' · you can add more files while it runs.'; }
+      else if (BOXED && c.nologo) { n = 2; hint = '<b>Drag a box</b> around the logo on the preview. It is removed as soon as you let go.'; }
+      else if (c.opening || c.queued || c.finding) { n = 2; hint = 'Looking at your ' + (S.items.length === 1 ? 'file' : 'files') + '…'; }
+      else { n = 2; hint = todo ? 'Cleaning starts by itself.' : c.nologo ? 'No logo was found in some files. Point it out or leave it.' : 'Nothing to clean yet.'; }
+    }
+    root.querySelectorAll('#stepper .st').forEach((li) => {
+      const k = +li.dataset.s;
+      li.classList.toggle('is-done', k < n || (all && k === 3));
+      li.classList.toggle('is-now', k === n && !(all && k === 3));
+      if (k === n && !(all && k === 3)) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+    const h = $('#stepHint'); if (h.innerHTML !== hint) h.innerHTML = hint;
+  }
+  function renderBarCore() {
     if (!S.items.length) return;
     const c = counts(), done = c.done, todo = c.opening + c.queued + c.finding + c.ready, issues = issueParts(c);
     if (S.busy) {
@@ -1717,6 +1763,7 @@ export function mountTool(root, opts = {}) {
         sub: [flagged ? 'Open the amber ' + (flagged === 1 ? 'card' : 'cards') + ' to see what to look at' : '', plural(done, 'file', 'files') + ' · ' + sizeDone, took, saved ? 'downloaded' : '', ...issues].filter(Boolean).join(' · '),
         primary: { act: 'save', label: saved ? (done === 1 ? 'Download again' : 'Download all again (ZIP)') : done === 1 ? 'Download' : 'Download all (ZIP)', icon: ICON.save, disabled: S.zipping, busy: S.zipping },
         secondary: stale ? { act: 'redo', label: 'Redo in ' + (S.quality === 'max' ? 'best quality' : 'smaller files'), icon: ICON.redo } : { act: 'startover', label: 'Start over' },
+        more: true,
       });
       if (S.zipping) setText(abPrimaryLabel, 'Building the ZIP…');
       return;
@@ -1839,6 +1886,7 @@ export function mountTool(root, opts = {}) {
       case 'stop': cancelAll(); break;
       case 'redo': redoDone(); break;
       case 'startover': clearAll(); break;
+      case 'more': pickFiles(); break;
     }
   });
   const toggleBox = () => { if (!canDraw()) return; S.boxMode = !S.boxMode; rvRender(); };

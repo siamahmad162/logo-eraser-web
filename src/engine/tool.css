@@ -205,8 +205,8 @@
   .pipe span.ok b { color: var(--ok); }
   .pipe span.warn { border-color: rgba(245, 165, 91, 0.45); }
   .pipe span.warn b { color: var(--warn); }
-  .studio.docked.on { display: grid; grid-template-columns: minmax(400px, 0.85fr) minmax(0, 1.4fr); gap: 22px; align-items: start; }
-  .studio.docked.on:has(#review[hidden]) { grid-template-columns: minmax(0, 1fr); }
+  .studio.docked.on { display: grid; column-gap: 22px; }
+  
   .studio.docked #review { position: sticky; inset: auto; top: 78px; z-index: 1; display: block; padding: 0; height: calc(100dvh - 250px); min-height: 480px; }
   .studio.docked #review[hidden] { display: none; }
   .studio.docked .modal-backdrop, .studio.docked #rvClose { display: none; }
@@ -448,3 +448,62 @@
 
   /* the Sora remover has no box to draw */
   .lx-tool[data-mode="sora"] #boxBtn, .lx-tool[data-mode="sora"] #boxBtn2, .lx-tool[data-mode="sora"] #redetect { display: none; }
+
+/* ===== the tool pages, redesigned: add files -> clean -> download ===== */
+
+/* where you are, and what to do next */
+.lx-tool .stepper { display: flex; align-items: center; justify-content: space-between; gap: 10px 20px; flex-wrap: wrap; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
+.lx-tool .st-list { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.lx-tool .st { display: inline-flex; align-items: center; gap: 8px; color: var(--faint); font-size: 13.5px; font-weight: 550; white-space: nowrap; }
+.lx-tool .st + .st::before { content: ""; width: 22px; height: 1.5px; margin-right: 6px; background: var(--line-2); border-radius: 2px; }
+.lx-tool .st-n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: 600 12px/1 var(--f-mono); border: 1.5px solid var(--line-2); color: var(--muted); }
+.lx-tool .st.is-now { color: var(--ink); }
+.lx-tool .st.is-now .st-n { border-color: var(--mask); color: #fff; background: var(--mask-soft); box-shadow: 0 0 0 4px rgba(255, 77, 141, 0.14); }
+.lx-tool .st.is-done { color: var(--muted); }
+.lx-tool .st.is-done .st-n { border-color: rgba(61, 220, 151, 0.55); background: var(--ok-soft); color: transparent; position: relative; }
+.lx-tool .st.is-done .st-n::after { content: ""; position: absolute; width: 6px; height: 11px; border: solid var(--ok); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.lx-tool .st-hint { margin: 0; color: var(--muted); font-size: 13.5px; }
+.lx-tool .st-hint b { color: var(--ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .lx-tool .st-l { display: none; }
+  .lx-tool .st.is-now .st-l { display: inline; }
+  .lx-tool .st + .st::before { width: 12px; }
+}
+
+/* the start: the drop zone, with a short guide (and an ad) beside it where there is room */
+.lx-tool .welcome { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; justify-items: stretch; }
+.lx-tool .welcome-main { display: grid; gap: 18px; justify-items: center; min-width: 0; }
+.lx-tool .welcome-side { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.lx-tool .how { padding: 18px 20px; border-radius: 20px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
+.lx-tool .how h3 { margin: 0 0 12px; font: 600 14px/1.2 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.lx-tool .how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: how; }
+.lx-tool .how li { counter-increment: how; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--muted); font-size: 14.5px; line-height: 1.4; }
+.lx-tool .how li::before { content: counter(how); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font: 600 12px/1 var(--f-mono); color: var(--ink); background: var(--mask-soft); border: 1px solid rgba(255, 77, 141, 0.3); }
+.lx-tool .how li b { color: var(--ink); font-weight: 600; }
+.lx-tool[data-room="wide"] .welcome { grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
+.lx-tool[data-room="wide"] .welcome-main { align-content: start; }
+/* below 960 px: the guide goes under the drop zone, the ad last */
+.lx-tool .work-ad { margin-top: 0; padding-top: 0; border-top: 0; display: grid; justify-items: center; }
+
+/* the file list on a wide screen: the action card first, then the files, then the ad; the inspector beside them all */
+.lx-tool .studio { display: grid; gap: 16px; }
+.lx-tool .studio.docked.on { grid-template-columns: minmax(380px, 0.85fr) minmax(0, 1.4fr); grid-template-areas: "bar review" "jobs review"; grid-template-rows: auto 1fr; align-items: start; row-gap: 14px; }
+.lx-tool .studio.docked.on:has(#review[hidden]) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "bar" "jobs"; }
+.lx-tool .studio.docked.on > #actionbar { grid-area: bar; position: static; }
+.lx-tool .studio.docked.on > #jobArea { grid-area: jobs; }
+.lx-tool .studio.docked.on > #review { grid-area: review; }
+.lx-tool .studio.docked #actionbar .ab-main { padding: 14px; }
+.lx-tool .studio.docked #actionbar .ab-right { width: 100%; }
+.lx-tool .studio.docked #actionbar .ab-right .cta, .lx-tool .studio.docked #actionbar .ab-right .btn-soft { flex: 1 1 auto; justify-content: center; }
+.lx-tool .studio:not(.docked) > #actionbar { position: sticky; bottom: 12px; }
+
+/* the end: a clear "all done" with the one big thing to do */
+.lx-tool .actionbar[data-state="done"] { border-color: rgba(61, 220, 151, 0.4); background: linear-gradient(180deg, rgba(61, 220, 151, 0.09), rgba(14, 16, 22, 0.97) 70%); }
+.lx-tool .actionbar[data-state="done"] .ab-line b { font-size: 18px; }
+.lx-tool .actionbar[data-state="done"] #abPrimary { padding: 15px 22px; font-size: 16.5px; }
+.lx-tool .studio.docked #actionbar[data-state="done"] .ab-right { flex-direction: column; align-items: stretch; }
+.lx-tool .studio.docked #actionbar[data-state="done"] #abPrimary { order: -1; width: 100%; }
+.lx-tool .studio.docked #actionbar[data-state="done"] .ab-right > .btn-soft { flex: 1 1 100%; }
+
+/* no before/after close-ups on the working pages (the compare view of the preview stays) */
+.lx-tool #loupes, .lx-tool .job .cu:not(.ask), .lx-tool .job .strip { display: none !important; }

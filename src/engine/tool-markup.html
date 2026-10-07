@@ -3,8 +3,19 @@
 <input type="file" id="file" class="file-input" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple tabindex="-1" aria-hidden="true">
 <input type="file" id="folder" class="file-input" webkitdirectory multiple tabindex="-1" aria-hidden="true">
 
+<!-- where you are: add files, clean, download -->
+<nav class="stepper" id="stepper" aria-label="Steps">
+  <ol class="st-list">
+    <li class="st" data-s="1"><span class="st-n" aria-hidden="true">1</span><span class="st-l"></span></li>
+    <li class="st" data-s="2"><span class="st-n" aria-hidden="true">2</span><span class="st-l"></span></li>
+    <li class="st" data-s="3"><span class="st-n" aria-hidden="true">3</span><span class="st-l"></span></li>
+  </ol>
+  <p class="st-hint" id="stepHint" aria-live="polite"></p>
+</nav>
+
 <!-- before any file -->
 <section class="welcome" id="welcome" aria-label="Add your files">
+<div class="welcome-main">
   <div class="hero-drop" id="drop">
     <span class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg></span>
     <h2>Drop your videos or photos here</h2>
@@ -33,6 +44,14 @@
     <button type="button" class="link-btn strong" id="sampleBtn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg><span>Try a sample video</span></button>
   </div>
   <p class="msg" id="welcomeNote" hidden></p>
+</div>
+<aside class="welcome-side" aria-label="How it works">
+  <div class="how">
+    <h3>How it works</h3>
+    <ol id="howList"></ol>
+  </div>
+  <div class="work-ad" id="adWelcome"></div>
+</aside>
 </section>
 
 <!-- with files: one card per file -->
@@ -137,9 +156,7 @@
     </div>
   </div>
 </div>
-</div>
-
-<!-- progress and the next action: always in view -->
+<!-- progress and the next action: the top of the file list on a wide screen, always in view at the bottom elsewhere -->
 <div class="actionbar" id="actionbar" role="region" aria-label="Progress and actions" hidden>
   <div class="ab-progress" id="abProgress" hidden><i id="abFill"></i></div>
   <div class="ab-main">
@@ -151,6 +168,7 @@
       </div>
     </div>
     <div class="ab-right">
+      <button type="button" class="btn-soft" id="abMore" data-act="more" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Clean more files</span></button>
       <button type="button" class="btn-soft" id="abSecondary" hidden></button>
       <button type="button" class="cta cta-inline" id="abPrimary" disabled>
         <span class="cta-ico" id="abPrimaryIcon" aria-hidden="true"></span><span id="abPrimaryLabel">Clean files</span>
@@ -158,6 +176,7 @@
     </div>
   </div>
   <div class="note" id="noteBox" hidden><span id="note"></span><button type="button" class="icon-btn" id="noteClose" aria-label="Dismiss this message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+</div>
 </div>
 
 <p class="sr-only" id="srStatus" role="status" aria-live="polite"></p>

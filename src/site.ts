@@ -19,13 +19,14 @@ export const SITE = {
 //
 //   banner   horizontal ads inside the pages (home, tools, text pages, under every tool). `desktop` is used on wide
 //            screens, `phone` on narrow ones; use the same code for both if the company only has one responsive tag.
-//   rect     a 300x250 box. It sits in the file list of every tool once files are added (so it is on screen while
-//            they are cleaned), and beside the text of guides on screens from 1100 px.
-//   rail     vertical ads on the left and right of every page, shown on wide screens (about 1560 px and up).
-//            160x600 is the usual size; for 300x600 set the width and they show from about 1900 px.
+//   rect     a 300x250 box. It sits beside the drop zone of every tool, in the file list once files are added (so it is
+//            on screen while they are cleaned), and beside the text of guides on screens from 1100 px.
+//   rail     vertical ads beside every page: on both sides from about 1340 px, on the right only from about 1170 px
+//            (narrower screens have no room beside the page). 160x600 is the usual size; for 300x600 set the width and
+//            they show from about 1620 px (both) and 1330 px (right only).
 // ---------------------------------------------------------------------------------------------------------------
 export type AdUnit = { width: number; height: number; code: string };
-export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'work' | 'side';
+export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'welcome' | 'work' | 'side';
 
 export const ADS = {
   banner: {
@@ -42,7 +43,7 @@ export const ADS = {
   // vertical ads on both sides of every page on wide screens (false: none)
   rails: true,
   // which places carry an ad (set one to false to leave that place without an ad)
-  places: { home1: true, home2: true, home3: true, tools1: true, tools2: true, tool1: true, tool2: true, article1: true, article2: true, faq1: true, work: true, side: true } as Record<AdPlace, boolean>,
+  places: { home1: true, home2: true, home3: true, tools1: true, tools2: true, tool1: true, tool2: true, article1: true, article2: true, faq1: true, welcome: true, work: true, side: true } as Record<AdPlace, boolean>,
   // Start the ad in the file list while files are being cleaned (that is when visitors wait and look). Cleaning is not
   // slowed by an ordinary banner; if a video-ad company's ads make it stutter, set this to false.
   workWhileBusy: true,

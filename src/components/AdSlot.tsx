@@ -119,43 +119,52 @@ export function AdSlot({ place }: { place: AdPlace }) {
 
 // ---- the 300x250 box: in a tool's file list, and beside the text of a guide ----
 export const rectLive = () => adsOn() && hasCode(ADS.rect);
-export function AdRect({ place }: { place: 'work' | 'side' }) {
+export function AdRect({ place }: { place: 'welcome' | 'work' | 'side' }) {
   const preview = usePreview();
   if (!ADS.places[place]) return null;
   const u = ADS.rect;
-  if (rectLive()) return <Unit unit={u} className="ad ad-rect" place={place} busyOk={place === 'work' && ADS.workWhileBusy} when={place === 'side' ? '(min-width: 1100px)' : undefined} />;
+  if (rectLive()) return <Unit unit={u} className="ad ad-rect" place={place} busyOk={place !== 'side' && ADS.workWhileBusy} when={place === 'side' ? '(min-width: 1100px)' : undefined} />;
   if (demoOn()) return <DemoBox className="ad ad-rect" place={place} w={u.width} h={u.height} />;
   if (preview) return <Preview className="ad ad-rect" place={place} w={u.width} h={u.height} text={'Ad space · ' + place + ' · ' + u.width + '×' + u.height} />;
   return null;
 }
-// the tool's file list has a spot for it (see #adWork in the tool markup); it is filled once the tool is on the page
+// the tool has a spot for it beside the drop zone (#adWelcome) and in the file list (#adWork); they are filled once the tool is on the page
 export function WorkAd({ root }: { root: HTMLElement | null }) {
-  const [host, setHost] = useState<Element | null>(null);
-  useEffect(() => { setHost(root ? root.querySelector('#adWork') : null); }, [root]);
+  const [hosts, setHosts] = useState<{ welcome: Element | null; work: Element | null }>({ welcome: null, work: null });
+  useEffect(() => { setHosts({ welcome: root ? root.querySelector('#adWelcome') : null, work: root ? root.querySelector('#adWork') : null }); }, [root]);
   const preview = usePreview();
-  if (!host || !(rectLive() || demoOn() || preview)) return null;
-  return createPortal(<AdRect place="work" />, host);
+  if (!(rectLive() || demoOn() || preview)) return null;
+  return (
+    <>
+      {hosts.welcome && createPortal(<AdRect place="welcome" />, hosts.welcome)}
+      {hosts.work && createPortal(<AdRect place="work" />, hosts.work)}
+    </>
+  );
 }
 // does the page have room for a sidebar? (decided by the build, so nothing moves when the page loads)
 export const sideOn = () => (rectLive() || demoOn()) && ADS.places.side;
 
 // ---- the two vertical ads on the sides of every page (wide screens only) ----
 const railWidth = () => Math.max(hasCode(ADS.rail.left) ? ADS.rail.left.width : 0, hasCode(ADS.rail.right) ? ADS.rail.right.width : 0);
+// Room the page itself needs (the tool docks its inspector beside the file list from 960 px), then the rails: one on the right
+// from there, both when there is room for two.
+const PAGE = 960, GAP = 12, PAD = 32;
 export function useRails() {
   const preview = usePreview();
   const live = adsOn() && railWidth() > 0;
   const width = Math.max(ADS.rail.left.width, ADS.rail.right.width);
-  const need = 1200 + 2 * (width + 16) + 48;
-  return { on: ADS.rails && (live || demoOn() || preview) && width > 0, width, need, preview, live };
+  const one = PAGE + width + GAP + PAD, both = PAGE + 2 * (width + GAP) + PAD;
+  return { on: ADS.rails && (live || demoOn() || preview) && width > 0, width, one, both, preview, live };
 }
-export function AdRail({ side, width, need, preview }: { side: 'left' | 'right'; width: number; need: number; preview: boolean }) {
+export function AdRail({ side, width, one, both, preview }: { side: 'left' | 'right'; width: number; one: number; both: number; preview: boolean }) {
   const unit = ADS.rail[side];
   const live = adsOn() && hasCode(unit);
+  const when = `(min-width: ${side === 'left' ? both : one}px)`;
   return (
     <div className={'rail rail-' + side} aria-hidden={live ? undefined : true}>
       <div className="rail-in" style={{ width }}>
         {live
-          ? <Unit unit={unit} className="ad ad-rail" place={'rail-' + side} when={`(min-width: ${need}px)`} />
+          ? <Unit unit={unit} className="ad ad-rail" place={'rail-' + side} when={when} />
           : demoOn() ? <DemoBox className="ad ad-rail" place={'rail-' + side} w={unit.width} h={unit.height} />
           : preview ? <Preview className="ad ad-rail" place={'rail-' + side} w={unit.width} h={unit.height} text={'Ad space · ' + side + ' · ' + unit.width + '×' + unit.height} /> : null}
       </div>
