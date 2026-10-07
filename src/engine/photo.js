@@ -89,8 +89,12 @@ export function selectLogo(crop, box, seed = 1, maxFrac = 0.95) {
   const inBox = (S) => { const v = []; for (let y = box.y; y < box.y + box.h; y++) for (let x = box.x; x < box.x + box.w; x++) v.push(S[y * w + x]); return v; };
   // the shape that a signal and its split level give: strong pixels are the logo, weaker ones count when they
   // touch it (the dark parts of a logo on a dark picture)
-  const shapeOf = (S, thr, loFloor) => {
-    const lo = Math.max(loFloor, 0.22 * thr);
+  const shapeOf = (S, thr, gap, loFloor) => {
+    // The weaker level the shape is grown out to. Tied to how far apart the two groups of pixels are, not to
+    // the level itself: on a picture with bright things of its own in the box (a city at night behind a logo)
+    // a fixed fraction of the level sits among the background's own values, and the growing then runs out of
+    // the logo and over everything else, taking half the box with it.
+    const lo = Math.max(loFloor, thr - 0.35 * gap);
     let strong = new Uint8Array(w * h); const weak = new Uint8Array(w * h);
     for (let i = 0; i < w * h; i++) if (M[i]) { if (S[i] > thr) strong[i] = 1; if (S[i] > lo) weak[i] = 1; }
     strong = pieces(strong, w, h, 6);
@@ -113,7 +117,7 @@ export function selectLogo(crop, box, seed = 1, maxFrac = 0.95) {
     D[i] = d;
   }
   const d0 = otsu(inBox(D));
-  if (d0.gap >= 24 && d0.thr >= 10) { const m = shapeOf(D, d0.thr, 9); if (m) return m; }
+  if (d0.gap >= 24 && d0.thr >= 10) { const m = shapeOf(D, d0.thr, d0.gap, 9); if (m) return m; }
   // the guess told us nothing: look for strokes that stand out from what is right around them
   const hi = new Float32Array(w * h), lo = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) { hi[i] = Math.max(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]); lo[i] = Math.min(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]); }
@@ -123,7 +127,7 @@ export function selectLogo(crop, box, seed = 1, maxFrac = 0.95) {
     const H = topHat(S, w, h, k, light), o = otsu(inBox(H));
     if (o.gap >= 14 && o.thr >= 6 && (!best || o.gap > best.gap)) best = { H, ...o };
   }
-  return best ? shapeOf(best.H, best.thr, 6) : null;
+  return best ? shapeOf(best.H, best.thr, best.gap, 6) : null;
 }
 
 // The grain of the picture around the hole, put back into the hole (a fill is smoother than a photo).

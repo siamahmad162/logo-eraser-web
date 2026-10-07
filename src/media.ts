@@ -40,6 +40,10 @@ import PBreakfastBefore from './assets/media/p-breakfast-before.webp';
 import PBreakfastAfter from './assets/media/p-breakfast-after.webp';
 import PBoatBefore from './assets/media/p-boat-before.webp';
 import PBoatAfter from './assets/media/p-boat-after.webp';
+import PBikeBefore from './assets/media/p-bike-before.webp';
+import PBikeAfter from './assets/media/p-bike-after.webp';
+import PCarBefore from './assets/media/p-car-before.webp';
+import PCarAfter from './assets/media/p-car-after.webp';
 import TSoraWebm from './assets/media/t-sora.webm';
 import TSoraMp4 from './assets/media/t-sora.mp4';
 import TSoraPoster from './assets/media/t-sora-poster.webp';
@@ -74,6 +78,9 @@ export const PHOTOS: Demo[] = [
   { id: 'p-sneaker', source: 'Photo', title: 'Sneaker', alt: 'Sneaker (AI image)', media: { kind: 'image', before: PSneakerBefore, after: PSneakerAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
   { id: 'p-breakfast', source: 'Photo', title: 'Breakfast', alt: 'Breakfast (AI image)', media: { kind: 'image', before: PBreakfastBefore, after: PBreakfastAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
   { id: 'p-boat', source: 'Photo', title: 'Lantern boat', alt: 'Lantern boat (AI image)', media: { kind: 'image', before: PBoatBefore, after: PBoatAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
+  // A big brand overlay in a corner, on a dark picture: the kind a shop puts on its own photos
+  { id: 'p-bike', source: 'Photo', title: 'Motorcycle at night', alt: 'A motorcycle on a city street at night, with a brand overlay in the corner', media: { kind: 'image', before: PBikeBefore, after: PBikeAfter, w: 480, h: 270 }, logo: { x: 0.14, y: 0.13 } },
+  { id: 'p-car', source: 'Photo', title: 'Sports car at night', alt: 'A sports car on a city road at night, with a brand overlay in the corner', media: { kind: 'image', before: PCarBefore, after: PCarAfter, w: 480, h: 270 }, logo: { x: 0.23, y: 0.2 } },
 ];
 
 export const GALLERY_VIDEOS: Demo[] = [CLIPS.G_OCEAN, CLIPS.G_GARDEN, CLIPS.G_ALLEY, CLIPS.V_JELLY, CLIPS.V_AURORA, CLIPS.V_LAVA];

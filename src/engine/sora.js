@@ -239,6 +239,21 @@ export function makeSora(E, env, extra = {}) {
       });
       if (!intervals.length) return { ok: false, engine: 'sora' };
       intervals.sort((p, q) => p.t0 - q.t0);
+      // Each run was widened by a few frames for the fades, so a run at one spot and the next one at another
+      // spot overlap. The mark does not cross-fade - it is at one spot in a frame and at the next spot in the
+      // frame after - and a moment is cleaned at one spot only, the first that claims it. In the overlap that
+      // was the spot the mark had already left, so the mark stayed on screen for those few frames and the
+      // picture at the old spot was rebuilt for nothing. The overlap is handed over where the frames
+      // themselves say the mark moved: the first frame the later spot is at least as strong as the earlier.
+      for (let i = 1; i < intervals.length; i++) {
+        const A = intervals[i - 1], B = intervals[i];
+        if (A.slot === B.slot || B.a > A.b) continue;
+        let cut = B.a;
+        for (let t = B.a; t <= A.b && t < n2; t++) { if (scores[B.slot][t] >= scores[A.slot][t]) { cut = t; break; } cut = t + 1; }
+        cut = Math.max(B.a, Math.min(cut, A.b + 1));
+        if (cut > A.a) { A.b = cut - 1; A.t1 = times[A.b]; }
+        if (cut <= B.b) { B.a = cut; B.t0 = times[B.a]; }
+      }
       // the longest interval stands for "where the mark is" in previews
       const main = intervals.reduce((p, q) => (q.t1 - q.t0 > p.t1 - p.t0 ? q : p), intervals[0]);
       return { ok: true, engine: 'sora', kind: 'video', gemini: false, veo: false, W, H, s: sf, tol: 0.5 / (info.fps || 30), intervals, rect: main.rect, mainT: (main.t0 + main.t1) / 2, frames: n2, hits: cl.hits.length };
