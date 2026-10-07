@@ -538,7 +538,7 @@ export function mountTool(root, opts = {}) {
   function setZoom(z, fx, fy) {
     // keep the point under the cursor (fx, fy as fractions of the stage) where it is
     const W = view.width || 1, H = view.height || 1, v = viewRect(), px = v.sx + fx * v.sw, py = v.sy + fy * v.sh;
-    S.zoom = clamp(z, 1, 4);
+    S.zoom = clamp(z, 1, 4); S.splitSet = false;
     const sw = W / S.zoom, sh = H / S.zoom;
     S.zx = S.zoom === 1 ? 0.5 : (px - fx * sw + sw / 2) / W; S.zy = S.zoom === 1 ? 0.5 : (py - fy * sh + sh / 2) / H;
     stage.dataset.zoomed = S.zoom > 1 ? '1' : '';
@@ -548,8 +548,9 @@ export function mountTool(root, opts = {}) {
   function drawView() {
     if (!P.has) return;
     const model = previewModel(P.item), mode = viewMode(), W = view.width, H = view.height, r = currentRect();
-    if (r && !S.splitSet) S.split = clamp((r.x + r.w / 2) / W, 0.08, 0.92);
     const vr = viewRect();
+    // the compare line starts on the logo (where it is on screen, zoomed or not) until the visitor moves it
+    if (r && !S.splitSet) S.split = clamp((r.x + r.w / 2 - vr.sx) / vr.sw, 0.08, 0.92);
     vctx.imageSmoothingEnabled = true; vctx.imageSmoothingQuality = 'high';
     if (mode === 'original') vctx.drawImage(P.orig, vr.sx, vr.sy, vr.sw, vr.sh, 0, 0, W, H);
     else {
@@ -671,9 +672,11 @@ export function mountTool(root, opts = {}) {
   }
   // zoomed in: drag the picture to move around it; the wheel zooms where the pointer is
   let pan = null;
+  // close to the compare line (or its knob): the line is what is being grabbed, even when zoomed in
+  const nearSplit = (e) => { if (viewMode() !== 'split') return false; const b = stage.getBoundingClientRect(); return Math.abs(e.clientX - (b.left + S.split * b.width)) < 30; };
   stage.addEventListener('pointerdown', (e) => {
     const free = boxOn() ? (e.shiftKey || e.button === 1 || e.button === 2) : e.button === 0;
-    if (S.zoom > 1 && free && !e.target.closest('#split')) { pan = { x: e.clientX, y: e.clientY, zx: S.zx, zy: S.zy }; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
+    if (S.zoom > 1 && free && !e.target.closest('#split') && !nearSplit(e)) { pan = { x: e.clientX, y: e.clientY, zx: S.zx, zy: S.zy }; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
   });
   stage.addEventListener('pointermove', (e) => {
     if (!pan) return;
@@ -699,7 +702,7 @@ export function mountTool(root, opts = {}) {
     else setZoom(z, 0.5, 0.5);
   });
   stage.addEventListener('pointerdown', (e) => {
-    if (S.zoom > 1 || boxOn() || viewMode() !== 'split' || e.button > 0) return;
+    if ((S.zoom > 1 && !nearSplit(e)) || boxOn() || viewMode() !== 'split' || e.button > 0) return;
     splitDrag = true; stage.setPointerCapture(e.pointerId); splitFrom(e);
   });
   stage.addEventListener('pointermove', (e) => { if (splitDrag) splitFrom(e); });
