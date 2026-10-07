@@ -1,6 +1,7 @@
 import { Gallery } from '../components/Gallery';
 import { ArrowRight, Check, Download, Frames, Gauge, Globe, Lock, Photo, Scan, Stack, Text, Upload } from '../components/Icons';
 import { MediaCompare } from '../components/MediaCompare';
+import { ToolShowcase } from '../components/ToolShowcase';
 import { Plans } from '../components/Plans';
 import { JsonLd, abs } from '../components/Seo';
 import { GUIDES, LANDINGS } from '../content/meta';
@@ -60,19 +61,19 @@ export function Home() {
         <div className="hero-bg" aria-hidden="true" />
         <div className="wrap">
           <div className="hero-copy">
-            <Link to="/veo-watermark-remover" className="pill">
-              <span className="pill-dot" /> New: removes the Veo text mark too <ArrowRight />
+            <Link to="/tools" className="pill">
+              <span className="pill-dot" /> New: Sora, any-logo and photo removers <ArrowRight />
             </Link>
             <h1>
               Remove AI watermarks.<br />
               <span className="grad">Keep every pixel.</span>
             </h1>
             <p className="lede">
-              {SITE.name} finds the logo on Gemini and Veo videos and photos and restores the picture underneath, frame by frame, right in your browser.
+              {SITE.name} removes the logo from Gemini, Veo and Sora videos, from any other video and from photos, frame by frame, right in your browser.
             </p>
             <div className="cta-row">
               <Link to="/app" className="btn btn-primary btn-lg">Remove a watermark free <ArrowRight /></Link>
-              <Link to="/pricing" className="btn btn-ghost btn-lg">See pricing</Link>
+              <Link to="/tools" className="btn btn-ghost btn-lg">See all tools</Link>
             </div>
             <ul className="trust">
               <li><Check /> No upload</li>
@@ -98,7 +99,19 @@ export function Home() {
       <section className="works" aria-label="Works with">
         <div className="wrap works-row">
           <span className="works-label">Works with</span>
-          <span>Gemini videos</span><span>Veo videos</span><span>Gemini images</span><span>The Veo text mark</span><span>Any steady corner logo</span>
+          <span>Gemini</span><span>Veo</span><span>Sora</span><span>Any logo in a video</span><span>Any logo in a photo</span>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="tools">
+        <div className="wrap">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Four tools</span>
+            <h2 id="tools" className="section-title">Pick the remover that fits your file.</h2>
+            <p className="section-lede">One for each kind of logo, each with a real before-and-after. Move across a picture to compare, then open the tool.</p>
+          </div>
+          <ToolShowcase />
+          <p className="more"><Link to="/tools">All tools <ArrowRight /></Link></p>
         </div>
       </section>
 
@@ -116,8 +129,8 @@ export function Home() {
       <section className="section" aria-labelledby="results">
         <div className="wrap">
           <div className="section-head" data-reveal>
-            <span className="eyebrow">Real results</span>
-            <h2 id="results" className="section-title">Unedited output. See for yourself.</h2>
+            <span className="eyebrow">Gemini and Veo</span>
+            <h2 id="results" className="section-title">More results, unedited.</h2>
             <p className="section-lede">Each clip plays the original and the result side by side, frame for frame. Move across a card to compare.</p>
           </div>
           <Gallery />
@@ -237,20 +250,6 @@ export function Home() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link to="/sora-watermark-remover" className="usecase">
-                <span className="usecase-kind">Sora</span>
-                <span className="usecase-title">Sora watermark remover: found by itself, even as it moves</span>
-                <span className="usecase-go">Open the remover <ArrowRight /></span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/remove-logo" className="usecase">
-                <span className="usecase-kind">Any logo</span>
-                <span className="usecase-title">Remove a logo from any video or photo: draw a box</span>
-                <span className="usecase-go">Open the remover <ArrowRight /></span>
-              </Link>
-            </li>
           </ul>
         </div>
       </section>

@@ -152,7 +152,7 @@ export function patchFill(target, mask, others = [], opts = {}) {
   }
   let ringVal = null, est = null, nnf = null;
   for (let l = levels - 1; l >= 0; l--) {
-    const { t, srcs } = pyr[l], w = t.w, h = t.h, M = t.mask, r = l === 0 ? 2 : 3;
+    const { t, srcs } = pyr[l], w = t.w, h = t.h, M = t.mask, r = l === 0 ? (opts.fineR || 2) : 3;
     // the picture of this level: the real pixels outside the hole, the coarser result (or a smooth fill) inside
     const cur = new Float32Array(w * h * 3);
     if (l === levels - 1) {
@@ -254,7 +254,7 @@ export function patchFill(target, mask, others = [], opts = {}) {
       // vote: every hole pixel is the weighted mean of what the patches that cover it say
       const last = iter === it - 1, withRing = last && l === 0;
       const acc = new Float32Array(w * h * 3), wsum = new Float32Array(w * h);
-      let nsum = 0; for (let i = 0; i < nc; i++) nsum += nd[i]; const sigma = Math.max(1, 1.3 * nsum / nc);
+      let nsum = 0; for (let i = 0; i < nc; i++) nsum += nd[i]; const sigma = Math.max(1, (opts.sigmaMul || 1.3) * nsum / nc);
       for (let i = 0; i < nc; i++) {
         const c = centres[i], q = nq[i], s = srcRgb[nk[i]], wt = Math.exp(-nd[i] / (2 * sigma));
         for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {

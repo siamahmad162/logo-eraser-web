@@ -13,15 +13,19 @@ import { Guide, Guides } from './pages/Guides';
 import { HowItWorks } from './pages/HowItWorks';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
-import { SoraRemover, LogoRemover } from './pages/OtherTools';
+import { SoraRemover, LogoRemover, PhotoRemover } from './pages/OtherTools';
+import { Tools } from './pages/Tools';
+import { TOOL_PATHS as TOOL_LIST } from './content/tools';
 import { GUIDES, LANDINGS } from './content/meta';
 
-const TOOL_PATHS = new Set(['/app', '/sora-watermark-remover', '/remove-logo']);
+const TOOL_PATHS = new Set(TOOL_LIST);
 const PAGES: Record<string, () => React.JSX.Element> = {
   '/': Home,
   '/app': () => <Tool />,
   '/sora-watermark-remover': SoraRemover,
-  '/remove-logo': LogoRemover,
+  '/remove-logo-from-video': LogoRemover,
+  '/remove-logo-from-photo': PhotoRemover,
+  '/tools': Tools,
   '/pricing': Pricing,
   '/faq': Faq,
   '/terms': Terms,

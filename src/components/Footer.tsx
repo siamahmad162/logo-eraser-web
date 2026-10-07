@@ -20,9 +20,11 @@ export function Footer() {
         </div>
         <nav aria-label="Product">
           <h2>Product</h2>
+          <Link to="/tools">All tools</Link>
           <Link to="/app">Gemini &amp; Veo remover</Link>
           <Link to="/sora-watermark-remover">Sora watermark remover</Link>
-          <Link to="/remove-logo">Any-logo remover</Link>
+          <Link to="/remove-logo-from-video">Video logo remover</Link>
+          <Link to="/remove-logo-from-photo">Photo logo remover</Link>
           <Link to="/how-it-works">How it works</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQ</Link>

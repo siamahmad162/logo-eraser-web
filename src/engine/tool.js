@@ -5,12 +5,19 @@ import C from './core.js';
 import { makeEngine } from './engine.js';
 import EngineWorker from './worker.js?worker&inline';
 import { makeSora, rectAtTime } from './sora.js';
+import { makePhoto } from './photo.js';
 
 export function mountTool(root, opts = {}) {
   // which remover this page is: Gemini and Veo logos (the default), the Sora watermark, or any logo the person points out
-  const MODE = opts.mode === 'sora' || opts.mode === 'logo' ? opts.mode : 'gemini';
-  const CFG = { gemini: { ask: true, box: true, images: true, sample: true, same: true }, sora: { ask: false, box: false, images: false, sample: false, same: false }, logo: { ask: false, box: true, images: true, sample: false, same: false } }[MODE];
+  const MODE = opts.mode === 'sora' || opts.mode === 'logo' || opts.mode === 'photo' ? opts.mode : 'gemini';
+  const CFG = {
+    gemini: { ask: true, box: true, videos: true, images: true, sample: true, same: true },
+    sora: { ask: false, box: false, videos: true, images: false, sample: false, same: false },
+    logo: { ask: false, box: true, videos: true, images: false, sample: false, same: false },
+    photo: { ask: false, box: true, videos: false, images: true, sample: false, same: false },
+  }[MODE];
   const OTHER = MODE !== 'gemini';
+  const BOXED = MODE === 'logo' || MODE === 'photo';               // the person points out the logo with a box
   root.dataset.mode = MODE;
   const ac = new AbortController(), signal = ac.signal, cleanups = [];
   let alive = true;
@@ -32,13 +39,18 @@ export function mountTool(root, opts = {}) {
 
   // the start page says what this remover is for
   if (OTHER) {
-    const copy = MODE === 'sora'
-      ? { h: 'Drop your Sora videos here', sub: 'The Sora watermark is found and removed automatically, even while it moves around the frame. Everything stays on your device.', formats: ['MP4', 'MOV', 'WebM'], accept: 'video/*,.mp4,.mov,.m4v,.webm,.mkv' }
-      : { h: 'Drop a video or photo here', sub: 'Then drag a box around the logo you want gone. Works on any logo, on videos and photos, and everything stays on your device.', formats: ['MP4', 'MOV', 'WebM', 'PNG', 'JPG', 'WebP'], accept: null };
+    const COPY = {
+      sora: { h: 'Drop your Sora videos here', sub: 'The Sora watermark is found and removed automatically, even while it moves around the frame. Everything stays on your device.', formats: ['MP4', 'MOV', 'WebM'], accept: 'video/*,.mp4,.mov,.m4v,.webm,.mkv' },
+      logo: { h: 'Drop your videos here', sub: 'Then drag a box around the logo you want gone. It is rebuilt in every frame, and everything stays on your device.', formats: ['MP4', 'MOV', 'WebM'], accept: 'video/*,.mp4,.mov,.m4v,.webm,.mkv' },
+      photo: { h: 'Drop your photos here', sub: 'Then drag a box around the logo or watermark you want gone. Only the logo itself is rebuilt, from the picture around it. Everything stays on your device.', formats: ['PNG', 'JPG', 'WebP'], accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp' },
+    };
+    const copy = COPY[MODE];
     $('.hero-drop h2').textContent = copy.h; $('.hero-sub').textContent = copy.sub;
     $('.formats').innerHTML = copy.formats.map((f) => '<b>' + f + '</b>').join('');
-    if (copy.accept) $('#file').setAttribute('accept', copy.accept);
+    $('#file').setAttribute('accept', copy.accept);
     sampleCard.hidden = true;
+    if (!CFG.videos) { for (const el of root.querySelectorAll('#welcomeQuality, #options')) el.hidden = true; }   // nothing to set for photos
+    if (BOXED) redetectBtn.textContent = MODE === 'photo' ? 'Clear boxes' : 'Clear box';
   }
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // on a wide screen the review window is docked beside the queue (an inspector); elsewhere it is a window
@@ -89,6 +101,7 @@ export function mountTool(root, opts = {}) {
   // be worked on at once. Where workers are not available everything runs here, with the same code.
   const E = makeEngine(S);
   const SR = makeSora(E, S);
+  const PH = makePhoto(E, S);
   const { GEMINI, GEMINI_SHARP, GEMINI_SHARP_DARK, VEO, VEO_MIN, YUV8, analyzeImage, cleanSample, csInit, encodeImage, evenRect, frameMode, fromRel, isImageFile, isJpeg, makeCanvas, openInput, padRect, planeModels, probe, probeImage, readFrame, readRgb, readYuv, rgbToYuv, stamps, targetBitrate, toRel, withTrack, yuvToRgb } = E;
   const pool = (() => {
     let ws = null, dead = false, seq = 0;
@@ -492,6 +505,14 @@ export function mountTool(root, opts = {}) {
     if (item.detected) return item.detected.rect;
     return null;
   }
+  // every box shown on the original: the ones drawn for a photo, else the logo's one box
+  function currentRects() {
+    const it = P.item, out = [];
+    if (it && MODE === 'photo' && it.boxes && it.boxes.length) for (const b of it.boxes) out.push(b);
+    else { const r = currentRect(); if (r && !(drag && drag.rect)) out.push(r); }
+    if (drag && drag.rect) out.push(drag.rect);
+    return out;
+  }
   function drawView() {
     if (!P.has) return;
     const model = previewModel(P.item), mode = viewMode(), W = view.width, H = view.height, r = currentRect();
@@ -558,22 +579,21 @@ export function mountTool(root, opts = {}) {
     octx.setTransform(1, 0, 0, 1, 0, 0);
     octx.clearRect(0, 0, overlay.width, overlay.height);
     // the logo box shows while drawing one and on the original; the result views stay unmarked
-    const r = P.has && (boxOn() || viewMode() === 'original') ? currentRect() : null;
-    if (r && view.width) {
-      const k = overlay.width / view.width;
+    const rs = P.has && view.width && (boxOn() || viewMode() === 'original') ? currentRects() : [];
+    const k = overlay.width / Math.max(1, view.width), dash = 6 * dpr, gap = 4 * dpr, off = reduceMotion ? 0 : -((ts / 45) % (dash + gap));
+    rs.forEach((r, n) => {
       const x = Math.round(r.x * k) + 0.5, y = Math.round(r.y * k) + 0.5, w = Math.round(r.w * k), h = Math.round(r.h * k);
-      const dash = 6 * dpr, gap = 4 * dpr, off = reduceMotion ? 0 : -((ts / 45) % (dash + gap));
       octx.lineWidth = 1.5 * dpr; octx.setLineDash([dash, gap]);
       octx.lineDashOffset = off; octx.strokeStyle = '#FFFFFF'; octx.strokeRect(x, y, w, h);
       octx.lineDashOffset = off + dash; octx.strokeStyle = tokens.mask; octx.strokeRect(x, y, w, h);
       octx.setLineDash([]);
       octx.font = '600 ' + Math.round(12 * dpr) + 'px "Geist Variable", system-ui, sans-serif';
-      const label = drag && drag.rect ? 'New box' : 'Logo';
+      const label = drag && drag.rect && r === drag.rect ? 'New box' : rs.length > 1 ? 'Logo ' + (n + 1) : 'Logo';
       const tw = octx.measureText(label).width + 10 * dpr, th = 18 * dpr;
       const ly = y - th >= 0 ? y - th : y + h;
       octx.fillStyle = tokens.mask; octx.fillRect(x - 0.5, ly, tw, th);
       octx.fillStyle = tokens.maskInk; octx.textBaseline = 'middle'; octx.fillText(label, x + 4.5 * dpr, ly + th / 2 + 0.5);
-    }
+    });
     overlayRaf = requestAnimationFrame(drawOverlay);
   }
   const startOverlay = () => { if (!overlayRaf) overlayRaf = requestAnimationFrame(drawOverlay); };
@@ -717,10 +737,11 @@ export function mountTool(root, opts = {}) {
     if (box && !wasBoxing) stage.scrollIntoView({ block: 'nearest' });
     wasBoxing = box;
     boxHint.hidden = !box || !!drag;
-    boxHintText.textContent = needsBox(it) && !S.boxMode ? 'No logo found. Drag a box around it.' : 'Drag a box around the logo';
+    boxHintText.textContent = needsBox(it) && !S.boxMode && !BOXED ? 'No logo found. Drag a box around it.' : MODE === 'photo' && it.boxes && it.boxes.length ? 'Drag a box around the next logo' : 'Drag a box around the logo';
     for (const b of [boxBtn, boxBtn2]) { b.disabled = !canDraw(); b.setAttribute('aria-pressed', String(!!S.boxMode)); }
-    boxBtn.querySelector('span').textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
-    boxBtn2.textContent = S.boxMode ? 'Cancel box' : 'Draw a box';
+    const boxLabel = S.boxMode ? 'Cancel box' : MODE === 'photo' && it.boxes && it.boxes.length ? 'Add another box' : 'Draw a box';
+    boxBtn.querySelector('span').textContent = boxLabel;
+    boxBtn2.textContent = boxLabel;
     viewSeg.querySelectorAll('button').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.view === mode)); b.disabled = !previewModel(it); });
     const ph = phase(it);
     const afterName = it.status === 'done' && it.result ? 'Result' : 'Preview';
@@ -732,7 +753,7 @@ export function mountTool(root, opts = {}) {
     const paused = '';
     playBtn.title = paused; boxBtn.title = paused; boxBtn2.title = paused; redetectBtn.title = paused;
     rvHint.hidden = !(S.busy && P.playing); rvHint.textContent = 'Cleaning pauses while the preview plays, so it stays smooth.';
-    redetectBtn.disabled = !it.info || S.busy || ph === 'finding';
+    redetectBtn.disabled = !it.info || S.busy || ph === 'finding' || (BOXED && !(it.boxes && it.boxes.length) && !it.manual);
     renderTransport();
     renderLogo();
   }
@@ -757,9 +778,14 @@ export function mountTool(root, opts = {}) {
       const kv = m.engine === 'sora'
         ? '<dt>Where</dt><dd>' + m.intervals.length + (m.intervals.length === 1 ? ' place' : ' places') + ' in the frame · it moves ' + Math.max(0, m.intervals.length - 1) + ' times</dd>' +
           '<dt>Size</dt><dd>' + m.rect.w + '×' + m.rect.h + ' px</dd><dt>Method</dt><dd>rebuilt from other moments and from around it</dd>'
+        : m.engine === 'photo'
+          ? '<dt>' + (m.rects.length === 1 ? 'Your box' : 'Your boxes') + '</dt><dd>' + m.rects.map((r) => r.w + '×' + r.h + ' at ' + r.x + ', ' + r.y).join('<br>') + '</dd>' +
+            '<dt>Method</dt><dd>' + (m.modes.every((x) => x === 'shape') ? 'only the logo’s own pixels rebuilt from around them, then the photo’s grain put back' : m.modes.some((x) => x === 'shape') ? 'the logo’s pixels rebuilt where it could be told apart; the whole box elsewhere' : 'the whole box rebuilt from around it') + '</dd>'
         : '<dt>Your box</dt><dd>x ' + m.rect.x + ' · y ' + m.rect.y + ' · ' + m.rect.w + '×' + m.rect.h + '</dd><dt>Method</dt><dd>' + (m.kind === 'image' ? 'filled in from around it' : 'rebuilt from other frames and from around it') + '</dd>';
-      html = logoState('ok', logoName(m) + (done ? ' removed' : ' found'), m.engine === 'sora'
+      html = logoState(m.engine === 'photo' && m.modes.includes('box') ? 'warn' : 'ok', logoName(m) + (done ? ' removed' : ' found'), m.engine === 'sora'
         ? (done ? 'The picture under it was rebuilt from other moments and from around it.' : 'It moves around the frame, so it is found at every moment. What is under it is gone, so it is rebuilt from other moments and from around it.')
+        : m.engine === 'photo'
+          ? (m.modes.includes('box') ? 'The logo could not be told apart from the picture here, so the whole box was rebuilt. A tighter box around it gives a cleaner result. Check it before you download.' : 'Only the logo itself was rebuilt, from the picture around it. Look at the close-ups to check it before you download.') + ' Draw another box to remove more.'
         : 'This is not a logo the tool knows, so what is under it is rebuilt from other frames and from around it. Check the result before you download.') +
         '<details class="details"><summary>Technical details</summary><dl class="kv">' + kv + '</dl></details>';
     } else if (m && m.ok) {
@@ -785,7 +811,7 @@ export function mountTool(root, opts = {}) {
       html = logoState('warn', it.info ? 'Couldn’t clean this file' : 'Can’t open this file', esc(explain(it).text));
     } else {
       html = MODE === 'sora' ? logoState('warn', 'No Sora watermark found', esc(it.msg && !/^No Sora/.test(it.msg) ? it.msg : 'This video does not seem to carry one. If it does, it may be too faint or too small to find.'))
-        : MODE === 'logo' ? logoState('warn', it.manual ? 'That spot could not be cleaned' : 'Choose the logo to remove', it.manual ? 'Draw the box again, a little bigger.' : 'Click “Draw a box”, then drag a rectangle around the logo, a little bigger than it.')
+        : BOXED ? logoState('warn', it.manual ? 'That spot could not be cleaned' : 'Choose the logo to remove', it.manual ? 'Draw the box again, a little bigger.' : 'Click “Draw a box”, then drag a rectangle around the logo, a little bigger than it.')
         : logoState('warn', it.manual ? 'No logo in that box' : 'No logo found', 'Click “Draw a box”, then drag a rectangle around it, a little bigger than the logo.');
     }
     logoInfo.innerHTML = html;
@@ -826,14 +852,15 @@ export function mountTool(root, opts = {}) {
   const keyOf = (f) => f.name + '|' + f.size + '|' + f.lastModified;
   function addFiles(list, source) {
     const all = [...list];
-    const files = all.filter((f) => isVideoFile(f) || (CFG.images && isImgFile(f)));
+    const files = all.filter((f) => (CFG.videos && isVideoFile(f)) || (CFG.images && isImgFile(f)));
     const ignored = all.length - files.length;
-    if (!files.length) { setNote(source === 'folder' ? 'There are no videos or photos in that folder.' : 'No videos or photos found. Add MP4, MOV, WebM or PNG, JPG, WebP files.', 'warn'); return; }
+    const KIND = CFG.videos && CFG.images ? 'videos or photos' : CFG.images ? 'photos' : 'videos', EXT = CFG.videos && CFG.images ? 'MP4, MOV, WebM or PNG, JPG, WebP' : CFG.images ? 'PNG, JPG or WebP' : 'MP4, MOV or WebM';
+    if (!files.length) { setNote(source === 'folder' ? 'There are no ' + KIND + ' in that folder.' : 'No ' + KIND + ' found. Add ' + EXT + ' files.', 'warn'); return; }
     const have = new Set(S.items.map((i) => i.key)), fresh = [];
     let dupes = 0;
     for (const f of files) { const k = keyOf(f); if (have.has(k)) { dupes++; continue; } have.add(k); fresh.push(f); }
     const notes = [];
-    if (ignored) notes.push(source === 'folder' ? plural(ignored, 'other file', 'other files') + ' in the folder ' + (ignored === 1 ? 'was' : 'were') + ' left out.' : plural(ignored, 'file is', 'files are') + ' not a video or photo and ' + (ignored === 1 ? 'was' : 'were') + ' left out.');
+    if (ignored) notes.push(source === 'folder' ? plural(ignored, 'other file', 'other files') + ' in the folder ' + (ignored === 1 ? 'was' : 'were') + ' left out.' : plural(ignored, 'file is', 'files are') + ' not ' + (CFG.videos && CFG.images ? 'a video or photo' : CFG.images ? 'a photo' : 'a video') + ' and ' + (ignored === 1 ? 'was' : 'were') + ' left out.');
     if (dupes) notes.push(plural(dupes, 'file was', 'files were') + ' already in the list.');
     setNote(notes.filter(Boolean).join(' '), notes.some(Boolean) ? 'warn' : '');
     for (const file of fresh) {
@@ -1066,6 +1093,11 @@ export function mountTool(root, opts = {}) {
       return { model: m, msg: '', detected: { rect: m.rect, confidence: null, manual: false, gemini: false, tmpl: null }, rect: m.rect };
     }
     if (!manualRect) return { model: null, msg: 'Draw a box around the logo you want removed.' };
+    if (MODE === 'photo') {
+      if (it.kind !== 'image') return { model: null, msg: 'This tool is for photos. Add a PNG, JPG or WebP file.' };
+      const model = await PH.removeBoxes(it, manualRect, onP);
+      return { model, msg: model ? '' : 'That spot could not be filled in', detected: { rect: model ? model.rect : manualRect[0], confidence: null, manual: true, gemini: false, tmpl: null }, rect: model ? model.rect : manualRect[0] };
+    }
     const det = { rect: manualRect, confidence: null, manual: true, gemini: false, tmpl: null };
     if (it.kind === 'image') {
       const model = await SR.logoImage(it, manualRect);
@@ -1170,12 +1202,17 @@ export function mountTool(root, opts = {}) {
   function requestBox(it, rect, guess) {
     if (!it || !it.info || it.removed || it.status === 'encoding' || it.status === 'learning') return;
     if (S.busy) it.runId = S.runId;
+    if (MODE === 'photo') {
+      // each new box is added to the ones before it; the photo is cleaned again with all of them
+      it.boxes = (it.boxes || []).concat([rect]); rect = it.boxes.slice();
+      if (it.status === 'done') { it.result = null; it.saved = false; it.status = 'ready'; }
+    }
     it.model = null; it.msg = ''; it.borrowed = false; it.cuHas = false; it.boxReq = rect; it.boxGuess = guess || null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
     updItem(it); render(); pump();
   }
   function retryItem(it) {
     if (!it || S.busy || it.removed) return;
-    it.msg = ''; it.model = null; it.detected = null; it.borrowed = false; it.manual = false; it.cuHas = false; it.boxReq = null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
+    it.msg = ''; it.model = null; it.detected = null; it.borrowed = false; it.manual = false; it.cuHas = false; it.boxReq = null; it.boxes = null; it.skipped = false; it.check = null; it.checkG = null; it.retried = '';
     if (!it.info) { it.status = 'new'; updItem(it); render(); intake(); return; }
     if (it.status === 'done' || it.status === 'error') { it.result = null; it.saved = false; }
     it.status = 'ready';
@@ -1485,7 +1522,7 @@ export function mountTool(root, opts = {}) {
         return { tone: 'ok', icon: 'found', title: logoName(it.model) + ' found', sub: (S.stopped ? 'Paused · press Continue to clean it' : 'Cleaning starts by itself') + (it.manual ? ' · your box' : '') };
       case 'nologo':
         if (MODE === 'sora') return { tone: 'idle', icon: 'info', title: 'No Sora watermark found', sub: it.msg && !/^No Sora/.test(it.msg) ? it.msg : 'This video does not seem to carry one.' };
-        if (MODE === 'logo') return { tone: 'warn', icon: 'info', title: it.manual ? 'That spot could not be cleaned' : 'Choose the logo to remove', sub: it.manual ? it.msg || 'Draw the box again, a little bigger.' : 'Open Review and drag a box around it.' };
+        if (BOXED) return { tone: 'warn', icon: 'info', title: it.manual ? 'That spot could not be cleaned' : 'Choose the logo to remove', sub: it.manual ? it.msg || 'Draw the box again, a little bigger.' : 'Open Review and drag a box around it.' };
         if (it.manual) return { tone: 'warn', title: 'No logo in that box', sub: 'Draw a slightly bigger box around it.' };
         return { tone: 'idle', icon: 'info', title: 'No logo found', sub: 'It may already be clean. If you can see a logo, point it out.' };
       case 'skipped': return { tone: 'idle', icon: 'info', title: 'Left as it is', sub: 'Nothing to remove. Draw a box if you change your mind.' };
@@ -1538,7 +1575,7 @@ export function mountTool(root, opts = {}) {
     c.skip.hidden = !firstAsk;
     c.box.hidden = !CFG.box || !(ph === 'nologo' || ph === 'skipped');
     c.box.classList.toggle('primary', ph === 'nologo' && !firstAsk);
-    c.retry.hidden = !(ph === 'error' || (ph === 'nologo' && !firstAsk && MODE !== 'logo') || (ph === 'ready' && it.borrowed));
+    c.retry.hidden = !(ph === 'error' || (ph === 'nologo' && !firstAsk && !BOXED) || (ph === 'ready' && it.borrowed));
     c.yes.disabled = c.retry.disabled = S.busy; c.box.disabled = false;
     c.yes.title = c.retry.title = S.busy ? 'Available when the files being cleaned are finished' : '';
     setText(c.retry, ph === 'error' ? 'Try again' : 'Check again');
@@ -1722,8 +1759,8 @@ export function mountTool(root, opts = {}) {
       return;
     }
     setBar({
-      tone: 'idle', icon: ICON.info, title: c.nologo ? (MODE === 'sora' ? 'No Sora watermark found' : MODE === 'logo' ? 'Choose the logo to remove' : 'No logo found') : 'Nothing to clean',
-      sub: c.nologo ? (MODE === 'sora' ? 'Nothing was changed. These videos do not seem to carry the Sora watermark.' : MODE === 'logo' ? 'Open a file and drag a box around the logo. It is removed as soon as you let go.' : 'Nothing was changed. It may already be clean; if you can see a logo, point it out on the card.') : c.skipped ? 'Every file was left as it is.' : 'Remove the files that can’t be opened, or add others.',
+      tone: 'idle', icon: ICON.info, title: c.nologo ? (MODE === 'sora' ? 'No Sora watermark found' : BOXED ? 'Choose the logo to remove' : 'No logo found') : 'Nothing to clean',
+      sub: c.nologo ? (MODE === 'sora' ? 'Nothing was changed. These videos do not seem to carry the Sora watermark.' : BOXED ? 'Open a file and drag a box around the logo. It is removed as soon as you let go.' : 'Nothing was changed. It may already be clean; if you can see a logo, point it out on the card.') : c.skipped ? 'Every file was left as it is.' : 'Remove the files that can’t be opened, or add others.',
     });
   }
   function pill(text) { stagePill.hidden = !text; stagePillText.textContent = text || ''; }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useRouter } from '../router';
 import { SITE } from '../site';
+import { TOOL_PATHS } from '../content/tools';
 import { Close, LogoMark, Menu } from './Icons';
+import { ToolsMenu } from './ToolsMenu';
 
 const NAV = [
-  { to: '/app', label: 'Remover' },
   { to: '/how-it-works', label: 'How it works' },
   { to: '/guides', label: 'Guides' },
   { to: '/pricing', label: 'Pricing' },
@@ -26,14 +27,15 @@ export function Header() {
           {open ? <Close /> : <Menu />}
         </button>
         <nav id="site-nav" className={open ? 'nav is-open' : 'nav'} aria-label="Main">
+          <ToolsMenu onNavigate={close} />
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} className="nav-link" aria-current={path === n.to || (n.to === '/guides' && path.startsWith('/guides/')) ? 'page' : undefined} onClick={close}>
               {n.label}
             </Link>
           ))}
-          {path !== '/app' && (
-            <Link to="/app" className="btn btn-primary btn-sm nav-cta" onClick={close}>
-              Try it free
+          {!TOOL_PATHS.includes(path) && (
+            <Link to="/tools" className="btn btn-primary btn-sm nav-cta" onClick={close}>
+              Open a tool
             </Link>
           )}
         </nav>

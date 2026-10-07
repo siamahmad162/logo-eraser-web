@@ -182,7 +182,7 @@ export function makeSora(E, env, extra = {}) {
             // a clean picture of this slot
             if (best.score < 0.3 && (tick[si]++ % stride[si]) === 0) {
               const c = crops[si];
-              store[si].push({ t: s.timestamp, rgb: getRgb(fr, c.x, c.y, c.w, c.h) });
+              store[si].push({ t: s.timestamp, score: best.score, rgb: getRgb(fr, c.x, c.y, c.w, c.h) });
               if (store[si].length > keep) { store[si] = store[si].filter((_, i) => i % 2 === 0); stride[si] *= 2; }
             }
           });
@@ -195,7 +195,14 @@ export function makeSora(E, env, extra = {}) {
       for (let t = 0; t < n2; t++) { let m = 0; for (let q = 0; q < slots.length; q++) m = Math.max(m, scores[q][t]); for (let q = 0; q < slots.length; q++) if (scores[q][t] < m - 0.12) scores[q][t] = 0; }
       const intervals = [];
       slots.forEach((sl, si) => {
-        for (const [a, b] of SC.runsOf(Float32Array.from(scores[si]))) {
+        const runs = SC.runsOf(Float32Array.from(scores[si])), spans = runs.map(([a, b]) => [times[a], times[b]]);
+        // pictures for filling: where the mark is clearly not there, and not from the moments just before or after it
+        // (a mark that is fading in or out is still a little there)
+        const apart = (d, pad) => spans.every(([ta, tb]) => d.t < ta - pad || d.t > tb + pad);
+        let clean = store[si].filter((d) => d.score < 0.15 && apart(d, 0.4));
+        if (clean.length < 6) clean = store[si].filter((d) => d.score < 0.2 && apart(d, 0.2));
+        if (clean.length < 6) clean = store[si];
+        for (const [a, b] of runs) {
           const xs = [], ys = [];
           for (let t = a; t <= b; t++) if (scores[si][t] > 0.6) { xs.push(where[si][t].x); ys.push(where[si][t].y); }
           xs.sort((p, q) => p - q); ys.sort((p, q) => p - q);
@@ -203,7 +210,7 @@ export function makeSora(E, env, extra = {}) {
           // the crop is the slot's own, so the pictures kept from frames without the mark line up with it exactly
           iv.rect = blockRect(iv, W, H, sf); iv.crop = crops[si];
           const mid = (iv.t0 + iv.t1) / 2;
-          iv.pool = store[si].slice().sort((p, q) => Math.abs(p.t - mid) - Math.abs(q.t - mid)).slice(0, 14).map((d) => ({ t: d.t, rgb: d.rgb }));
+          iv.pool = clean.slice().sort((p, q) => Math.abs(p.t - mid) - Math.abs(q.t - mid)).slice(0, 14).map((d) => ({ t: d.t, rgb: d.rgb }));
           intervals.push(iv);
         }
       });

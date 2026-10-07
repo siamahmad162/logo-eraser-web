@@ -17,13 +17,23 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/sora-watermark-remover',
-    title: `Sora Watermark Remover — Free to Try, No Upload`,
+    title: `Sora Watermark Remover — No Upload`,
     description: 'Remove the moving Sora watermark from your videos automatically. Found at every moment, rebuilt frame by frame, in your browser. Nothing is uploaded.',
   },
   {
-    path: '/remove-logo',
-    title: `Remove a Logo from Any Video or Photo — ${n}`,
-    description: 'Drag a box around a logo, a badge or a date stamp and it is removed from the video or photo. Runs in your browser; nothing is uploaded.',
+    path: '/remove-logo-from-video',
+    title: `Remove a Logo from a Video — ${n}`,
+    description: 'Drag a box around a logo, a badge or a date stamp and it is removed from every frame of the video. Runs in your browser; nothing is uploaded.',
+  },
+  {
+    path: '/remove-logo-from-photo',
+    title: `Remove a Logo from a Photo — ${n}`,
+    description: 'Drag a box around a logo, a stamp or a watermark and it is removed from the photo. Only the logo itself is rebuilt. Runs in your browser; nothing is uploaded.',
+  },
+  {
+    path: '/tools',
+    title: `All tools: Gemini, Veo, Sora and any-logo removers — ${n}`,
+    description: 'Four watermark and logo removers for videos and photos: Gemini and Veo, Sora, any logo in a video, any logo in a photo. All run in your browser.',
   },
   {
     path: '/pricing',
