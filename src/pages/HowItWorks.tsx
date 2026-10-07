@@ -1,3 +1,4 @@
+import { AdSlot } from '../components/AdSlot';
 import { Breadcrumbs, ToolCta } from '../components/Seo';
 import { Link } from '../router';
 import { SITE } from '../site';
@@ -57,6 +58,7 @@ export function HowItWorks() {
             <li><strong>Invisible watermarks</strong> such as SynthID are not affected. See <Link to="/guides/visible-watermark-vs-synthid">visible watermark vs SynthID</Link>.</li>
           </ul>
 
+          <AdSlot place="article1" />
           <ToolCta title="See it on your own file" />
         </div>
       </section>

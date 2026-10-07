@@ -575,3 +575,27 @@ body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
 .choose-a svg { width: 15px; height: 15px; }
 .src-sora { color: #9fd0ff; border-color: rgba(90, 170, 255, 0.35); background: rgba(90, 170, 255, 0.08); }
 .src-logo { color: #ffd08a; border-color: rgba(245, 165, 91, 0.35); background: rgba(245, 165, 91, 0.08); }
+
+/* Ads: every ad has its space reserved (nothing jumps when it arrives), is labelled, and stays away from the tools' buttons */
+.page-frame { flex: 1; min-width: 0; display: block; }
+.page-frame.has-rails { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--rail-w); column-gap: 16px; padding-inline: 16px; }
+.rail { position: relative; }
+.rail-in { position: sticky; top: 84px; padding-top: 24px; margin-inline: auto; }
+.ad { text-align: center; }
+.ad-label { display: block; margin-bottom: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.ad-box { margin-inline: auto; max-width: 100%; overflow: hidden; border-radius: 10px; display: flex; justify-content: center; }
+.ad-box iframe { border: 0; display: block; max-width: 100%; }
+.ad-box.ad-ph { align-items: center; border: 1px dashed var(--line-2); background: rgba(255, 255, 255, 0.02); color: var(--faint); font-size: 12.5px; padding: 8px; }
+.ad-banner { margin: 40px auto; padding-inline: 16px; }
+.ad-rail .ad-box { border-radius: 8px; }
+.ad[data-empty] { display: none; }
+@media (max-width: 640px) { .ad-banner { margin-block: 28px; } }
+
+/* the ask, only where visitors have to be asked first */
+.consent { position: fixed; z-index: 60; left: 16px; bottom: 16px; width: min(420px, calc(100vw - 32px)); padding: 16px 18px; border-radius: 16px; background: #10121a; border: 1px solid var(--line-2); box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.9); }
+.consent p { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.consent b { color: var(--ink); font-weight: 600; }
+.consent-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.footer-link-btn { display: block; padding: 0; border: 0; background: none; font: inherit; color: var(--muted); cursor: pointer; text-align: left; }
+.footer-link-btn:hover { color: var(--ink); }
+.free-ticks { margin-top: 4px; }

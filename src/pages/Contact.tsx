@@ -21,8 +21,8 @@ export function Contact() {
               <p>Tell us your browser and computer, the file type and resolution, and what you see. A screenshot of the result helps a lot. Please don’t send files you aren’t allowed to share.</p>
             </div>
             <div className="contact-card">
-              <h2>Billing</h2>
-              <p>Write from the email address you subscribed with. For refunds, see our <Link to="/refunds">Refund Policy</Link>; you can also reply to your receipt.</p>
+              <h2>Ads and privacy</h2>
+              <p>{SITE.name} is free and supported by ads. If an ad looks wrong or unsafe, tell us what you saw and on which page. Privacy questions are answered in our <Link to="/privacy">Privacy Policy</Link>.</p>
             </div>
             <div className="contact-card">
               <h2>Business &amp; press</h2>

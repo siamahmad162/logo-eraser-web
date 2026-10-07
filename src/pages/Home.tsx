@@ -2,7 +2,7 @@ import { Gallery } from '../components/Gallery';
 import { ArrowRight, Check, Download, Frames, Gauge, Globe, Lock, Photo, Scan, Stack, Text, Upload } from '../components/Icons';
 import { MediaCompare } from '../components/MediaCompare';
 import { ToolShowcase } from '../components/ToolShowcase';
-import { Plans } from '../components/Plans';
+import { AdSlot } from '../components/AdSlot';
 import { JsonLd, abs } from '../components/Seo';
 import { GUIDES, LANDINGS } from '../content/meta';
 import { FAQ, FaqList } from '../faq';
@@ -77,7 +77,7 @@ export function Home() {
             </div>
             <ul className="trust">
               <li><Check /> No upload</li>
-              <li><Check /> No sign-up to try</li>
+              <li><Check /> Free, no sign-up</li>
               <li><Check /> Videos and photos</li>
             </ul>
           </div>
@@ -114,6 +114,8 @@ export function Home() {
           <p className="more"><Link to="/tools">All tools <ArrowRight /></Link></p>
         </div>
       </section>
+
+      <AdSlot place="home1" />
 
       <section className="section" aria-labelledby="stats">
         <div className="wrap">
@@ -254,15 +256,23 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section" aria-labelledby="pricing">
+      <section className="section" aria-labelledby="free">
         <div className="wrap">
-          <div className="section-head center" data-reveal>
-            <span className="eyebrow">Pricing</span>
-            <h2 id="pricing" className="section-title">Start free. Upgrade when you publish daily.</h2>
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Free</span>
+            <h2 id="free" className="section-title">Free for everyone. No sign-up, no limits.</h2>
+            <p className="section-lede">Clean as many videos and photos as you like. Ads on the pages around the tools pay for {SITE.name}; they are never placed inside a tool, and they never see your files, because your files never leave your device.</p>
           </div>
-          <Plans />
+          <ul className="ticks free-ticks" data-reveal>
+            <li><Check /> No account, no limit on files, no watermark of ours on your results</li>
+            <li><Check /> Everything runs in your browser, so there is no upload to wait for</li>
+            <li><Check /> Four tools: Gemini and Veo, Sora, any logo in a video, any logo in a photo</li>
+          </ul>
+          <p className="more"><Link to="/tools">Open a tool <ArrowRight /></Link></p>
         </div>
       </section>
+
+      <AdSlot place="home2" />
 
       <section className="section" aria-labelledby="guides">
         <div className="wrap">

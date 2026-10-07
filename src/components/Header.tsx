@@ -8,7 +8,6 @@ import { ToolsMenu } from './ToolsMenu';
 const NAV = [
   { to: '/how-it-works', label: 'How it works' },
   { to: '/guides', label: 'Guides' },
-  { to: '/pricing', label: 'Pricing' },
   { to: '/faq', label: 'FAQ' },
 ];
 

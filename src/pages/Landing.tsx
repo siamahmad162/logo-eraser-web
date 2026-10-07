@@ -1,3 +1,4 @@
+import { AdSlot } from '../components/AdSlot';
 import type { ReactNode } from 'react';
 import { MediaCompare } from '../components/MediaCompare';
 import { CLIPS, PHOTOS, type Demo } from '../media';
@@ -141,6 +142,8 @@ export function Landing({ path }: { path: string }) {
         </div>
       </section>
 
+      <AdSlot place="article1" />
+
       <section className="section" aria-labelledby="steps">
         <div className="wrap">
           <h2 id="steps" className="section-title">Three steps</h2>
@@ -164,6 +167,8 @@ export function Landing({ path }: { path: string }) {
           <FaqList items={p.faq.map((id) => FAQ.find((q) => q.id === id)!)} />
         </div>
       </section>
+
+      <AdSlot place="article2" />
 
       <section className="section" aria-labelledby="read">
         <div className="wrap">

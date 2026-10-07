@@ -1608,6 +1608,7 @@ export function mountTool(root, opts = {}) {
   }
   function render() {
     const has = S.items.length > 0;
+    document.documentElement.dataset.busy = S.busy ? '1' : '';   // the page's ads wait while a file is being cleaned
     welcomeEl.hidden = has; jobArea.hidden = !has; barEl.hidden = !has;
     studioEl.classList.toggle('on', has); studioEl.classList.toggle('docked', docked());
     reconcileCards();
@@ -1955,7 +1956,7 @@ export function mountTool(root, opts = {}) {
       keepAwake(false);
       restoreTitle();
       stopOverlay();
-      scrollLocks = 0; document.documentElement.style.overflow = '';
+      scrollLocks = 0; document.documentElement.style.overflow = ''; document.documentElement.dataset.busy = '';
       ac.abort();
       cleanups.forEach((f) => f());
       closePreview();

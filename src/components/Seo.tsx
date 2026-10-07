@@ -28,7 +28,7 @@ export function Breadcrumbs({ items }: { items: { to: string; label: string }[] 
   );
 }
 
-export function ToolCta({ title = 'Try it on your own video', text = 'Free to start. Nothing is uploaded: it all runs in your browser.' }: { title?: string; text?: string }) {
+export function ToolCta({ title = 'Try it on your own video', text = 'Free, with no sign-up. Nothing is uploaded: it all runs in your browser.' }: { title?: string; text?: string }) {
   return (
     <aside className="tool-cta">
       <div>

@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 const ssr = path.join(root, 'dist-ssr');
-const { render, ROUTES, NOT_FOUND, SITE } = await import(pathToFileURL(path.join(ssr, 'entry-server.js')).href);
+const { render, ROUTES, NOT_FOUND, SITE, ADS } = await import(pathToFileURL(path.join(ssr, 'entry-server.js')).href);
 const template = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 // preload the two fonts the first screen uses, so text doesn't reflow when they arrive
 const fonts = fs.readdirSync(path.join(dist, 'assets')).filter((f) => /^geist(-mono)?-latin-wght-normal-.*\.woff2$/.test(f));
@@ -48,5 +48,7 @@ if (SITE.url) {
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
   fs.appendFileSync(path.join(dist, 'robots.txt'), `\nSitemap: ${SITE.url}/sitemap.xml\n`);
 }
+// ads.txt tells ad buyers who may sell this site's ads; the lines come from the ad company (see ADS in src/site.ts)
+if (ADS.adsTxt.length) fs.writeFileSync(path.join(dist, 'ads.txt'), ADS.adsTxt.join('\n') + '\n');
 fs.rmSync(ssr, { recursive: true, force: true });
 console.log(`prerendered ${ROUTES.length} pages + 404`);

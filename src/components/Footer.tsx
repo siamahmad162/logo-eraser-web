@@ -2,6 +2,7 @@ import { LANDINGS } from '../content/meta';
 import { Link } from '../router';
 import { SITE } from '../site';
 import { LogoMark } from './Icons';
+import { asksFirst, setConsent } from '../ads';
 
 const USE_CASES: Record<string, string> = {
   '/gemini-watermark-remover': 'Gemini watermark remover',
@@ -15,7 +16,7 @@ export function Footer() {
       <div className="wrap footer-grid">
         <div className="footer-brand">
           <Link to="/" className="brand"><LogoMark className="brand-mark" /><span>{SITE.name}</span></Link>
-          <p>Frame-by-frame watermark removal for AI videos and photos. Runs in your browser; your files never leave your device.</p>
+          <p>Free watermark and logo removal for videos and photos. Runs in your browser; your files never leave your device.</p>
           <a className="footer-mail" href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>
         </div>
         <nav aria-label="Product">
@@ -26,7 +27,6 @@ export function Footer() {
           <Link to="/remove-logo-from-video">Video logo remover</Link>
           <Link to="/remove-logo-from-photo">Photo logo remover</Link>
           <Link to="/how-it-works">How it works</Link>
-          <Link to="/pricing">Pricing</Link>
           <Link to="/faq">FAQ</Link>
         </nav>
         <nav aria-label="Use cases">
@@ -43,7 +43,7 @@ export function Footer() {
           <h2>Legal</h2>
           <Link to="/terms">Terms of Service</Link>
           <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/refunds">Refund Policy</Link>
+          {asksFirst() && <button type="button" className="footer-link-btn" onClick={() => setConsent(null)}>Ad choices</button>}
         </nav>
       </div>
       <div className="wrap">

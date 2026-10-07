@@ -1,3 +1,4 @@
+import { AdSlot } from '../components/AdSlot';
 import { ArrowRight } from '../components/Icons';
 import { Breadcrumbs, JsonLd, ToolCta, abs } from '../components/Seo';
 import { GUIDE_BODIES } from '../content/guides';
@@ -77,11 +78,13 @@ export function Guide({ slug }: { slug: string }) {
             <div className="prose article">
               <Body />
             </div>
+            <AdSlot place="article1" />
             <ToolCta />
           </div>
         </div>
         <JsonLd data={article} />
       </article>
+      <AdSlot place="article2" />
       <section className="section section-alt" aria-labelledby="more-guides">
         <div className="wrap">
           <h2 id="more-guides" className="section-title">More guides</h2>

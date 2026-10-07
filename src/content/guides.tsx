@@ -155,7 +155,7 @@ export const GUIDE_BODIES: Record<string, () => ReactNode> = {
         <li>Keep the tab open and visible while it runs; browsers slow down background tabs.</li>
         <li>Plug your laptop in: processing uses the graphics chip and CPU heavily.</li>
         <li>If your browser runs out of memory with many long 4K videos, process them in smaller groups.</li>
-        <li>Batch mode and longer videos are part of <Link to="/pricing">{n} Pro</Link>.</li>
+        <li>Everything is free, with no limit on how many files you clean. The only limit is what your own computer can handle.</li>
       </ul>
     </>
   ),

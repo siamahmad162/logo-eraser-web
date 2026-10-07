@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Tool } from './Tool';
-import { FaqList } from '../faq';
+import { AdSlot } from '../components/AdSlot';
+import { FAQ, FaqList } from '../faq';
 import type { Qa } from '../faq';
 import { Link } from '../router';
 import { SITE } from '../site';
@@ -11,7 +12,7 @@ import { JsonLd } from '../components/Seo';
 const n = SITE.name;
 
 const asText = (a: ReactNode) => (typeof a === 'string' ? a : '');
-function Page({ mode, sections, faq, other }: { mode: 'sora' | 'logo' | 'photo'; sections: { title: string; body: ReactNode }[]; faq: Qa[]; other: ReactNode }) {
+function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo' | 'photo'; sections: { title: string; body: ReactNode }[]; faq: Qa[]; other: ReactNode }) {
   return (
     <>
       <Tool mode={mode} />
@@ -27,6 +28,7 @@ function Page({ mode, sections, faq, other }: { mode: 'sora' | 'logo' | 'photo';
           </div>
         </div>
       </section>
+      <AdSlot place="tool1" />
       <section className="section" aria-labelledby="questions">
         <div className="wrap narrow">
           <h2 id="questions" className="section-title">Questions</h2>
@@ -35,13 +37,14 @@ function Page({ mode, sections, faq, other }: { mode: 'sora' | 'logo' | 'photo';
           <p className="also">{other}</p>
         </div>
       </section>
+      <AdSlot place="tool2" />
     </>
   );
 }
 
 const SORA_FAQ: Qa[] = [
   { id: 'sora-works', q: 'Does it remove the watermark from Sora videos?', a: <p>Yes. The Sora watermark (the white cloud, the word “Sora” and the creator’s name) is found by itself at every moment, wherever it sits, and removed from every frame. You do not draw anything.</p> },
-  { id: 'sora-clean', q: 'Will it look exactly like the original?', a: <p>The Sora mark is almost solid, so the pixels under it are gone and cannot be restored the way the see-through Gemini mark can. They are rebuilt: from other moments of the same shot (a still scene comes back as it was) and from around the mark. Busy, fast motion behind the mark can show a soft patch, so look at the result before you use it. The first download is free so you can judge it.</p> },
+  { id: 'sora-clean', q: 'Will it look exactly like the original?', a: <p>The Sora mark is almost solid, so the pixels under it are gone and cannot be restored the way the see-through Gemini mark can. They are rebuilt: from other moments of the same shot (a still scene comes back as it was) and from around the mark. Busy, fast motion behind the mark can show a soft patch, so look at the result before you use it.</p> },
   { id: 'sora-moves', q: 'It moves around. Does that matter?', a: <p>No, it helps. The mark sits in one place for a few seconds, fades, and appears somewhere else. The place it has left shows the real picture again, which is what the rebuilt picture is copied from.</p> },
   { id: 'sora-upload', q: 'Are my videos uploaded?', a: <p>No. Everything runs in your browser on your own device, so your videos stay private and you do not wait for an upload. How fast it goes depends on your device.</p> },
   { id: 'sora-quality', q: 'Do I lose quality, sound or length?', a: <p>The size, frame rate, length and sound stay the same. Only the area under the mark is changed, and the video is saved again at a higher bitrate than the original so nothing else is lost.</p> },
@@ -110,6 +113,21 @@ export function PhotoRemover() {
       ]}
       faq={PHOTO_FAQ}
       other={<>Other removers: <Link to="/app">Gemini and Veo</Link> · <Link to="/sora-watermark-remover">Sora</Link> · <Link to="/remove-logo-from-video">video logo</Link> · <Link to="/tools">all tools</Link></>}
+    />
+  );
+}
+
+export function GeminiRemover() {
+  return (
+    <Page
+      mode="gemini"
+      sections={[
+        { title: 'Found by itself, to the pixel', body: <p>Drop in a Gemini or Veo video or photo and {n} finds the four-pointed sparkle or the “Veo” text mark on its own, measures its exact shape and strength in your file, and starts cleaning. There is nothing to draw and no button to press.</p> },
+        { title: 'Restored, not covered up', body: <p>The sparkle is see-through, so the real picture is still in every frame, only blended with white. {n} reverses that blend frame by frame, so whatever moves behind the logo stays sharp. Where a mark is fully solid there is nothing underneath to recover, and those pixels are filled in from around them.</p> },
+        { title: 'Same file, minus the logo', body: <p>Resolution, frame rate, length and sound stay the same. Photos keep their format: a PNG stays lossless. Everything runs in your browser, so your files are never uploaded, and it is free with no sign-up.</p> },
+      ]}
+      faq={FAQ.filter((x) => ['which-watermarks', 'clean', 'upload', 'quality', 'formats', 'speed', 'allowed', 'free', 'google'].includes(x.id))}
+      other={<>Other removers: <Link to="/sora-watermark-remover">Sora</Link> · <Link to="/remove-logo-from-video">video logo</Link> · <Link to="/remove-logo-from-photo">photo logo</Link> · <Link to="/tools">all tools</Link></>}
     />
   );
 }

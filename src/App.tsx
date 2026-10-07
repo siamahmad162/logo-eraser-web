@@ -1,19 +1,19 @@
 import { Fragment, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { AdRail, useRails } from './components/AdSlot';
+import { ConsentBar } from './components/ConsentBar';
 import { useRouter } from './router';
 import { Home } from './pages/Home';
-import { Tool } from './pages/Tool';
-import { Pricing } from './pages/Pricing';
 import { Faq } from './pages/Faq';
-import { Terms, Privacy, Refunds } from './pages/Legal';
+import { Terms, Privacy } from './pages/Legal';
 import { NotFound } from './pages/NotFound';
 import { Landing } from './pages/Landing';
 import { Guide, Guides } from './pages/Guides';
 import { HowItWorks } from './pages/HowItWorks';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
-import { SoraRemover, LogoRemover, PhotoRemover } from './pages/OtherTools';
+import { GeminiRemover, SoraRemover, LogoRemover, PhotoRemover } from './pages/OtherTools';
 import { Tools } from './pages/Tools';
 import { TOOL_PATHS as TOOL_LIST } from './content/tools';
 import { GUIDES, LANDINGS } from './content/meta';
@@ -21,16 +21,14 @@ import { GUIDES, LANDINGS } from './content/meta';
 const TOOL_PATHS = new Set(TOOL_LIST);
 const PAGES: Record<string, () => React.JSX.Element> = {
   '/': Home,
-  '/app': () => <Tool />,
+  '/app': GeminiRemover,
   '/sora-watermark-remover': SoraRemover,
   '/remove-logo-from-video': LogoRemover,
   '/remove-logo-from-photo': PhotoRemover,
   '/tools': Tools,
-  '/pricing': Pricing,
   '/faq': Faq,
   '/terms': Terms,
   '/privacy': Privacy,
-  '/refunds': Refunds,
   '/how-it-works': HowItWorks,
   '/guides': Guides,
   '/about': About,
@@ -62,14 +60,20 @@ function useReveal(path: string) {
 export function App() {
   const { path } = useRouter();
   useReveal(path);
+  const rails = useRails();
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
       <Header />
-      <main id="main" className={TOOL_PATHS.has(path) ? 'main main-tool' : 'main'}>
-        <Fragment key={path}>{renderPage(path)}</Fragment>
-      </main>
+      <div className={rails.on ? 'page-frame has-rails' : 'page-frame'} style={rails.on ? { ['--rail-w' as string]: rails.width + 'px' } : undefined}>
+        {rails.on && <AdRail side="left" width={rails.width} preview={rails.preview} />}
+        <main id="main" className={TOOL_PATHS.has(path) ? 'main main-tool' : 'main'}>
+          <Fragment key={path}>{renderPage(path)}</Fragment>
+        </main>
+        {rails.on && <AdRail side="right" width={rails.width} preview={rails.preview} />}
+      </div>
       <Footer />
+      <ConsentBar />
     </>
   );
 }

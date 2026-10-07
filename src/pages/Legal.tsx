@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from '../router';
 import { SITE } from '../site';
 
-// Plain-language starting points. Have them reviewed before taking payments.
+// Plain-language starting points. Have them reviewed before the site goes live with ads.
 function LegalPage({ title, children }: { title: string; children: ReactNode }) {
   return (
     <>
@@ -40,14 +40,14 @@ export function Terms() {
       </ul>
       <p>{n} removes visible marks only. AI-generated media may still contain invisible watermarks or metadata (for example Google’s SynthID), which {n} does not remove. You are responsible for how you use and publish your content.</p>
 
-      <h2>3. Accounts</h2>
-      <p>Some features may require an account. Keep your sign-in details secure; you are responsible for activity under your account. We may suspend accounts that break these terms.</p>
+      <h2>3. Free service and advertising</h2>
+      <p>{n} is free to use. It is supported by advertising shown on the pages around the tools, provided by third-party advertising companies. Ads are not placed inside the tools, and advertisers never receive your files. See our <Link to="/privacy">Privacy Policy</Link> for how advertising uses data and how to control it. We may change, limit or stop any part of the service at any time, and we do not promise that it will always be available.</p>
 
-      <h2>4. Subscriptions and payments</h2>
-      <p>Paid plans are billed in advance, monthly or yearly, and renew automatically until cancelled. Payments are handled by our payment partner, who acts as the merchant of record and may add applicable taxes. You can cancel at any time; your plan stays active until the end of the paid period. Refunds are covered by our <Link to="/refunds">Refund Policy</Link>. We may change prices with reasonable advance notice; changes apply from your next billing period.</p>
+      <h2>4. Fair use</h2>
+      <p>Because the processing happens on your own device, there is no limit on how many files you clean. Automated or abusive use of the website itself, such as scripted ad clicks or attempts to disrupt the service, is not allowed and may be blocked.</p>
 
-      <h2>5. Fair use</h2>
-      <p>“Unlimited” plans are for normal individual or team use. Automated or abusive use that degrades the service for others may be limited.</p>
+      <h2>5. Third-party links and ads</h2>
+      <p>The ads and links on {n} lead to sites we do not control. We are not responsible for what those sites offer or do, so please use your own judgement.</p>
 
       <h2>6. Intellectual property</h2>
       <p>You keep all rights to your content. {n}’s software, design and brand belong to us. Third-party names such as Gemini and Veo are trademarks of their owners and are used only to describe compatibility; {n} is not affiliated with or endorsed by Google.</p>
@@ -56,7 +56,7 @@ export function Terms() {
       <p>{n} is provided “as is” and “as available”, without warranties of any kind, to the extent the law allows. Keep your original files: always check results before publishing them.</p>
 
       <h2>8. Limitation of liability</h2>
-      <p>To the extent the law allows, we are not liable for indirect, incidental or consequential damages, or for lost data, profits or revenue. Our total liability for any claim is limited to the amount you paid us in the 12 months before the claim.</p>
+      <p>To the extent the law allows, we are not liable for indirect, incidental or consequential damages, or for lost data, profits or revenue. Because the service is free, our total liability for any claim is limited as far as the law allows.</p>
 
       <h2>9. Indemnity</h2>
       <p>You agree to cover claims, losses and costs arising from content you process or publish with {n} in breach of these terms or the law.</p>
@@ -85,25 +85,33 @@ export function Privacy() {
       <h2>What we collect</h2>
       <ul>
         <li><strong>Website logs.</strong> Our hosting provider processes technical data such as IP address, browser type and pages requested, to deliver and protect the website.</li>
-        <li><strong>Account data</strong> (when accounts are available). If you sign in, we store your email address, name and sign-in provider, and your plan and usage counts so limits can be applied.</li>
-        <li><strong>Payment data</strong> (when you subscribe). Payments are handled by our payment partner, the merchant of record. We receive your subscription status, country and the last digits of your card; we never see your full card details.</li>
+        <li><strong>Advertising data.</strong> When ads are shown, the advertising companies behind them may use cookies, device identifiers and similar technologies, and may collect data such as your IP address, browser and the pages you view, to show and measure ads (see “Advertising” below).</li>
         <li><strong>Support emails.</strong> If you write to us, we keep the conversation to help you.</li>
       </ul>
+      <p>We have no accounts and ask for no personal details to use the tools.</p>
 
       <h2>How we use it</h2>
-      <p>To run and secure the service, manage accounts and subscriptions, answer support requests and meet legal obligations. We do not sell your personal data and do not use it for advertising.</p>
+      <p>To run and secure the service, show and measure advertising, answer support requests and meet legal obligations. We do not sell your personal data. Your videos and photos are never used for advertising, because they never leave your device.</p>
+
+      <h2>Advertising</h2>
+      <p>{n} is free and supported by advertising from third-party advertising companies. Their ads are shown beside and between the pages’ text, and each ad runs in its own sandboxed frame, so it cannot reach the page or the files you are working on. Those companies are responsible for the data they collect; they have their own privacy policies, which you can read from their ads.</p>
+      <ul>
+        <li>Where visitors have to be asked first (for example in the EEA, the UK and Switzerland), ads that use cookies or personal data are only shown after you say yes. You can change your answer at any time with “Ad choices” in the footer. If you say no, the website works the same, without ads.</li>
+        <li>You can also block ads and cookies in your browser; the tools keep working without them.</li>
+        <li>Ads are kept away from the tools themselves. Nothing you add to a tool is shared with advertisers.</li>
+      </ul>
 
       <h2>Cookies</h2>
-      <p>We use only the cookies and local storage needed to run the website and keep you signed in. If we ever add analytics or marketing cookies, we will ask for your consent where the law requires it.</p>
+      <p>We use only the cookies and local storage needed to run the website. Advertising cookies are set by the advertising companies, subject to your consent where the law requires it. You can also block or delete cookies in your browser settings; the tools keep working without them.</p>
 
       <h2>Sharing</h2>
-      <p>We share data only with providers that help us run {n} (hosting, authentication, database, payments, email), under agreements that protect it, or when the law requires.</p>
+      <p>We share data only with providers that help us run {n} (hosting and advertising companies), under agreements that protect it, or when the law requires.</p>
 
       <h2>Retention</h2>
-      <p>Account data is kept while your account is open and deleted within 30 days of you asking us to delete it, except where we must keep records (for example invoices) by law.</p>
+      <p>We keep support emails for as long as needed to help you and meet legal obligations. Advertising data is kept by the advertising companies under their own policies.</p>
 
       <h2>Your rights</h2>
-      <p>Depending on where you live (for example under the GDPR or the CCPA), you can ask to access, correct, delete or export your data, and object to or restrict its use. Write to <Mail /> and we will reply within 30 days. You can also complain to your local data protection authority.</p>
+      <p>Depending on where you live (for example under the GDPR or the CCPA), you can ask to access, correct, delete or export the data we hold about you, and object to or restrict its use. Write to <Mail /> and we will reply within 30 days. You can also complain to your local data protection authority.</p>
 
       <h2>International transfers</h2>
       <p>Our providers may process data in other countries. Where required, transfers are protected by appropriate safeguards such as standard contractual clauses.</p>
@@ -116,30 +124,6 @@ export function Privacy() {
 
       <h2>Contact</h2>
       <p><Mail /></p>
-    </LegalPage>
-  );
-}
-
-export function Refunds() {
-  const n = SITE.name;
-  return (
-    <LegalPage title="Refund Policy">
-      <p>We want you to be happy with {n} Pro. Since you can try the free plan first, we keep refunds simple.</p>
-
-      <h2>14-day money-back guarantee</h2>
-      <p>If {n} Pro doesn’t work for you, ask within 14 days of your first payment and we will refund it in full. No lengthy questions; a short note on what went wrong helps us improve.</p>
-
-      <h2>Renewals</h2>
-      <p>Renewal payments are generally not refunded, but if you forgot to cancel and haven’t used Pro since the renewal, write to us within 7 days and we will usually refund it.</p>
-
-      <h2>Cancelling</h2>
-      <p>You can cancel at any time. Your plan stays active until the end of the period you paid for and will not renew.</p>
-
-      <h2>Your legal rights</h2>
-      <p>Nothing in this policy limits rights you have under consumer law where you live, such as the 14-day withdrawal right for consumers in the EU and UK.</p>
-
-      <h2>How to ask</h2>
-      <p>Email <Mail /> from the address you used to subscribe, or reply to your receipt. Refunds go back to the original payment method, usually within 5–10 business days.</p>
     </LegalPage>
   );
 }

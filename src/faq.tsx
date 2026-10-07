@@ -10,8 +10,8 @@ export const FAQ: Qa[] = [
     q: 'Which watermarks can it remove?',
     a: (
       <>
-        <p>The four-pointed sparkle that Google Gemini and Veo put in the corner of generated videos and images, and the “Veo” text logo. It finds them on its own.</p>
-        <p>It also handles other steady, semi-transparent corner logos: drag a box around one on the preview and {SITE.name} learns that logo from the video itself.</p>
+        <p>The four-pointed sparkle that Google Gemini and Veo put in the corner of generated videos and images, and the “Veo” text logo. The <Link to="/app">Gemini and Veo remover</Link> finds them on its own.</p>
+        <p>Three more tools cover the rest: the <Link to="/sora-watermark-remover">Sora remover</Link> finds the moving Sora mark by itself, and the <Link to="/remove-logo-from-video">video</Link> and <Link to="/remove-logo-from-photo">photo</Link> logo removers take any other logo you draw a box around. See <Link to="/tools">all tools</Link>.</p>
       </>
     ),
   },
@@ -66,14 +66,14 @@ export const FAQ: Qa[] = [
     ),
   },
   {
-    id: 'cancel',
-    q: 'Can I cancel Pro at any time?',
-    a: <p>Yes. Cancel whenever you like and Pro stays active until the end of the period you’ve paid for. You won’t be charged again.</p>,
-  },
-  {
-    id: 'refunds',
-    q: 'Do you offer refunds?',
-    a: <p>Yes. If {SITE.name} Pro doesn’t work for you, ask within 14 days of your first payment for a full refund. Details are in our <Link to="/refunds">Refund Policy</Link>.</p>,
+    id: 'free',
+    q: 'Is it really free?',
+    a: (
+      <>
+        <p>Yes. Every tool is free, with no sign-up, no limit on how many files you clean and no watermark of ours added to your results.</p>
+        <p>{SITE.name} is paid for by ads on the pages around the tools. Ads are never placed inside a tool or next to its buttons, and they never see your files, because your files never leave your device.</p>
+      </>
+    ),
   },
   {
     id: 'google',

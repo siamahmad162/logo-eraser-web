@@ -1,2 +1,5 @@
 # the any-logo remover became the video logo remover when the photo logo remover was split off
 /remove-logo  /remove-logo-from-video  301
+# the site is free now: the pages about plans and refunds are gone
+/pricing  /  301
+/refunds  /  301

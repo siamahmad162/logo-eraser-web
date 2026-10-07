@@ -8,7 +8,7 @@ export const ROUTES: RouteMeta[] = [
   {
     path: '/',
     title: `${n} — Remove AI watermarks from videos and photos`,
-    description: 'Remove the corner sparkle and text watermarks from AI-generated videos and photos. Frame-by-frame restoration that runs in your browser — nothing is uploaded.',
+    description: 'Free tools that remove the Gemini, Veo and Sora watermarks, or any logo, from videos and photos. They run in your browser: nothing is uploaded, no sign-up.',
   },
   {
     path: '/app',
@@ -36,14 +36,9 @@ export const ROUTES: RouteMeta[] = [
     description: 'Four watermark and logo removers for videos and photos: Gemini and Veo, Sora, any logo in a video, any logo in a photo. All run in your browser.',
   },
   {
-    path: '/pricing',
-    title: `Pricing — ${n}`,
-    description: `Start free. Upgrade to ${n} Pro for unlimited videos, batch mode and ZIP downloads.`,
-  },
-  {
     path: '/faq',
     title: `FAQ — ${n}`,
-    description: `How ${n} removes watermarks, which files it supports, privacy, and billing.`,
+    description: `How ${n} removes watermarks, which files it supports, privacy, and why it is free.`,
   },
   ...LANDINGS.map((l) => ({ path: l.path, title: `${l.title} — ${n}`, description: l.description })),
   {
@@ -58,10 +53,9 @@ export const ROUTES: RouteMeta[] = [
   },
   ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, title: `${g.title} — ${n}`, description: g.description })),
   { path: '/about', title: `About — ${n}`, description: `Who makes ${n}, and the principles behind it: privacy, honest results and responsible use.` },
-  { path: '/contact', title: `Contact — ${n}`, description: `Get help with ${n}, billing questions or business enquiries.` },
+  { path: '/contact', title: `Contact — ${n}`, description: `Get help with ${n}, report an ad, or write to us about business enquiries.` },
   { path: '/terms', title: `Terms of Service — ${n}`, description: `The terms for using ${n}.` },
   { path: '/privacy', title: `Privacy Policy — ${n}`, description: `How ${n} handles your data. Your files are processed on your device.` },
-  { path: '/refunds', title: `Refund Policy — ${n}`, description: `Refunds and cancellations for ${n} subscriptions.` },
 ];
 
 export const NOT_FOUND: RouteMeta = { path: '/404', title: `Page not found — ${n}`, description: 'This page does not exist.' };

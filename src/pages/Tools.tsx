@@ -1,3 +1,4 @@
+import { AdSlot } from '../components/AdSlot';
 import { ToolShowcase } from '../components/ToolShowcase';
 import { TOOLS } from '../content/tools';
 import { Link } from '../router';
@@ -48,6 +49,8 @@ export function Tools() {
           <ToolShowcase />
         </div>
       </section>
+      <AdSlot place="tools1" />
+
       <section className="section section-tight" aria-labelledby="common">
         <div className="wrap">
           <div className="section-head">
