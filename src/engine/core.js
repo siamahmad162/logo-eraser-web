@@ -428,12 +428,17 @@ const LogoCore = (() => {
       const o0 = pm.orig && pm.orig.length === r.w * r.h ? pm.orig : (pm.orig = new Uint8Array(r.w * r.h));
       for (let j = 0; j < r.h; j++) for (let i = 0; i < r.w; i++) o0[j * r.w + i] = p.data[p.off + (r.y + j) * p.stride + (r.x + i) * p.step];
     }
+    // A pixel whose own opacity came out too strong would be asked to show a background darker than
+    // black. The picture says otherwise, so the model is wrong for that one pixel: it is left to be
+    // filled in from the pixels around it rather than painted black.
+    let impossible = null;
     for (let j = 0; j < r.h; j++) {
       let o = p.off + (r.y + j) * p.stride + r.x * p.step;
       for (let i = 0; i < r.w; i++, o += p.step) {
-        const a = alpha[j * r.w + i], aD = pm.dark ? pm.dark.alpha[j * r.w + i] : a;
+        const k = j * r.w + i, a = alpha[k], aD = pm.dark ? pm.dark.alpha[k] : a;
         if (a === 0 && aD === 0) continue;
         if (a >= OPAQUE) { holes++; continue; }
+        let out;
         if (pm.dark && aD !== a) {
           // opacity depends on the background: aD at near-black, a above; solve for the background
           const { lo: dlo, hi: dhi } = pm.dark, v = p.data[o];
@@ -442,18 +447,18 @@ const LogoCore = (() => {
             const mid = (lo + hi) / 2, t = clamp((dhi - mid) / (dhi - dlo), 0, 1), am = Math.min(OPAQUE, a + (aD - a) * t);
             if (am * W + (1 - am) * mid + (pm.resp ? am * respAt(pm.resp, mid) : 0) < v) lo = mid; else hi = mid;
           }
-          p.data[o] = clamp(Math.round((lo + hi) / 2), 0, 255);
-          continue;
-        }
-        if (pm.resp) {
+          out = (lo + hi) / 2;
+        } else if (pm.resp) {
           const target = p.data[o] - a * W;
           let lo = -40, hi = 300;
           for (let it = 0; it < 16; it++) { const mid = (lo + hi) / 2; if ((1 - a) * mid + a * respAt(pm.resp, mid) < target) lo = mid; else hi = mid; }
-          p.data[o] = clamp(Math.round((lo + hi) / 2), 0, 255);
-        } else p.data[o] = clamp(Math.round((p.data[o] - a * W) / (1 - a)), 0, 255);
+          out = (lo + hi) / 2;
+        } else out = (p.data[o] - a * W) / (1 - a);
+        if (out < -1.5) { (impossible = impossible || new Uint8Array(r.w * r.h))[k] = 1; holes++; continue; }
+        p.data[o] = clamp(Math.round(out), 0, 255);
       }
     }
-    if (holes) fillHoles(p, pm);
+    if (holes) fillHoles(p, pm, impossible);
     if (!pm.noHeal) heal(p, pm);
     if (pm.soften) soften(p, pm);
     if (pm.denoise) denoise(p, pm);
@@ -954,13 +959,13 @@ const LogoCore = (() => {
       p.data[p.off + (r.y + j) * p.stride + (r.x + i) * p.step] = clamp(Math.round(v[k] + (s / c - v[k]) * t), 0, 255);
     }
   }
-  function fillHoles(p, pm) {
+  function fillHoles(p, pm, extra) {
     const { r, alpha } = pm, w = r.w, h = r.h, n = w * h;
     const known = new Uint8Array(n), val = new Float32Array(n);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
       const k = j * w + i;
       val[k] = p.data[p.off + (r.y + j) * p.stride + (r.x + i) * p.step];
-      known[k] = alpha[k] < OPAQUE ? 1 : 0;
+      known[k] = alpha[k] < OPAQUE && !(extra && extra[k]) ? 1 : 0;
     }
     // onion peel: fill from the outside in, then smooth the filled part
     let left = n - known.reduce((s, v) => s + v, 0), guard = 0;
@@ -1562,16 +1567,18 @@ const LogoCore = (() => {
         if (a2 !== a2) curD[q] = cur[q];
       }
     }
+    let lcnt = null, dcnt = null;
     for (const tol of [0.15, 0.1]) {
       // Σyd and Σd² for light and dark backgrounds (y = observed − bg, d = L − bg)
       const ly = new Float64Array(n), dy = new Float64Array(n);
       lx = new Float64Array(n); dx = new Float64Array(n);
+      lcnt = new Int32Array(n); dcnt = new Int32Array(n);
       used = 0; nDark = 0;
       for (let t = 0; t < sq.length; t++) {
         const q = sq[t], m = sm[t], d = L - m, y = so[t] - m, isDark = !!o.darkRegime && m < darkCut;
         if (Math.abs(d) < minD) continue;
         if (Math.abs(y - (isDark ? curD : cur)[q] * d) > Math.max(3, tol * Math.abs(d))) continue;
-        if (isDark) { dy[q] += y * d; dx[q] += d * d; nDark++; } else { ly[q] += y * d; lx[q] += d * d; }
+        if (isDark) { dy[q] += y * d; dx[q] += d * d; dcnt[q]++; nDark++; } else { ly[q] += y * d; lx[q] += d * d; lcnt[q]++; }
         used++;
       }
       const next = new Float32Array(n), nextD = new Float32Array(n);
@@ -1606,6 +1613,53 @@ const LogoCore = (() => {
       for (let q = 0; q < n; q++) smD[q] = U[q] ? clamp(sm[q] + f2[q], -0.2, 0.98) : 0;
       cur = sm; curD = smD;
     }
+    // A pixel's opacity is measured only from the frames in which its own background was known, and
+    // a background far from the logo's colour carries a lot of weight. Where only one or two frames
+    // said anything, a single thing passing under the logo in one of them decides that pixel, and
+    // removal then leaves a speck there — a dark dot, or a black one where the picture is dark. Such
+    // a pixel keeps the logo's known shape instead; three frames or more outvote a stray one.
+    const MINS = 3;
+    for (let q = 0; q < n; q++) {
+      if (!U[q]) continue;
+      if (lcnt[q] < MINS) cur[q] = alpha0[q];
+      if (dcnt[q] < MINS) curD[q] = cur[q];
+    }
+    // Anything left that still stands apart from the pixels around it is a speck of the same kind:
+    // the logo's opacity changes smoothly, so such a value is replaced by its neighbours' middle one.
+    // How far apart counts as apart follows the neighbours' own spread, so a sharp edge or a thin rim,
+    // where they really do differ, is left alone. Two passes, because a speck can be a few pixels wide.
+    const despike = (m) => {
+      let cur2 = m;
+      for (let pass = 0; pass < 2; pass++) {
+        const out = Float32Array.from(cur2), buf = [];
+        for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+          const q = j * w + i;
+          if (!U[q]) continue;
+          buf.length = 0;
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+            if (!di && !dj) continue;
+            const a2 = i + di, b2 = j + dj;
+            if (a2 < 0 || b2 < 0 || a2 >= w || b2 >= h || !U[b2 * w + a2]) continue;
+            buf.push(cur2[b2 * w + a2]);
+          }
+          if (buf.length < 6) continue;
+          buf.sort((x, y) => x - y);
+          const med = buf[buf.length >> 1], spread = buf[buf.length - 2] - buf[1];
+          if (Math.abs(cur2[q] - med) > Math.max(0.02, 1.5 * spread)) out[q] = med;
+        }
+        cur2 = out;
+      }
+      return cur2;
+    };
+    cur = despike(cur);
+    // over near-black the logo shows a little more of itself; that extra is a smooth, physical thing,
+    // so it is cleaned of specks on its own rather than together with the opacity it is added to
+    {
+      const lift = new Float32Array(n);
+      for (let q = 0; q < n; q++) lift[q] = curD[q] - cur[q];
+      const sm2 = despike(lift);
+      for (let q = 0; q < n; q++) curD[q] = cur[q] + sm2[q];
+    }
     // A real logo differs from its template only so much: a faint halo just outside it, a somewhat
     // stronger or weaker edge. Anything beyond that is something that sits there (a ring, a mark)
     // and must not become part of the logo.
@@ -1618,8 +1672,15 @@ const LogoCore = (() => {
       for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a2 = i + di, b2 = j + dj; if (a2 < 0 || b2 < 0 || a2 >= w || b2 >= h) continue; const v = alpha0[b2 * w + a2]; lo = Math.min(lo, v); hi = Math.max(hi, v); }
       lo3[j * w + i] = o.edgeRange ? lo : 9; hi3[j * w + i] = o.edgeRange ? hi : -9;
     }
-    const bound = (v, q) => (alpha0[q] === 0 ? clamp(v, Math.min(-halo, lo3[q]), Math.max(halo, hi3[q])) : clamp(v, Math.min(alpha0[q] - span, lo3[q]), Math.max(alpha0[q] + span, hi3[q])));
-    for (let q = 0; q < n; q++) { if (!U[q]) continue; cur[q] = bound(cur[q], q); curD[q] = bound(curD[q], q); }
+    // A measurement that lands outside that range is not a measurement of the logo: something was
+    // sitting under it. Keeping it at the limit would still remove far too much (the limit is the
+    // largest error allowed), so such a pixel falls back to what it started from.
+    const bound = (v, q, back) => {
+      const lo = alpha0[q] === 0 ? Math.min(-halo, lo3[q]) : Math.min(alpha0[q] - span, lo3[q]);
+      const hi = alpha0[q] === 0 ? Math.max(halo, hi3[q]) : Math.max(alpha0[q] + span, hi3[q]);
+      return v < lo || v > hi ? back : v;
+    };
+    for (let q = 0; q < n; q++) { if (!U[q]) continue; cur[q] = bound(cur[q], q, alpha0[q]); curD[q] = bound(curD[q], q, cur[q]); }
     // a trace this small changes nothing visible; leave those pixels untouched
     const alpha = new Float32Array(n), alphaDark = new Float32Array(n);
     let darkMatters = false;

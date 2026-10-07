@@ -50,39 +50,80 @@ function otsu(vals) {
   return { thr, gap: m1 - m0 };
 }
 
+// Grey-scale opening (for a light mark) or closing (for a dark one) by a square, then the difference: how much
+// brighter or darker a pixel is than its own close surroundings. Unlike the guess below this is a local
+// measure, so a busy picture does not drown it.
+function topHat(L, w, h, k, light) {
+  const r = k >> 1, t = new Float32Array(w * h), e = new Float32Array(w * h), o = new Float32Array(w * h);
+  const a1 = light ? Math.min : Math.max, i1 = light ? Infinity : -Infinity;
+  const a2 = light ? Math.max : Math.min, i2 = light ? -Infinity : Infinity;
+  const pass = (src, dst, horiz, pick, init) => {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = init;
+      for (let d = -r; d <= r; d++) {
+        const X = horiz ? clamp(x + d, 0, w - 1) : x, Y = horiz ? y : clamp(y + d, 0, h - 1);
+        m = pick(m, src[Y * w + X]);
+      }
+      dst[y * w + x] = m;
+    }
+  };
+  pass(L, t, true, a1, i1); pass(t, e, false, a1, i1);
+  pass(e, t, true, a2, i2); pass(t, o, false, a2, i2);
+  const out = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) out[i] = light ? L[i] - o[i] : o[i] - L[i];
+  return out;
+}
+
 /**
- * Which pixels of the box are the logo? The whole box is filled in once from outside it (so the logo never
- * shows), and what differs most from that guess is the logo. Returns null when nothing can be told apart
- * (a busy picture, a faint logo): the whole box is then used.
+ * Which pixels of the box are the logo? Two ways of looking. First: the whole box is filled in once from
+ * outside it (so the logo never shows), and what differs most from that guess is the logo - which works when
+ * the picture under the box is calm. When that cannot tell anything apart (a busy picture), the second way is
+ * tried: how much brighter or darker each pixel is than its own close surroundings, which a logo's strokes
+ * stand out in whatever the picture behind them does. Returns null when neither tells the logo from the
+ * picture: the whole box is then used.
  * @param crop {w,h,rgb}  the picture around the box;  box {x,y,w,h} in crop coordinates
  */
 export function selectLogo(crop, box, seed = 1, maxFrac = 0.95) {
   const { w, h, rgb } = crop, M = new Uint8Array(w * h);
   for (let y = box.y; y < box.y + box.h; y++) for (let x = box.x; x < box.x + box.w; x++) M[y * w + x] = 1;
+  const inBox = (S) => { const v = []; for (let y = box.y; y < box.y + box.h; y++) for (let x = box.x; x < box.x + box.w; x++) v.push(S[y * w + x]); return v; };
+  // the shape that a signal and its split level give: strong pixels are the logo, weaker ones count when they
+  // touch it (the dark parts of a logo on a dark picture)
+  const shapeOf = (S, thr, loFloor) => {
+    const lo = Math.max(loFloor, 0.22 * thr);
+    let strong = new Uint8Array(w * h); const weak = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) if (M[i]) { if (S[i] > thr) strong[i] = 1; if (S[i] > lo) weak[i] = 1; }
+    strong = pieces(strong, w, h, 6);
+    let m = Uint8Array.from(strong), grew = true, guard = 0;
+    while (grew && guard++ < 12) {
+      grew = false; const near = dilateSq(m, w, h, 1);
+      for (let i = 0; i < w * h; i++) if (weak[i] && !m[i] && near[i]) { m[i] = 1; grew = true; }
+    }
+    m = fillGaps(dilateSq(m, w, h, 1), w, h, Math.round(0.2 * box.w * box.h));
+    m = dilateSq(m, w, h, 2);
+    let n = 0; for (let i = 0; i < w * h; i++) { if (M[i] === 0) m[i] = 0; n += m[i]; }
+    const frac = n / (box.w * box.h);
+    return frac < 0.03 || frac > maxFrac ? null : m;
+  };
   const guess = patchFill(crop, M, [], { seed, iters: [1, 2, 3, 4] });
-  const D = new Float32Array(w * h), vals = [];
+  const D = new Float32Array(w * h);
   for (let y = box.y; y < box.y + box.h; y++) for (let x = box.x; x < box.x + box.w; x++) {
     const i = y * w + x; let d = 0;
     for (let c = 0; c < 3; c++) d = Math.max(d, Math.abs(rgb[i * 3 + c] - guess[i * 3 + c]));
-    D[i] = d; vals.push(d);
+    D[i] = d;
   }
-  const { thr, gap } = otsu(vals);
-  if (gap < 24 || thr < 10) return null;
-  // strong pixels are the logo; weaker ones count when they touch it (dark parts of a logo on a dark picture)
-  const lo = Math.max(9, 0.22 * thr);
-  let strong = new Uint8Array(w * h), weak = new Uint8Array(w * h);
-  for (let i = 0; i < w * h; i++) if (M[i]) { if (D[i] > thr) strong[i] = 1; if (D[i] > lo) weak[i] = 1; }
-  strong = pieces(strong, w, h, 6);
-  let m = Uint8Array.from(strong), grew = true, guard = 0;
-  while (grew && guard++ < 12) {
-    grew = false; const near = dilateSq(m, w, h, 1);
-    for (let i = 0; i < w * h; i++) if (weak[i] && !m[i] && near[i]) { m[i] = 1; grew = true; }
+  const d0 = otsu(inBox(D));
+  if (d0.gap >= 24 && d0.thr >= 10) { const m = shapeOf(D, d0.thr, 9); if (m) return m; }
+  // the guess told us nothing: look for strokes that stand out from what is right around them
+  const hi = new Float32Array(w * h), lo = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) { hi[i] = Math.max(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]); lo[i] = Math.min(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]); }
+  const k = Math.max(5, Math.round(Math.min(box.w, box.h) * 0.55)) | 1;
+  let best = null;
+  for (const [S, light] of [[hi, true], [lo, false]]) {
+    const H = topHat(S, w, h, k, light), o = otsu(inBox(H));
+    if (o.gap >= 14 && o.thr >= 6 && (!best || o.gap > best.gap)) best = { H, ...o };
   }
-  m = fillGaps(dilateSq(m, w, h, 1), w, h, Math.round(0.2 * box.w * box.h));
-  m = dilateSq(m, w, h, 2);
-  let n = 0; for (let i = 0; i < w * h; i++) { if (M[i] === 0) m[i] = 0; n += m[i]; }
-  const frac = n / (box.w * box.h);
-  return frac < 0.03 || frac > maxFrac ? null : m;
+  return best ? shapeOf(best.H, best.thr, 6) : null;
 }
 
 // The grain of the picture around the hole, put back into the hole (a fill is smoother than a photo).

@@ -12,10 +12,28 @@ export const WORD = { w: 85, h: 34, a: b64('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 // size of the whole block (icon + word + name) at scale 1, and where its parts sit relative to the icon's
 // top-left corner. The name is right-aligned to the word when the text is left of the icon ("R"), and
 // left-aligned when it is right of it ("L").
-export function geometry(s, layout) {
-  return layout === 'R'
-    ? { bx: -168 * s, by: 0, bw: 231 * s, bh: 63 * s, wx: -94 * s, wy: 2 * s, ux: -168 * s, uw: 154 * s, uy: 40 * s, uh: 20 * s }
-    : { bx: 0, by: 0, bw: 231 * s, bh: 63 * s, wx: 70 * s, wy: 2 * s, ux: 73 * s, uw: 156 * s, uy: 40 * s, uh: 20 * s };
+//
+// `fit` is what fitWord() measured on the video itself: { ws, wx, wy }, the word's own scale and its top-left
+// corner relative to the icon's. Sora does not always draw the word at the same size as the cloud (newer videos
+// have a smaller cloud beside the same lettering), so when a measurement is there it wins, and the block is
+// widened to hold whatever it found. Without one the numbers below are used, as before.
+export function geometry(s, layout, fit) {
+  const R = layout === 'R';
+  const g = R
+    ? { bx: -168 * s, by: 0, bw: 231 * s, bh: 63 * s, ws: s, wx: -94 * s, wy: 2 * s, ux: -168 * s, uw: 154 * s, uy: 40 * s, uh: 20 * s }
+    : { bx: 0, by: 0, bw: 231 * s, bh: 63 * s, ws: s, wx: 70 * s, wy: 2 * s, ux: 73 * s, uw: 156 * s, uy: 40 * s, uh: 20 * s };
+  if (!fit) return g;
+  const ws = fit.ws;
+  g.ws = ws; g.wx = fit.wx; g.wy = fit.wy;
+  // the name sits under the word and keeps its place against it (left edge for "L", right edge for "R")
+  g.ux = R ? g.wx + 85 * ws - 159 * ws : g.wx + 3 * ws;
+  g.uw = (R ? 154 : 156) * ws;
+  g.uy = g.wy + 38 * ws; g.uh = 20 * ws;
+  // the block holds the icon, the word and the name band - and never less than the plain geometry above
+  const left = Math.min(g.bx, 0, g.wx, g.ux), right = Math.max(g.bx + g.bw, 63 * s, g.wx + 85 * ws, g.ux + g.uw);
+  const top = Math.min(g.by, 0, g.wy), bot = Math.max(g.by + g.bh, 63 * s, g.uy + g.uh);
+  g.bx = left; g.bw = right - left; g.by = top; g.bh = bot - top;
+  return g;
 }
 
 // bilinear / box resize of an 8-bit one-channel picture
@@ -111,6 +129,64 @@ export function scanFrame(rgb, w, h, scales) {
   return { peaks: out, wm };
 }
 
+// ---- measuring the word beside the icon ----
+// The cloud tells us where the mark is, but not how big the lettering is: Sora draws the same "Sora" next to
+// clouds of different sizes. So the word is looked for on its own, over a range of sizes and places around
+// where the plain geometry would put it. Same idea as the icon's score: the strokes should be white and the
+// gaps around them should not.
+const wkernels = new Map();
+export function wordKernelAt(s) {
+  const k = 'w' + s.toFixed(3);
+  if (wkernels.has(k)) return wkernels.get(k);
+  const t = wordAt(s), w = t.w, h = t.h, mark = new Uint8Array(w * h), body = [], ring = [];
+  const rr = Math.max(1, Math.round(3 * s));
+  for (let i = 0; i < w * h; i++) mark[i] = t.a[i] > 38 ? 1 : 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    if (t.a[i] > 153) { body.push(i); continue; }
+    if (mark[i]) continue;
+    let hit = false;
+    for (let dy = -rr; dy <= rr && !hit; dy++) for (let dx = -rr; dx <= rr; dx++) { const Y = y + dy, X = x + dx; if (Y >= 0 && X >= 0 && Y < h && X < w && mark[Y * w + X]) { hit = true; break; } }
+    if (hit) ring.push(i);
+  }
+  const K = { w, h, s, body: Int32Array.from(body), ring: Int32Array.from(ring), wb: 1 / Math.max(1, body.length), wr: 0.7 / Math.max(1, ring.length) };
+  wkernels.set(k, K); return K;
+}
+export function scoreWordAt(wm, w, h, x, y, K) {
+  if (x < 0 || y < 0 || x + K.w > w || y + K.h > h) return -1;
+  let b = 0, r = 0;
+  for (let t = 0; t < K.body.length; t++) { const i = K.body[t], yy = (i / K.w) | 0, xx = i - yy * K.w; b += wm[(y + yy) * w + x + xx]; }
+  for (let t = 0; t < K.ring.length; t++) { const i = K.ring[t], yy = (i / K.w) | 0, xx = i - yy * K.w; r += wm[(y + yy) * w + x + xx]; }
+  return b * K.wb - r * K.wr;
+}
+export const THR_WORD = 0.55;
+/**
+ * Where and how big the word is, next to an icon found at (ix, iy) with scale `s`.
+ * @returns { ws, wx, wy, score } - the word's scale and its corner relative to the icon's - or null.
+ */
+export function fitWord(wm, w, h, ix, iy, s, layout) {
+  const g0 = geometry(s, layout), nx = Math.round(ix + g0.wx), ny = Math.round(iy + g0.wy);
+  // coarse: every other size, every third place; then fine around the best of those
+  let best = { score: -9 };
+  const look = (ms, rx, ry, step, cx, cy) => {
+    for (const m of ms) {
+      const ws = s * m; if (ws < 0.25 || ws > 4) continue;
+      const K = wordKernelAt(ws);
+      for (let dy = -ry; dy <= ry; dy += step) for (let dx = -rx; dx <= rx; dx += step) {
+        const sc = scoreWordAt(wm, w, h, cx + dx, cy + dy, K);
+        if (sc > best.score) best = { score: sc, m, ws, x: cx + dx, y: cy + dy };
+      }
+    }
+  };
+  const coarse = []; for (let m = 0.6; m <= 1.95; m += 0.1) coarse.push(+m.toFixed(2));
+  look(coarse, 60, 15, 3, nx, ny);
+  if (best.score < 0) return null;
+  const fine = [], m0 = best.m; for (let d = -0.08; d <= 0.081; d += 0.02) fine.push(+(m0 + d).toFixed(3));
+  look(fine, 4, 4, 1, best.x, best.y);
+  if (best.score < THR_WORD) return null;
+  return { ws: best.ws, wx: best.x - ix, wy: best.y - iy, score: best.score };
+}
+
 // ---------------------------------------------------------------------------------------------
 // From a few scanned frames to the places the mark sits in, and from per-frame scores to time intervals.
 // ---------------------------------------------------------------------------------------------
@@ -186,18 +262,43 @@ function topHat(min, w, h, k) {
   return out;
 }
 
+// The mark is near-white and mostly opaque, so whatever white sits against what the templates found is part of
+// it too: a letter the template fell short of, a cloud drawn a little fatter. The seed is grown into touching
+// white pixels, a few steps at a time, and the whole thing is dropped if it runs away (a white background).
+function flood(M, wm, w, h, steps) {
+  let seed = 0; for (let i = 0; i < w * h; i++) if (M[i]) seed++;
+  if (!seed || steps < 1) return M;
+  const out = Uint8Array.from(M);
+  let added = 0;
+  const cap = Math.round(0.8 * seed);
+  for (let it = 0; it < steps; it++) {
+    const grow = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (out[i] || wm[i] < 0.6) continue;
+      if ((x > 0 && out[i - 1]) || (x < w - 1 && out[i + 1]) || (y > 0 && out[i - w]) || (y < h - 1 && out[i + w])) grow.push(i);
+    }
+    if (!grow.length) break;
+    added += grow.length;
+    if (added > cap) return M;                       // it escaped into the picture: keep the templates only
+    for (const i of grow) out[i] = 1;
+  }
+  return out;
+}
+
 /**
  * @param crop   { x0, y0, w, h, rgb }  a picture of the area around the mark (frame coordinates of its corner)
  * @param ix,iy  icon top-left in frame coordinates, s the scale, layout 'L' | 'R'
+ * @param fit    what fitWord() measured for this spot, or null for the plain geometry
  * @returns Uint8Array (w*h) mask in crop coordinates
  */
-export function buildMask(crop, ix, iy, s, layout) {
-  const { x0, y0, w, h, rgb } = crop, g = geometry(s, layout), M = new Uint8Array(w * h);
+export function buildMask(crop, ix, iy, s, layout, fit) {
+  const { x0, y0, w, h, rgb } = crop, g = geometry(s, layout, fit), M = new Uint8Array(w * h);
   const put = (a, aw, ah, ox, oy, thr) => {
     const px = Math.round(ox) - x0, py = Math.round(oy) - y0;
     for (let y = 0; y < ah; y++) for (let x = 0; x < aw; x++) { if (a[y * aw + x] <= thr) continue; const X = px + x, Y = py + y; if (X >= 0 && Y >= 0 && X < w && Y < h) M[Y * w + X] = 1; }
   };
-  const ic = iconAt(s), wd = wordAt(s);
+  const ic = iconAt(s), wd = wordAt(g.ws);
   const sil = new Uint8Array(ic.w * ic.h); for (let i = 0; i < sil.length; i++) sil[i] = ic.a[i] > 15 ? 1 : 0;
   put(fillHoles(sil, ic.w, ic.h), ic.w, ic.h, ix, iy, 0);
   put(wd.a, wd.w, wd.h, ix + g.wx, iy + g.wy, 15);
@@ -205,9 +306,11 @@ export function buildMask(crop, ix, iy, s, layout) {
   const ux = Math.round(ix + g.ux) - x0, uy = Math.round(iy + g.uy) - y0, uw = Math.round(g.uw), uh = Math.round(g.uh);
   if (uw > 4 && uh > 3) {
     const min = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) min[i] = Math.min(rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]);
-    const k = Math.max(5, Math.round(9 * s)) | 1, th = topHat(min, w, h, k);
+    const k = Math.max(5, Math.round(9 * g.ws)) | 1, th = topHat(min, w, h, k);
     for (let y = Math.max(0, uy); y < Math.min(h, uy + uh); y++) for (let x = Math.max(0, ux); x < Math.min(w, ux + uw); x++) if (th[y * w + x] > 22) M[y * w + x] = 1;
   }
+  const big = Math.max(s, g.ws);
+  const grown = flood(M, whiteness(rgb, w, h), w, h, Math.max(2, Math.round(3 * big)));
   // the soft edge and the icon's small movements
-  return dilate(M, w, h, Math.max(3, Math.round(5 * s)));
+  return dilate(grown, w, h, Math.max(3, Math.round(5 * big)));
 }

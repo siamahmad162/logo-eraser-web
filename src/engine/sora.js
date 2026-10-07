@@ -10,7 +10,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 // The block of the mark (icon, word and name) of an interval, in frame coordinates, with some room around it.
 export function blockRect(iv, W, H, s) {
-  const g = SC.geometry(s, iv.layout), pad = Math.round(14 * s);
+  const g = SC.geometry(s, iv.layout, iv.fit), pad = Math.round(14 * Math.max(s, g.ws));
   const x0 = Math.max(0, Math.floor(iv.x + g.bx - pad)), y0 = Math.max(0, Math.floor(iv.y + g.by - pad));
   const x1 = Math.min(W, Math.ceil(iv.x + g.bx + g.bw + pad)), y1 = Math.min(H, Math.ceil(iv.y + g.by + g.bh + pad));
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
@@ -132,33 +132,41 @@ export function makeSora(E, env, extra = {}) {
       if (!cl) return { ok: false, engine: 'sora' };
       const sw = cl.s;                                     // icon scale at working size
       const sf = sw / r;                                   // ... in the video's own pixels
-      // which side of the icon the text is on, from the frames where each slot was seen
-      const slots = cl.slots.map((p) => ({ wx: p.x, wy: p.y, x: p.x / r, y: p.y / r, layout: 'L' }));
+      // Which side of the icon the text is on, and how big the lettering is: the word is matched on its own on
+      // the frames where each slot was seen, both ways round, and the better side wins. Sora does not keep the
+      // cloud and the word in step (newer videos pair a small cloud with the same big lettering), so the
+      // measurement, not the cloud's size, decides how much is covered.
+      const slots = cl.slots.map((p) => ({ wx: p.x, wy: p.y, x: p.x / r, y: p.y / r, layout: 'L', fit: null }));
       {
-        const wd = SC.wordAt(sw), seen = new Map();
-        for (const h of cl.hits) { const sl = slots.findIndex((q) => Math.abs(q.wx - h.x) < 12 * sw && Math.abs(q.wy - h.y) < 12 * sw); if (sl >= 0) { if (!seen.has(sl)) seen.set(sl, []); seen.get(sl).push(h.t); } }
-        for (const [si, times] of seen) {
-          const sc = { L: 0, R: 0 };
-          for await (const s of sink.samplesAtTimestamps(times.slice(0, 3))) {
+        const seen = new Map();
+        for (const h of cl.hits) { const sl = slots.findIndex((q) => Math.abs(q.wx - h.x) < 12 * sw && Math.abs(q.wy - h.y) < 12 * sw); if (sl >= 0) { if (!seen.has(sl)) seen.set(sl, []); seen.get(sl).push(h); } }
+        for (const [si, hits] of seen) {
+          const pick = hits.slice().sort((a, b) => b.score - a.score).slice(0, 3);
+          const byT = new Map(pick.map((h) => [h.t, h])), got = { L: [], R: [] };
+          for await (const s of sink.samplesAtTimestamps(pick.map((h) => h.t))) {
             if (!s) continue;
             try {
               const fr = await readFrame(s, whole, holder), rgb = look(fr, 0, 0, W, H, ww, wh);
-              for (const lay of ['L', 'R']) {
-                const g = SC.geometry(sw, lay), wx = Math.round(slots[si].wx + g.wx), wy = Math.round(slots[si].wy + g.wy);
-                if (wx < 0 || wy < 0 || wx + wd.w > ww || wy + wd.h > wh) continue;
-                let sum = 0, cnt = 0;
-                for (let y = 0; y < wd.h; y++) for (let x = 0; x < wd.w; x++) { if (wd.a[y * wd.w + x] < 153) continue; const i = ((wy + y) * ww + wx + x) * 3, m = Math.min(rgb[i], rgb[i + 1], rgb[i + 2]); sum += m <= 120 ? 0 : m >= 180 ? 1 : (m - 120) / 60; cnt++; }
-                sc[lay] += sum / Math.max(1, cnt);
-              }
+              const wm = SC.whiteness(rgb, ww, wh), h0 = byT.get(s.timestamp) || { x: slots[si].wx, y: slots[si].wy };
+              for (const lay of ['L', 'R']) { const f = SC.fitWord(wm, ww, wh, h0.x, h0.y, sw, lay); if (f) got[lay].push(f); }
             } finally { s.close(); }
+            await idle();
           }
-          slots[si].layout = sc.L >= sc.R ? 'L' : 'R';
+          const tot = (a) => a.reduce((p, f) => p + f.score, 0);
+          const lay = tot(got.L) >= tot(got.R) ? 'L' : 'R';
+          slots[si].layout = lay;
+          const found = got[lay];
+          if (found.length) {
+            // the middle of what the frames said, so one odd frame cannot set the size
+            const mid = (k) => { const v = found.map((f) => f[k]).sort((a, b) => a - b); return v[v.length >> 1]; };
+            slots[si].fit = { ws: mid('ws') / r, wx: mid('wx') / r, wy: mid('wy') / r, score: mid('score') };
+          }
         }
       }
       // 2. every frame: how strongly is the mark at each slot? Meanwhile keep pictures of each slot from frames
       // where it is not there (to copy from later).
       const K = SC.kernelAt(sw), n = K.n, win = n + 16, total = Math.max(1, Math.round((info.dur - info.first) * info.fps));
-      const crops = slots.map((sl) => { const iv = { x: sl.x, y: sl.y, layout: sl.layout }; return cropRect(iv, W, H, sf); });
+      const crops = slots.map((sl) => { const iv = { x: sl.x, y: sl.y, layout: sl.layout, fit: sl.fit }; return cropRect(iv, W, H, sf); });
       const keep = 36, store = slots.map(() => []), stride = slots.map(() => 1), tick = slots.map(() => 0);
       const times = [], scores = slots.map(() => []), where = slots.map(() => []), state = slots.map((sl) => ({ x: sl.wx, y: sl.wy, score: 0 }));
       let idx = 0;
@@ -206,7 +214,7 @@ export function makeSora(E, env, extra = {}) {
           const xs = [], ys = [];
           for (let t = a; t <= b; t++) if (scores[si][t] > 0.6) { xs.push(where[si][t].x); ys.push(where[si][t].y); }
           xs.sort((p, q) => p - q); ys.sort((p, q) => p - q);
-          const iv = { slot: si, a, b, t0: times[a], t1: times[b], x: xs.length ? xs[xs.length >> 1] : sl.x, y: ys.length ? ys[ys.length >> 1] : sl.y, layout: sl.layout };
+          const iv = { slot: si, a, b, t0: times[a], t1: times[b], x: xs.length ? xs[xs.length >> 1] : sl.x, y: ys.length ? ys[ys.length >> 1] : sl.y, layout: sl.layout, fit: sl.fit };
           // the crop is the slot's own, so the pictures kept from frames without the mark line up with it exactly
           iv.rect = blockRect(iv, W, H, sf); iv.crop = crops[si];
           const mid = (iv.t0 + iv.t1) / 2;
@@ -248,7 +256,7 @@ export function makeSora(E, env, extra = {}) {
     if (!iv || s.displayWidth !== model.W || s.displayHeight !== model.H) return s;
     const c = iv.crop, fr = await readFrame(s, c, holder);
     const rgb = getRgb(fr, c.x, c.y, c.w, c.h);
-    const mask = iv.mask || SC.buildMask({ x0: c.x, y0: c.y, w: c.w, h: c.h, rgb }, iv.x, iv.y, model.s, iv.layout);
+    const mask = iv.mask || SC.buildMask({ x0: c.x, y0: c.y, w: c.w, h: c.h, rgb }, iv.x, iv.y, model.s, iv.layout, iv.fit);
     let f = fillers.get(iv); if (!f) { f = makeFiller(); fillers.set(iv, f); }
     const r = f.fill({ w: c.w, h: c.h, rgb }, mask, iv.pool.filter((p) => p.rgb.length === c.w * c.h * 3), { s: model.s, seed: 1 + (iv.a & 15), donorMask: iv.mask || null });
     putRgb(fr, c.x, c.y, c.w, c.h, r.rgb, mask);
@@ -289,7 +297,7 @@ export function makeSora(E, env, extra = {}) {
                     while (idx - consumed > LOOK && !env.cancel) await new Promise((r) => setTimeout(r, 4));
                     const c = iv.crop, k = ivIndex(iv), n0 = seen.get(k) || 0; seen.set(k, n0 + 1);
                     const fr = await readFrame(s, c, ph), rgb = getRgb(fr, c.x, c.y, c.w, c.h);
-                    const mask = iv.mask ? iv.mask.slice() : SC.buildMask({ x0: c.x, y0: c.y, w: c.w, h: c.h, rgb }, iv.x, iv.y, model.s, iv.layout);
+                    const mask = iv.mask ? iv.mask.slice() : SC.buildMask({ x0: c.x, y0: c.y, w: c.w, h: c.h, rgb }, iv.x, iv.y, model.s, iv.layout, iv.fit);
                     masks.set(s.timestamp, mask);
                     const chunk = Math.floor(n0 / CH);
                     const job = fp.run(chunk + k, { key: k, w: c.w, h: c.h, rgb, mask: mask.slice(), s: model.s, seed: 1 + (iv.a & 15), fresh: n0 % CH === 0 });

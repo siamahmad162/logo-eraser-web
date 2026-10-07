@@ -2042,7 +2042,7 @@ export function mountTool(root, opts = {}) {
   }
   layoutStage();
   render();
-  window.__tool = { E, SR, S, P, pool, leaveWarning, render: () => render(), vetModel, verifyResult, probeSteps: async (file, g, n) => { const it = { file }; await probe(it); const sx = it.info.w / 1920, sy = it.info.h / 1080; g = g || { x: (1739.431 + 0.5) * sx - 0.5, y: (899.555 + 0.5) * sy - 0.5, s: Math.min(sx, sy) }; return traceCheck(file, it.info, g, null, n || 8); } };
+  window.__tool = { E, SR, S, P, pool, MB, leaveWarning, render: () => render(), vetModel, verifyResult, probeSteps: async (file, g, n) => { const it = { file }; await probe(it); const sx = it.info.w / 1920, sy = it.info.h / 1080; g = g || { x: (1739.431 + 0.5) * sx - 0.5, y: (899.555 + 0.5) * sy - 0.5, s: Math.min(sx, sy) }; return traceCheck(file, it.info, g, null, n || 8); } };
 
   return {
     isBusy: () => S.busy,
