@@ -42,6 +42,8 @@ export function Tools() {
           </ul>
         </div>
       </section>
+      <AdSlot place="tools1" />
+
       <section className="section section-tight" aria-labelledby="examples">
         <div className="wrap">
           <h2 id="examples" className="section-title">Examples, before and after</h2>
@@ -49,7 +51,7 @@ export function Tools() {
           <ToolShowcase />
         </div>
       </section>
-      <AdSlot place="tools1" />
+      <AdSlot place="tools2" />
 
       <section className="section section-tight" aria-labelledby="common">
         <div className="wrap">

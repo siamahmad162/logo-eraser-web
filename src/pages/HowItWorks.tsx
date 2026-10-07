@@ -1,4 +1,5 @@
 import { AdSlot } from '../components/AdSlot';
+import { ProseHead, ProseLayout } from '../components/ProseLayout';
 import { Breadcrumbs, ToolCta } from '../components/Seo';
 import { Link } from '../router';
 import { SITE } from '../site';
@@ -8,14 +9,15 @@ export function HowItWorks() {
   return (
     <>
       <section className="page-head">
-        <div className="wrap narrow">
+        <ProseHead>
           <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/how-it-works', label: 'How it works' }]} />
           <h1>How {n} removes watermarks</h1>
           <p className="lede">Most watermark removers hide the logo. {n} undoes it: the real picture is still inside every frame, and some careful arithmetic brings it back.</p>
-        </div>
+        </ProseHead>
       </section>
       <section className="section section-tight">
-        <div className="wrap narrow prose article">
+        <ProseLayout>
+        <div className="prose article">
           <h2>The short version</h2>
           <ul>
             <li>The AI sparkle watermark is see-through, so the original pixels are still there, only lightened.</li>
@@ -61,6 +63,7 @@ export function HowItWorks() {
           <AdSlot place="article1" />
           <ToolCta title="See it on your own file" />
         </div>
+        </ProseLayout>
       </section>
     </>
   );

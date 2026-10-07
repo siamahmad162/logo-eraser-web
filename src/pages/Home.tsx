@@ -103,6 +103,8 @@ export function Home() {
         </div>
       </section>
 
+      <AdSlot place="home1" />
+
       <section className="section" aria-labelledby="tools">
         <div className="wrap">
           <div className="section-head" data-reveal>
@@ -115,7 +117,7 @@ export function Home() {
         </div>
       </section>
 
-      <AdSlot place="home1" />
+      <AdSlot place="home2" />
 
       <section className="section" aria-labelledby="stats">
         <div className="wrap">
@@ -272,7 +274,7 @@ export function Home() {
         </div>
       </section>
 
-      <AdSlot place="home2" />
+      <AdSlot place="home3" />
 
       <section className="section" aria-labelledby="guides">
         <div className="wrap">

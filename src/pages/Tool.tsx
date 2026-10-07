@@ -1,4 +1,5 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { WorkAd } from '../components/AdSlot';
 import markup from '../engine/tool-markup.html?raw';
 import '../engine/tool.css';
 import { setLeaveGuard } from '../router';
@@ -18,10 +19,12 @@ const HEAD: Record<ToolMode, { h1: string; p: string }> = {
 
 export function Tool({ mode = 'gemini' }: { mode?: ToolMode }) {
   const host = useRef<HTMLDivElement>(null);
+  const [root, setRoot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     let tool: { destroy(): void; isBusy(): boolean; leaveWarning(): string } | null = null;
     let gone = false;
     const root = host.current!.firstElementChild as HTMLElement;
+    setRoot(root);
     import('../engine/tool.js').then(({ mountTool }) => {
       if (gone) return;
       tool = mountTool(root, { mode });
@@ -42,6 +45,7 @@ export function Tool({ mode = 'gemini' }: { mode?: ToolMode }) {
       <div ref={host}>
         <ToolShell />
       </div>
+      <WorkAd root={root} />
     </div>
   );
 }

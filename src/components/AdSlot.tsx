@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ADS, type AdPlace, type AdUnit } from '../site';
-import { adsOn, frameDoc, hasCode, loadSiteScripts, mayShow, onConsent, previewing, whenToolFree, type Allow } from '../ads';
+import { adsOn, demoOn, frameDoc, hasCode, loadSiteScripts, mayShow, onConsent, previewing, whenToolFree, type Allow } from '../ads';
 
 // The one ad box. It reserves its size before anything arrives (the page never jumps), says "Advertisement", and only starts
-// the ad when it is near the screen, the visitor allows it and no file is being cleaned. Without code it renders nothing.
+// the ad when it is near the screen, the visitor allows it (and, for most places, no file is being cleaned).
+// Without code it renders nothing. Which places exist, and where, is decided by the page layouts; the sizes by ADS in site.ts.
 function usePreview() {
   const [on, set] = useState(false);
   useEffect(() => { if (previewing()) set(true); }, []);
   return on;
 }
+export const usePreviewFlag = usePreview;
 function useMatch(q: string, initial = false) {
   const [m, set] = useState(initial);
   useEffect(() => {
@@ -25,20 +28,22 @@ function useAllowed(): Allow {
   return ok;
 }
 
-function Unit({ unit, label, className, style, place }: { unit: AdUnit; label: string; className: string; style: React.CSSProperties; place: string }) {
+type UnitProps = { unit: AdUnit; className: string; place: string; busyOk?: boolean; when?: string };
+function Unit({ unit, className, place, busyOk, when }: UnitProps) {
   const box = useRef<HTMLDivElement>(null);
   const allowed = useAllowed();
+  const shown = useMatch(when || 'all', true);        // a place that is hidden by the layout (a rail on a small screen) is not started
   const [started, setStarted] = useState(false);
   const [empty, setEmpty] = useState(false);
   useEffect(() => {
-    if (allowed !== 'yes' || !box.current) return;
+    if (allowed !== 'yes' || !shown || !box.current) return;
     let stopped = false;
-    const start = async () => { await loadSiteScripts(); await whenToolFree(); if (!stopped) setStarted(true); };
+    const start = async () => { await loadSiteScripts(); if (!busyOk) await whenToolFree(); if (!stopped) setStarted(true); };
     if (typeof IntersectionObserver === 'undefined') { start(); return () => { stopped = true; }; }
     const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); start(); } }, { rootMargin: '300px 0px' });
     io.observe(box.current);
     return () => { stopped = true; io.disconnect(); };
-  }, [allowed]);
+  }, [allowed, shown, busyOk]);
   // a frame that stays blank (a blocker, no ad to show) gives its space back after a while
   useEffect(() => {
     if (!started) return;
@@ -47,8 +52,8 @@ function Unit({ unit, label, className, style, place }: { unit: AdUnit; label: s
   }, [started]);
   if (allowed === 'no') return null;
   return (
-    <aside className={className} aria-label="Advertisement" data-empty={empty || undefined} data-place={place} style={style}>
-      <span className="ad-label">{label}</span>
+    <aside className={className} aria-label="Advertisement" data-empty={empty || undefined} data-place={place}>
+      <span className="ad-label">Advertisement</span>
       <div className="ad-box" ref={box} style={{ width: unit.width, height: unit.height }}>
         {started && (ADS.isolate
           ? <iframe title="Advertisement" srcDoc={frameDoc(unit)} width={unit.width} height={unit.height} scrolling="no" referrerPolicy="origin-when-cross-origin" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" />
@@ -73,37 +78,85 @@ function Preview({ className, w, h, text, place }: { className: string; w: numbe
   );
 }
 
-// a horizontal ad inside a page
+// A demo ad: stands in for a unit that has no code yet. It is plainly labelled, cannot be clicked and is hidden from
+// screen readers and search snippets, so nobody mistakes it for the real thing.
+function Demo({ w, h }: { w: number; h: number }) {
+  const shape = w / h >= 4 ? 'wide' : h / w >= 2 ? 'tall' : w <= 360 && h <= 130 ? 'phone' : 'rect';
+  return (
+    <div className="demo-ad" data-shape={shape} style={{ width: w, height: h }} aria-hidden="true">
+      <span className="demo-chip">Demo ad</span>
+      <span className="demo-ico" />
+      <span className="demo-text"><b>Your ad could be here</b><i>{w}×{h} · the real ad takes this spot</i></span>
+      <span className="demo-cta">Learn more</span>
+    </div>
+  );
+}
+function DemoBox({ className, w, h, place }: { className: string; w: number; h: number; place: string }) {
+  return (
+    <aside className={className} aria-label="Demo advertisement space" data-place={place} data-demo>
+      <span className="ad-label">Demo ad space</span>
+      <div className="ad-box" style={{ width: w, height: h }} data-nosnippet><Demo w={w} h={h} /></div>
+    </aside>
+  );
+}
+
+// ---- a horizontal ad inside a page ----
 export function AdSlot({ place }: { place: AdPlace }) {
   const preview = usePreview();
   const phone = useMatch('(max-width: 759px)');
   const d = ADS.banner.desktop, p = ADS.banner.phone;
-  const live = adsOn() && ADS.places[place] && (hasCode(d) || hasCode(p));
-  if (!live && !preview) return null;
-  const unit = phone ? (hasCode(p) ? p : d) : (hasCode(d) ? d : p);
-  if (preview && !live) return <Preview className="ad ad-banner" place={place} w={phone ? p.width : d.width} h={phone ? p.height : d.height} text={'Ad space · ' + place + ' · ' + (phone ? p.width + '×' + p.height : d.width + '×' + d.height)} />;
-  if (!hasCode(unit)) return null;
-  return <Unit unit={unit} label="Advertisement" className="ad ad-banner" place={place} style={{}} />;
+  if (!ADS.places[place]) return null;
+  const live = adsOn() && (hasCode(d) || hasCode(p));
+  if (live) {
+    const unit = phone ? (hasCode(p) ? p : d) : (hasCode(d) ? d : p);
+    return <Unit unit={unit} className="ad ad-banner" place={place} />;
+  }
+  const w = phone ? p.width : d.width, h = phone ? p.height : d.height;
+  if (demoOn()) return <DemoBox className="ad ad-banner" place={place} w={w} h={h} />;
+  if (preview) return <Preview className="ad ad-banner" place={place} w={w} h={h} text={'Ad space · ' + place + ' · ' + w + '×' + h} />;
+  return null;
 }
 
-// the two vertical ads on the sides of every page (wide screens only)
+// ---- the 300x250 box: in a tool's file list, and beside the text of a guide ----
+export const rectLive = () => adsOn() && hasCode(ADS.rect);
+export function AdRect({ place }: { place: 'work' | 'side' }) {
+  const preview = usePreview();
+  if (!ADS.places[place]) return null;
+  const u = ADS.rect;
+  if (rectLive()) return <Unit unit={u} className="ad ad-rect" place={place} busyOk={place === 'work' && ADS.workWhileBusy} when={place === 'side' ? '(min-width: 1100px)' : undefined} />;
+  if (demoOn()) return <DemoBox className="ad ad-rect" place={place} w={u.width} h={u.height} />;
+  if (preview) return <Preview className="ad ad-rect" place={place} w={u.width} h={u.height} text={'Ad space · ' + place + ' · ' + u.width + '×' + u.height} />;
+  return null;
+}
+// the tool's file list has a spot for it (see #adWork in the tool markup); it is filled once the tool is on the page
+export function WorkAd({ root }: { root: HTMLElement | null }) {
+  const [host, setHost] = useState<Element | null>(null);
+  useEffect(() => { setHost(root ? root.querySelector('#adWork') : null); }, [root]);
+  const preview = usePreview();
+  if (!host || !(rectLive() || demoOn() || preview)) return null;
+  return createPortal(<AdRect place="work" />, host);
+}
+// does the page have room for a sidebar? (decided by the build, so nothing moves when the page loads)
+export const sideOn = () => (rectLive() || demoOn()) && ADS.places.side;
+
+// ---- the two vertical ads on the sides of every page (wide screens only) ----
+const railWidth = () => Math.max(hasCode(ADS.rail.left) ? ADS.rail.left.width : 0, hasCode(ADS.rail.right) ? ADS.rail.right.width : 0);
 export function useRails() {
   const preview = usePreview();
-  const { left, right } = ADS.rail;
-  const live = adsOn() && (hasCode(left) || hasCode(right));
-  const w = Math.max(hasCode(left) ? left.width : 0, hasCode(right) ? right.width : 0) || (preview ? 160 : 0);
-  const fits = useMatch(`(min-width: ${1200 + 2 * (w + 16) + 48}px)`);
-  const allowed = useAllowed();
-  return { on: (live || preview) && w > 0 && fits && !(live && !preview && allowed === 'no'), width: w, preview, live };
+  const live = adsOn() && railWidth() > 0;
+  const width = Math.max(ADS.rail.left.width, ADS.rail.right.width);
+  const need = 1200 + 2 * (width + 16) + 48;
+  return { on: ADS.rails && (live || demoOn() || preview) && width > 0, width, need, preview, live };
 }
-export function AdRail({ side, width, preview }: { side: 'left' | 'right'; width: number; preview: boolean }) {
+export function AdRail({ side, width, need, preview }: { side: 'left' | 'right'; width: number; need: number; preview: boolean }) {
   const unit = ADS.rail[side];
   const live = adsOn() && hasCode(unit);
   return (
     <div className={'rail rail-' + side} aria-hidden={live ? undefined : true}>
       <div className="rail-in" style={{ width }}>
-        {live && !preview
-          ? <Unit unit={unit} label="Advertisement" className="ad ad-rail" place={'rail-' + side} style={{}} />
+        {live
+          ? <Unit unit={unit} className="ad ad-rail" place={'rail-' + side} when={`(min-width: ${need}px)`} />
+          : demoOn() ? <DemoBox className="ad ad-rail" place={'rail-' + side} w={unit.width} h={unit.height} />
           : preview ? <Preview className="ad ad-rail" place={'rail-' + side} w={unit.width} h={unit.height} text={'Ad space · ' + side + ' · ' + unit.width + '×' + unit.height} /> : null}
       </div>
     </div>

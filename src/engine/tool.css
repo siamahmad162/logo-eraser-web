@@ -63,7 +63,7 @@
   .welcome { display: grid; gap: 18px; justify-items: center; }
   .hero-drop {
     position: relative; width: 100%; display: grid; justify-items: center; gap: 10px; text-align: center; cursor: pointer;
-    padding: clamp(36px, 8vh, 72px) 24px; border-radius: 28px; isolation: isolate; overflow: hidden;
+    padding: clamp(28px, 5.5vh, 56px) 24px; border-radius: 28px; isolation: isolate; overflow: hidden;
     background: radial-gradient(640px 300px at 50% -10%, rgba(255, 77, 141, 0.14), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
     border: 1.5px dashed rgba(255, 255, 255, 0.2); transition: border-color 0.2s, background-color 0.2s;
   }

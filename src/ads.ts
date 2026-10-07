@@ -3,8 +3,12 @@
 // agreed (where asked), the unit is near the screen and no file is being cleaned.
 import { ADS, type AdUnit } from './site';
 
-export const adsOn = () => import.meta.env.MODE !== 'file' && [ADS.banner.desktop, ADS.banner.phone, ADS.rail.left, ADS.rail.right].some((u) => !!u.code.trim());
+export const adsOn = () => import.meta.env.MODE !== 'file' && [ADS.banner.desktop, ADS.banner.phone, ADS.rect, ADS.rail.left, ADS.rail.right].some((u) => !!u.code.trim());
 export const hasCode = (u: AdUnit) => !!u.code.trim();
+// demo ads stand in for units that have no code yet (never in the single-file test build)
+export const demoOn = () => import.meta.env.MODE !== 'file' && ADS.demo;
+// is there any ad space on the pages at all (real or demo)?
+export const layoutOn = () => adsOn() || demoOn();
 // ?ads=preview shows where the ads will go (as empty labelled boxes), whatever the settings
 export const previewing = () => typeof location !== 'undefined' && /[?&]ads=preview\b/.test(location.search);
 

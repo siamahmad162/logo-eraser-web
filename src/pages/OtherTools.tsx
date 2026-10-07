@@ -16,6 +16,7 @@ function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo'
   return (
     <>
       <Tool mode={mode} />
+      <AdSlot place="tool1" />
       <section className="section">
         <div className="wrap">
           <div className="explain" data-reveal>
@@ -28,7 +29,7 @@ function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo'
           </div>
         </div>
       </section>
-      <AdSlot place="tool1" />
+      <AdSlot place="tool2" />
       <section className="section" aria-labelledby="questions">
         <div className="wrap narrow">
           <h2 id="questions" className="section-title">Questions</h2>
@@ -37,7 +38,6 @@ function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo'
           <p className="also">{other}</p>
         </div>
       </section>
-      <AdSlot place="tool2" />
     </>
   );
 }

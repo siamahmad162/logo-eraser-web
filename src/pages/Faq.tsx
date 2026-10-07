@@ -1,3 +1,4 @@
+import { AdSlot } from '../components/AdSlot';
 import { FAQ, FaqList } from '../faq';
 import { SITE } from '../site';
 
@@ -15,6 +16,7 @@ export function Faq() {
           <FaqList items={FAQ} />
         </div>
       </section>
+      <AdSlot place="faq1" />
     </>
   );
 }

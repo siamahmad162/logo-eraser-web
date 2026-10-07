@@ -1,4 +1,5 @@
 import { AdSlot } from '../components/AdSlot';
+import { ProseHead, ProseLayout } from '../components/ProseLayout';
 import { ArrowRight } from '../components/Icons';
 import { Breadcrumbs, JsonLd, ToolCta, abs } from '../components/Seo';
 import { GUIDE_BODIES } from '../content/guides';
@@ -65,22 +66,22 @@ export function Guide({ slug }: { slug: string }) {
     <>
       <article>
         <header className="page-head">
-          <div className="wrap narrow">
+          <ProseHead>
             <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/guides', label: 'Guides' }, { to: path, label: g.title }]} />
             <h1>{g.title}</h1>
             <p className="article-meta">
               Updated <time dateTime={g.updated}>{fmt(g.updated)}</time> · {g.minutes} min read
             </p>
-          </div>
+          </ProseHead>
         </header>
         <div className="section section-tight">
-          <div className="wrap narrow">
+          <ProseLayout>
             <div className="prose article">
               <Body />
             </div>
             <AdSlot place="article1" />
             <ToolCta />
-          </div>
+          </ProseLayout>
         </div>
         <JsonLd data={article} />
       </article>

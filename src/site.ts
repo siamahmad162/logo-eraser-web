@@ -13,29 +13,39 @@ export const SITE = {
 
 // ---------------------------------------------------------------------------------------------------------------
 // Ads. Any ad company works: it gives you a small piece of HTML ("ad code" / "tag" / "script") for each ad size.
-// Paste each one into `code` below, with the size it was made for. A unit with an empty `code` shows nothing, and
-// until one is filled in no ad script is loaded and no space is reserved anywhere. Preview where ads will go with
-// ?ads=preview at the end of any page address (for example /tools?ads=preview).
+// Paste each one into `code` below, with the size it was made for, and that unit shows the company's ads.
+// A unit whose `code` is empty shows a clearly labelled DEMO ad of the same size (so the layout can be judged and
+// nothing else changes when the real code arrives). Set `demo` to false to show nothing instead.
 //
-//   banner   horizontal ads inside the pages (home, tools, text pages). `desktop` is used on wide screens, `phone`
-//            on narrow ones; use the same code for both if the company only has one responsive tag.
+//   banner   horizontal ads inside the pages (home, tools, text pages, under every tool). `desktop` is used on wide
+//            screens, `phone` on narrow ones; use the same code for both if the company only has one responsive tag.
+//   rect     a 300x250 box. It sits in the file list of every tool once files are added (so it is on screen while
+//            they are cleaned), and beside the text of guides on screens from 1100 px.
 //   rail     vertical ads on the left and right of every page, shown on wide screens (about 1560 px and up).
 //            160x600 is the usual size; for 300x600 set the width and they show from about 1900 px.
 // ---------------------------------------------------------------------------------------------------------------
 export type AdUnit = { width: number; height: number; code: string };
-export type AdPlace = 'home1' | 'home2' | 'tools1' | 'tool1' | 'tool2' | 'article1' | 'article2';
+export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'work' | 'side';
 
 export const ADS = {
   banner: {
     desktop: { width: 728, height: 90, code: '' } as AdUnit,
     phone: { width: 320, height: 100, code: '' } as AdUnit,
   },
+  rect: { width: 300, height: 250, code: '' } as AdUnit,
   rail: {
     left: { width: 160, height: 600, code: '' } as AdUnit,
     right: { width: 160, height: 600, code: '' } as AdUnit,
   },
-  // which in-page places carry a banner (set one to false to leave that place without an ad)
-  places: { home1: true, home2: true, tools1: true, tool1: true, tool2: true, article1: true, article2: true } as Record<AdPlace, boolean>,
+  // Show a demo ad wherever a unit has no code yet. Set to false once all real codes are in (or to run without ads).
+  demo: true,
+  // vertical ads on both sides of every page on wide screens (false: none)
+  rails: true,
+  // which places carry an ad (set one to false to leave that place without an ad)
+  places: { home1: true, home2: true, home3: true, tools1: true, tools2: true, tool1: true, tool2: true, article1: true, article2: true, faq1: true, work: true, side: true } as Record<AdPlace, boolean>,
+  // Start the ad in the file list while files are being cleaned (that is when visitors wait and look). Cleaning is not
+  // slowed by an ordinary banner; if a video-ad company's ads make it stutter, set this to false.
+  workWhileBusy: true,
   // Scripts the ad company asks you to add once for the whole site (addresses only). Loaded after the page has settled.
   scripts: [] as string[],
   // Lines for /ads.txt, exactly as the ad company gives them (one per entry). Left empty, no ads.txt is written.
