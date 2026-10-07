@@ -104,7 +104,7 @@ export function mountTool(root, opts = {}) {
   const S = {
     items: [], refId: null, reviewId: null, rectRel: null, sameRect: true, quality: 'max',
     busy: false, analyzing: false, cancel: false, frac: 0.25, conv: null, intake: false,
-    view: 'split', split: 0.5, splitSet: false, boxMode: false,
+    view: 'split', split: 0.5, splitSet: false, boxMode: false, zoom: 1, zx: 0.5, zy: 0.5,
     runId: 0, runT0: 0, runDid: 0, eta: null, lastSecs: 0, stopped: false, stopping: false, zipping: false,
   };
   let nextId = 1;
@@ -388,7 +388,8 @@ export function mountTool(root, opts = {}) {
     closePreview();
     if (!item || !item.info) return;
     const tok = P.token;
-    S.splitSet = false;
+    S.splitSet = false; S.zoom = 1; S.zx = 0.5; S.zy = 0.5; stage.dataset.zoomed = '';
+    $('#zoomSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.z === 1)));
     const { w, h } = item.info;
     if (item.kind === 'image') {
       P.item = item; P.orig = makeCanvas(w, h); P.proc = makeCanvas(w, h);
@@ -529,15 +530,32 @@ export function mountTool(root, opts = {}) {
     if (drag && drag.rect) out.push(drag.rect);
     return out;
   }
+  // the part of the picture on screen: all of it, or a zoomed-in window (zoom 2 shows half the width, and so on)
+  function viewRect() {
+    const W = view.width || 1, H = view.height || 1, z = S.zoom, sw = W / z, sh = H / z;
+    return { sx: clamp(S.zx * W - sw / 2, 0, W - sw), sy: clamp(S.zy * H - sh / 2, 0, H - sh), sw, sh };
+  }
+  function setZoom(z, fx, fy) {
+    // keep the point under the cursor (fx, fy as fractions of the stage) where it is
+    const W = view.width || 1, H = view.height || 1, v = viewRect(), px = v.sx + fx * v.sw, py = v.sy + fy * v.sh;
+    S.zoom = clamp(z, 1, 8);
+    const sw = W / S.zoom, sh = H / S.zoom;
+    S.zx = S.zoom === 1 ? 0.5 : (px - fx * sw + sw / 2) / W; S.zy = S.zoom === 1 ? 0.5 : (py - fy * sh + sh / 2) / H;
+    stage.dataset.zoomed = S.zoom > 1 ? '1' : '';
+    $('#zoomSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.z === S.zoom)));
+    drawView();
+  }
   function drawView() {
     if (!P.has) return;
     const model = previewModel(P.item), mode = viewMode(), W = view.width, H = view.height, r = currentRect();
     if (r && !S.splitSet) S.split = clamp((r.x + r.w / 2) / W, 0.08, 0.92);
-    if (mode === 'original') vctx.drawImage(P.orig, 0, 0);
+    const vr = viewRect();
+    vctx.imageSmoothingEnabled = true; vctx.imageSmoothingQuality = 'high';
+    if (mode === 'original') vctx.drawImage(P.orig, vr.sx, vr.sy, vr.sw, vr.sh, 0, 0, W, H);
     else {
-      vctx.drawImage(P.proc, 0, 0);
+      vctx.drawImage(P.proc, vr.sx, vr.sy, vr.sw, vr.sh, 0, 0, W, H);
       const x = Math.round(S.split * W);
-      if (mode === 'split' && x > 0) vctx.drawImage(P.orig, 0, 0, x, H, 0, 0, x, H);
+      if (mode === 'split' && x > 0) vctx.drawImage(P.orig, vr.sx, vr.sy, vr.sw * x / W, vr.sh, 0, 0, x, H);
     }
     stage.dataset.mode = mode;
     stage.style.setProperty('--split', (S.split * 100).toFixed(2) + '%');
@@ -597,8 +615,9 @@ export function mountTool(root, opts = {}) {
     // the logo box shows while drawing one and on the original; the result views stay unmarked
     const rs = P.has && view.width && (boxOn() || viewMode() === 'original') ? currentRects() : [];
     const k = overlay.width / Math.max(1, view.width), dash = 6 * dpr, gap = 4 * dpr, off = reduceMotion ? 0 : -((ts / 45) % (dash + gap));
+    const vr = viewRect(), kz = overlay.width / vr.sw;
     rs.forEach((r, n) => {
-      const x = Math.round(r.x * k) + 0.5, y = Math.round(r.y * k) + 0.5, w = Math.round(r.w * k), h = Math.round(r.h * k);
+      const x = Math.round((r.x - vr.sx) * kz) + 0.5, y = Math.round((r.y - vr.sy) * kz) + 0.5, w = Math.round(r.w * kz), h = Math.round(r.h * kz);
       octx.lineWidth = 1.5 * dpr; octx.setLineDash([dash, gap]);
       octx.lineDashOffset = off; octx.strokeStyle = '#FFFFFF'; octx.strokeRect(x, y, w, h);
       octx.lineDashOffset = off + dash; octx.strokeStyle = tokens.mask; octx.strokeRect(x, y, w, h);
@@ -616,8 +635,8 @@ export function mountTool(root, opts = {}) {
   const stopOverlay = () => { if (overlayRaf) cancelAnimationFrame(overlayRaf); overlayRaf = 0; };
 
   function toFrame(e) {
-    const b = overlay.getBoundingClientRect();
-    return { x: clamp((e.clientX - b.left) * view.width / b.width, 0, view.width), y: clamp((e.clientY - b.top) * view.height / b.height, 0, view.height) };
+    const b = overlay.getBoundingClientRect(), vr = viewRect();
+    return { x: clamp(vr.sx + (e.clientX - b.left) * vr.sw / b.width, 0, view.width), y: clamp(vr.sy + (e.clientY - b.top) * vr.sh / b.height, 0, view.height) };
   }
   overlay.addEventListener('pointerdown', (e) => {
     if (!boxOn() || e.button > 0) return;
@@ -650,8 +669,29 @@ export function mountTool(root, opts = {}) {
     S.split = clamp((e.clientX - b.left) / b.width, 0, 1); S.splitSet = true;
     drawView();
   }
+  // zoomed in: drag the picture to move around it; the wheel zooms where the pointer is
+  let pan = null;
   stage.addEventListener('pointerdown', (e) => {
-    if (boxOn() || viewMode() !== 'split' || e.button > 0) return;
+    if (S.zoom > 1 && !boxOn() && e.button === 0 && !e.target.closest('#split')) { pan = { x: e.clientX, y: e.clientY, zx: S.zx, zy: S.zy }; stage.setPointerCapture(e.pointerId); e.preventDefault(); }
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!pan) return;
+    const b = stage.getBoundingClientRect(), vr = viewRect();
+    S.zx = pan.zx - ((e.clientX - pan.x) / b.width) * vr.sw / view.width; S.zy = pan.zy - ((e.clientY - pan.y) / b.height) * vr.sh / view.height;
+    drawView();
+  });
+  const endPan = () => { pan = null; };
+  stage.addEventListener('pointerup', endPan); stage.addEventListener('pointercancel', endPan);
+  stage.addEventListener('wheel', (e) => {
+    if (!P.has) return;
+    e.preventDefault();
+    const b = stage.getBoundingClientRect();
+    setZoom(e.deltaY < 0 ? S.zoom * 1.25 : S.zoom / 1.25, clamp((e.clientX - b.left) / b.width, 0, 1), clamp((e.clientY - b.top) / b.height, 0, 1));
+    $('#zoomSeg').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.z === S.zoom)));
+  }, { passive: false });
+  $('#zoomSeg').addEventListener('click', (e) => { const x = e.target.closest('button[data-z]'); if (x) setZoom(+x.dataset.z, 0.5, 0.5); });
+  stage.addEventListener('pointerdown', (e) => {
+    if (S.zoom > 1 || boxOn() || viewMode() !== 'split' || e.button > 0) return;
     splitDrag = true; stage.setPointerCapture(e.pointerId); splitFrom(e);
   });
   stage.addEventListener('pointermove', (e) => { if (splitDrag) splitFrom(e); });

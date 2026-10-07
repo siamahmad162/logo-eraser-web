@@ -507,3 +507,6 @@
 
 /* no before/after close-ups on the working pages (the compare view of the preview stays) */
 .lx-tool #loupes, .lx-tool .job .cu:not(.ask), .lx-tool .job .strip { display: none !important; }
+
+.lx-tool .stage[data-zoomed="1"] { cursor: grab; }
+.lx-tool .stage[data-zoomed="1"]:active { cursor: grabbing; }
