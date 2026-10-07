@@ -48,6 +48,130 @@ export const GUIDE_BODIES: Record<string, () => ReactNode> = {
     </>
   ),
 
+  'remove-sora-watermark': () => (
+    <>
+      <p>Videos downloaded from Sora carry a small watermark: a white cloud-shaped logo, the word “Sora” and the creator’s name. Unlike a normal corner logo it does not stay put. Every few seconds it fades out and comes back in another place, in a corner or in the middle of a side. This guide explains how it can be removed, and what you can honestly expect.</p>
+
+      <h2>Why the Sora watermark is harder than a normal logo</h2>
+      <p>A fixed corner logo can be covered with a box or learned from the video. The Sora mark moves, so the spot you would cover changes during the clip. It is also almost solid white. A see-through logo (such as the Gemini sparkle) still lets the real picture show through, so the original can be calculated back. A nearly solid logo hides the pixels completely: there is nothing left to calculate, so the picture under it has to be rebuilt.</p>
+
+      <h2>How the rebuilding works</h2>
+      <p>{n} does it in three steps. First it looks through the whole video and finds where the mark sits, when it moves and when it fades. Then, for every frame, it marks exactly the pixels of the cloud, the word and the name. Finally it fills them in. Where the scene stands still, the picture is copied from moments when the mark was somewhere else, which can look the same as the original. Where the scene moves, the area is rebuilt from the picture around it.</p>
+
+      <h2>Step by step</h2>
+      <ol>
+        <li>Open the <Link to="/sora-watermark-remover">Sora watermark remover</Link> and drop your videos onto the page, or choose files. Use the original download rather than a screen recording.</li>
+        <li>Wait while the mark is found. There is nothing to draw and nothing to press; cleaning starts by itself.</li>
+        <li>Use the Compare view to slide over the places where the mark used to be, and zoom in to 2× or 4× to check the rebuilt area.</li>
+        <li>Download the clean video, or several as one ZIP. The size, frame rate, length and sound stay the same.</li>
+      </ol>
+
+      <h2>What to expect</h2>
+      <ul>
+        <li><strong>Still or slow scenes</strong> usually come out looking exactly like the original.</li>
+        <li><strong>Busy, fast motion</strong> right behind the mark can show a soft patch, because there is little to copy from. Look at those moments before you publish.</li>
+        <li><strong>A video without the mark</strong> is left alone, and the card says so.</li>
+        <li><strong>Everything stays on your device.</strong> Your videos are never uploaded.</li>
+      </ul>
+
+      <h2>Use it on your own videos, and label AI content</h2>
+      <p>Only remove the mark from videos you made or have the right to edit. The watermark is a label, and many platforms ask you to label AI-generated video. Removing the visible logo does not remove invisible provenance data. Read <Link to="/guides/label-ai-generated-content">how to label AI-generated videos</Link> and <Link to="/guides/visible-watermark-vs-synthid">what a visible watermark and SynthID are</Link>.</p>
+    </>
+  ),
+
+  'remove-logo-from-video': () => (
+    <>
+      <p>You may have a clip with a logo burned into a corner, a date stamp from an old camera or a small badge from a tool you used. If the mark stays in one place for the whole video, you can remove it by drawing a box around it. This guide shows how, and how to get the cleanest result.</p>
+
+      <h2>What works and what does not</h2>
+      <p>The <Link to="/remove-logo-from-video">video logo remover</Link> is made for marks that <strong>stay in the same place</strong>: a channel logo, a corner badge, a time or date stamp, an old watermark of your own. It does not follow a logo that moves around the picture. For the Gemini and Veo marks, and for the moving Sora mark, use their own tools; they find the mark by themselves.</p>
+
+      <h2>Step by step</h2>
+      <ol>
+        <li>Open the <Link to="/remove-logo-from-video">video logo remover</Link> and add your video (MP4, MOV, WebM or MKV).</li>
+        <li>On the preview, drag a rectangle around the logo. Make it a little bigger than the logo, with some picture around it. Zoom in with the 2× or 4× buttons for a precise box.</li>
+        <li>Let go of the mouse. The logo is removed from every frame and a clean preview appears.</li>
+        <li>Check the result with the Compare slider. If a piece of the logo is left, draw the box again, a little bigger.</li>
+        <li>Download the clean video.</li>
+      </ol>
+
+      <h2>How the picture under the logo is rebuilt</h2>
+      <p>A logo hides what is behind it, so that picture has to come from somewhere. When the picture moves behind the logo (a camera pan, people walking), the hidden pixels show up in other frames, and they are copied back, which can look perfect. Where the background is still, the area is filled in from around the logo, frame after frame, without flicker. Only the pixels of the logo itself are rebuilt, not the whole box.</p>
+
+      <h2>Tips for the cleanest result</h2>
+      <ul>
+        <li>Draw the box slightly generous. A box that cuts through the logo leaves a piece of it.</li>
+        <li>Logos over plain or moving backgrounds come out best. A big logo over a detailed, still picture can leave a smooth patch.</li>
+        <li>Check the result at 2× or 4× zoom before you download.</li>
+        <li>Keep your original file. {n} writes a new one.</li>
+      </ul>
+
+      <h2>Only your own videos</h2>
+      <p>Use this on videos you made or have the right to edit. Taking the watermark off someone else’s work is not what it is for. See our <Link to="/terms">Terms</Link>.</p>
+    </>
+  ),
+
+  'remove-logo-from-photo': () => (
+    <>
+      <p>A logo, a stamp or a watermark on a photo can usually be taken out by rebuilding the picture under it. The trick is to rebuild only what the logo covers, not a whole rectangle around it. This guide shows how to do it with the <Link to="/remove-logo-from-photo">photo logo remover</Link>.</p>
+
+      <h2>How it works</h2>
+      <p>You draw a box around the logo. Inside the box the tool works out which pixels are the logo and which are the picture, by comparing the box with a guess of what the picture would look like without it. Only the logo’s pixels are rebuilt, from the picture around them. Then the photo’s own grain is put back, because a fill is smoother than a photo, and a smooth patch is what gives edits away.</p>
+
+      <h2>Step by step</h2>
+      <ol>
+        <li>Open the <Link to="/remove-logo-from-photo">photo logo remover</Link> and add a PNG, JPG or WebP.</li>
+        <li>Drag a box around the logo, a little bigger than it. Zoom in for precision.</li>
+        <li>Let go. The logo is removed and a clean preview shows.</li>
+        <li>For a second logo, choose <em>Add another box</em> and draw the next one. <em>Clear boxes</em> goes back to the original.</li>
+        <li>Download the photo. A PNG stays lossless, and a JPG is saved again at high quality.</li>
+      </ol>
+
+      <h2>What works best</h2>
+      <ul>
+        <li><strong>Smooth backgrounds</strong> (sky, walls, water, studio backdrops, most AI images) come out almost perfectly.</li>
+        <li><strong>Fine texture</strong> such as foliage, fabric or crowds can leave a smooth patch. The tool tells you when it had to rebuild the whole box because it could not tell the logo from the picture.</li>
+        <li><strong>A tighter box</strong> over a plainer part of the photo gives a cleaner result.</li>
+      </ul>
+
+      <h2>The Gemini sparkle is different</h2>
+      <p>The sparkle that Gemini puts on its images is see-through, so the real picture is still there and can be restored exactly. Use the <Link to="/app">Gemini and Veo remover</Link> for that: it gives the real pixels back instead of rebuilding them.</p>
+
+      <h2>Only your own photos</h2>
+      <p>Remove logos, stamps and watermarks only from photos you took or have the right to edit. A stock library’s watermark or another photographer’s credit is not yours to take off. See <Link to="/guides/visible-watermark-vs-synthid">visible watermarks and SynthID</Link> for what removing a mark does and does not change.</p>
+    </>
+  ),
+
+  'watermark-remover-without-upload': () => (
+    <>
+      <p>Most online watermark removers ask you to upload your video or photo to a server, where it is processed and sent back. That is simple to build, but your file leaves your device, waits in a queue and may be stored. {n} works differently: everything runs inside your browser, on your own computer.</p>
+
+      <h2>How a tool can work without uploading</h2>
+      <p>Modern browsers can decode, change and encode video and images themselves, using features called WebCodecs and the canvas. {n} uses them to open your file, find the logo, rebuild the picture and write the new file, all in the page. The website only delivers the program. Your files are never sent to us, so they stay private and there is no upload to wait for.</p>
+
+      <h2>What that means for you</h2>
+      <ul>
+        <li><strong>Privacy.</strong> Nobody else receives your videos or photos, including clips you have not published yet.</li>
+        <li><strong>Speed.</strong> There is no upload and no queue. How fast it goes depends on your computer.</li>
+        <li><strong>No limits set by a server.</strong> You can clean as many files as your computer can handle.</li>
+        <li><strong>Works offline once loaded.</strong> The cleaning itself does not need the internet.</li>
+      </ul>
+
+      <h2>How to check any online tool</h2>
+      <ol>
+        <li>Open your browser’s network panel (F12, then Network) while you add a file. If a large upload starts, the file is leaving your device.</li>
+        <li>Read the privacy policy for how long uploaded files are kept.</li>
+        <li>Be careful with tools that ask you to sign up before you can see a result.</li>
+      </ol>
+
+      <h2>The one trade-off</h2>
+      <p>Because your own computer does the work, the speed depends on it. A long 4K video takes longer on an old laptop than on a server. A recent Chrome or Edge on a computer works best. Our <Link to="/privacy">Privacy Policy</Link> explains what the website itself collects, and <Link to="/how-it-works">how it works</Link> explains the method.</p>
+
+      <h2>Try it</h2>
+      <p>Pick the tool that matches your file on the <Link to="/tools">tools page</Link>: Gemini and Veo, Sora, any logo in a video, or any logo in a photo.</p>
+    </>
+  ),
+
   'blur-crop-or-restore': () => (
     <>
       <p>There are three common ways to get rid of a corner watermark: crop it out, cover it up, or restore what is underneath. They give very different results, especially in video.</p>

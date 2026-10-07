@@ -6,6 +6,7 @@ import { makeEngine } from './engine.js';
 import EngineWorker from './worker.js?worker&inline';
 import { makeSora, rectAtTime } from './sora.js';
 import { makePhoto } from './photo.js';
+import { COPY } from './toolcopy.js';
 
 export function mountTool(root, opts = {}) {
   // which remover this page is: Gemini and Veo logos (the default), the Sora watermark, or any logo the person points out
@@ -49,11 +50,6 @@ export function mountTool(root, opts = {}) {
 
   // the start page says what this remover is for
   if (OTHER) {
-    const COPY = {
-      sora: { h: 'Drop your Sora videos here', sub: 'The Sora watermark is found and removed automatically, even while it moves around the frame. Everything stays on your device.', formats: ['MP4', 'MOV', 'WebM'], accept: 'video/*,.mp4,.mov,.m4v,.webm,.mkv' },
-      logo: { h: 'Drop your videos here', sub: 'Then drag a box around the logo you want gone. It is rebuilt in every frame, and everything stays on your device.', formats: ['MP4', 'MOV', 'WebM'], accept: 'video/*,.mp4,.mov,.m4v,.webm,.mkv' },
-      photo: { h: 'Drop your photos here', sub: 'Then drag a box around the logo or watermark you want gone. Only the logo itself is rebuilt, from the picture around it. Everything stays on your device.', formats: ['PNG', 'JPG', 'WebP'], accept: 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp' },
-    };
     const copy = COPY[MODE];
     $('.hero-drop h2').textContent = copy.h; $('.hero-sub').textContent = copy.sub;
     $('.formats').innerHTML = copy.formats.map((f) => '<b>' + f + '</b>').join('');
@@ -582,7 +578,9 @@ export function mountTool(root, opts = {}) {
     const avail = stageWrap.clientWidth;
     if (!avail) return;
     const W = view.width || 16, H = view.height || 9;
-    const maxH = docked() ? clamp(window.innerHeight - 430, 240, 640) : clamp(window.innerHeight - 290, 220, 720);
+    // a tall (phone) video gets more height, since its width is small: the inspector scrolls, so the controls stay reachable
+    const tall = H > W * 1.1;
+    const maxH = tall ? clamp(window.innerHeight - 190, 400, 1000) : docked() ? clamp(window.innerHeight - 430, 240, 640) : clamp(window.innerHeight - 290, 220, 720);
     let w = avail, h = w * H / W;
     if (h > maxH) { h = maxH; w = h * W / H; }
     stage.style.width = Math.floor(w) + 'px'; stage.style.height = Math.floor(h) + 'px';

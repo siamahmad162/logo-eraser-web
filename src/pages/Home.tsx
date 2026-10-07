@@ -3,7 +3,7 @@ import { ArrowRight, Check, Download, Frames, Gauge, Globe, Lock, Photo, Scan, S
 import { MediaCompare } from '../components/MediaCompare';
 import { ToolShowcase } from '../components/ToolShowcase';
 import { AdSlot } from '../components/AdSlot';
-import { JsonLd, abs } from '../components/Seo';
+import { JsonLd, abs, faqSchema } from '../components/Seo';
 import { GUIDES, LANDINGS } from '../content/meta';
 import { FAQ, FaqList } from '../faq';
 import { CLIPS, PHOTOS } from '../media';
@@ -37,6 +37,7 @@ const SCHEMA = {
   '@graph': [
     { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('/favicon.svg'), email: SITE.supportEmail },
     { '@type': 'WebSite', name: SITE.name, url: abs('/') },
+    faqSchema(FAQ.slice(0, 6)),
     {
       '@type': 'SoftwareApplication',
       name: SITE.name,

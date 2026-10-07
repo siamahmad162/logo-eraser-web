@@ -5,20 +5,46 @@ import { FAQ, FaqList } from '../faq';
 import type { Qa } from '../faq';
 import { Link } from '../router';
 import { SITE } from '../site';
-import { JsonLd } from '../components/Seo';
+import { Breadcrumbs, JsonLd, abs, faqSchema } from '../components/Seo';
+import { Check } from '../components/Icons';
+import { toolById } from '../content/tools';
+import { TOOL_SEO } from '../content/toolseo';
+import { GUIDES, type GuideMeta } from '../content/meta';
+import { GuideCards } from './Guides';
 
 // The removers that are not about Gemini and Veo: the Sora watermark (found by itself), and any other logo in a
 // video or a photo (pointed out with a box). The tool comes first; what it does and does not do is written out below it.
 const n = SITE.name;
 
-const asText = (a: ReactNode) => (typeof a === 'string' ? a : '');
+const ID_OF = { gemini: 'gemini', sora: 'sora', logo: 'video', photo: 'photo' } as const;
+
 function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo' | 'photo'; sections: { title: string; body: ReactNode }[]; faq: Qa[]; other: ReactNode }) {
+  const tool = toolById(ID_OF[mode]), seo = TOOL_SEO[tool.id];
+  const trouble: Qa[] = seo.trouble.map((x, i) => ({ id: `fix-${mode}-${i}`, q: x.q, a: <p>{x.a}</p> }));
+  const guides = seo.guides.map((slug) => GUIDES.find((g) => g.slug === slug)).filter((g): g is GuideMeta => !!g);
+  const qa = [...faq, ...trouble];
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication', name: tool.name, url: abs(tool.path), description: seo.summary, applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Any (runs in a web browser)', browserRequirements: 'Requires a recent browser with WebCodecs (Chrome or Edge recommended)', inLanguage: 'en',
+        isAccessibleForFree: true, offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, featureList: seo.features,
+      },
+      {
+        '@type': 'HowTo', name: seo.howTo.name, description: seo.summary,
+        step: seo.howTo.steps.map((st, i) => ({ '@type': 'HowToStep', position: i + 1, name: st.name, text: st.text })),
+      },
+      faqSchema(qa),
+    ],
+  };
   return (
     <>
       <Tool mode={mode} />
       <AdSlot place="tool1" />
-      <section className="section">
+      <section className="section section-tight">
         <div className="wrap">
+          <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/tools', label: 'Tools' }, { to: tool.path, label: tool.name }]} />
           <div className="explain" data-reveal>
             {sections.map((s) => (
               <div key={s.title} className="explain-item">
@@ -29,12 +55,54 @@ function Page({ mode, sections, faq, other }: { mode: 'gemini' | 'sora' | 'logo'
           </div>
         </div>
       </section>
+      <section className="section section-tight" aria-labelledby="how-to">
+        <div className="wrap">
+          <h2 id="how-to" className="section-title">{seo.howTo.name}</h2>
+          <ol className="howto" data-reveal>
+            {seo.howTo.steps.map((st, i) => (
+              <li key={st.name}><span className="howto-n">{i + 1}</span><h3>{st.name}</h3><p>{st.text}</p></li>
+            ))}
+          </ol>
+        </div>
+      </section>
+      <section className="section section-tight" aria-labelledby="uses">
+        <div className="wrap">
+          <h2 id="uses" className="section-title">What people use it for</h2>
+          <ul className="uses" data-reveal>
+            {seo.uses.map((u) => (<li key={u.title}><h3>{u.title}</h3><p>{u.text}</p></li>))}
+          </ul>
+        </div>
+      </section>
       <AdSlot place="tool2" />
-      <section className="section" aria-labelledby="questions">
+      <section className="section section-tight" aria-labelledby="files">
+        <div className="wrap narrow-l">
+          <h2 id="files" className="section-title">Supported files and what you get</h2>
+          <table className="spec" data-reveal>
+            <tbody>
+              {seo.files.map(([k, v]) => (<tr key={k}><th scope="row">{k}</th><td>{v}</td></tr>))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section className="section section-tight" aria-labelledby="tips">
+        <div className="wrap narrow-l">
+          <h2 id="tips" className="section-title">Tips for the best result</h2>
+          <ul className="ticks" data-reveal>
+            {seo.tips.map((t) => (<li key={t}><Check /> {t}</li>))}
+          </ul>
+        </div>
+      </section>
+      <section className="section section-tight" aria-labelledby="questions">
         <div className="wrap narrow">
-          <h2 id="questions" className="section-title">Questions</h2>
-          <FaqList items={faq} />
-          <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((q) => ({ '@type': 'Question', name: q.q, acceptedAnswer: { '@type': 'Answer', text: asText(q.a) || q.q } })) }} />
+          <h2 id="questions" className="section-title">Questions and fixes</h2>
+          <FaqList items={qa} />
+          <JsonLd data={schema} />
+        </div>
+      </section>
+      <section className="section section-tight" aria-labelledby="read">
+        <div className="wrap">
+          <h2 id="read" className="section-title">Read more</h2>
+          <GuideCards items={guides} />
           <p className="also">{other}</p>
         </div>
       </section>

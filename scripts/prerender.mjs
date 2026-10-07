@@ -21,8 +21,12 @@ function page(meta, html) {
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
     '<meta property="og:type" content="website" />',
+    '<meta property="og:locale" content="en_US" />',
     '<meta name="twitter:card" content="summary_large_image" />',
+    `<meta name="twitter:title" content="${esc(meta.title)}" />`,
+    `<meta name="twitter:description" content="${esc(meta.description)}" />`,
   ];
+  if (meta !== NOT_FOUND) head.push('<meta name="robots" content="index,follow,max-image-preview:large" />');
   if (SITE.url && meta !== NOT_FOUND) {
     const url = SITE.url + meta.path;
     head.push(`<link rel="canonical" href="${esc(url)}" />`, `<meta property="og:url" content="${esc(url)}" />`, `<meta property="og:image" content="${esc(SITE.url)}/og.png" />`);
@@ -44,7 +48,9 @@ for (const r of ROUTES) {
 fs.writeFileSync(path.join(dist, '404.html'), page(NOT_FOUND, render('/404')));
 
 if (SITE.url) {
-  const urls = ROUTES.map((r) => `  <url><loc>${SITE.url}${r.path}</loc></url>`).join('\n');
+  const today = new Date().toISOString().slice(0, 10);
+  const prio = (p) => (p === '/' ? '1.0' : /^\/(app|sora-watermark-remover|remove-logo-from-video|remove-logo-from-photo|tools)$/.test(p) ? '0.9' : p.startsWith('/guides/') || p.endsWith('-watermark-remover') ? '0.7' : '0.5');
+  const urls = ROUTES.map((r) => `  <url><loc>${SITE.url}${r.path}</loc><lastmod>${today}</lastmod><priority>${prio(r.path)}</priority></url>`).join('\n');
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
   fs.appendFileSync(path.join(dist, 'robots.txt'), `\nSitemap: ${SITE.url}/sitemap.xml\n`);
 }
