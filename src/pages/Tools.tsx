@@ -65,8 +65,8 @@ export function Tools() {
 
       <section className="section section-tight" aria-labelledby="examples">
         <div className="wrap">
-          <h2 id="examples" className="section-title">Examples, before and after</h2>
-          <p className="section-lede">Move across a picture to compare the original with the result.</p>
+          <h2 id="examples" className="section-title">Free watermark removers, with real before and after</h2>
+          <p className="section-lede">Pick the remover for your file and open it. Move across a picture to compare the original with the result.</p>
           <ToolShowcase />
         </div>
       </section>

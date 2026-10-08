@@ -81,7 +81,7 @@ export function Home() {
               {SITE.name} removes the Gemini and Veo watermark from your videos and images, frame by frame, right in your browser.
             </p>
             <div className="cta-row">
-              <Link to="/tools" className="btn btn-primary btn-lg">Remove a watermark free <ArrowRight /></Link>
+              <Link to="/tools#examples" className="btn btn-primary btn-lg">Remove a watermark free <ArrowRight /></Link>
               <Link to="/how-it-works" className="btn btn-ghost btn-lg">How it works</Link>
             </div>
             <ul className="trust">
