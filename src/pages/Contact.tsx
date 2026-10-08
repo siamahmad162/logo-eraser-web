@@ -68,20 +68,19 @@ function ContactForm() {
         <button type="submit" className="btn btn-primary" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send message'}</button>
         <p className="cf-note">Please don’t attach or paste files you aren’t allowed to share.</p>
       </div>
-      {state === 'error' && <p className="cf-error" role="alert">{note.replace(/[.!\s]+$/, '')}. You can also write to {SITE.supportEmail}.</p>}
+      {state === 'error' && <p className="cf-error" role="alert">{note.replace(/[.!\s]+$/, '')}. Please try again in a moment.</p>}
     </form>
   );
 }
 
 export function Contact() {
-  const mail = <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>;
   return (
     <>
       <section className="page-head">
         <div className="wrap narrow">
           <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/contact', label: 'Contact' }]} />
           <h1>Contact {SITE.name}</h1>
-          <p className="lede">Email {mail}. We usually reply within one or two working days.</p>
+          <p className="lede">Send us a message with the form below. We usually reply within one or two working days.</p>
         </div>
       </section>
       <section className="section section-tight">
@@ -104,7 +103,7 @@ export function Contact() {
             </div>
             <div className="contact-card">
               <h2>Business &amp; press</h2>
-              <p>Teams, partnerships, integrations or interviews: put “Business” in the subject line.</p>
+              <p>Teams, partnerships, integrations or interviews: choose “Business and press” in the form above.</p>
             </div>
             <div className="contact-card">
               <h2>Your files stay with you</h2>
