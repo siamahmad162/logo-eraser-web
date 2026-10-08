@@ -1,6 +1,6 @@
+import { ClipStage } from '../components/ClipStage';
 import { useClipRotation } from '../components/useClipRotation';
 import { AdSlot } from '../components/AdSlot';
-import { MediaCompare } from '../components/MediaCompare';
 import { CLIPS, PHOTOS, TOOL_DEMOS, type Demo } from '../media';
 import { ArrowRight, Check, Stack } from '../components/Icons';
 import { Breadcrumbs, JsonLd, ToolCta, abs } from '../components/Seo';
@@ -16,8 +16,8 @@ import { GuideCards } from './Guides';
 const n = SITE.name;
 // The examples each page can show in its first screen: real output, one is shown at a time and the rest are a click away.
 const DEMOS: Record<string, Demo[]> = {
-  '/gemini-watermark-remover': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_JELLY, CLIPS.H_CIRCUIT],
-  '/use-cases/gemini-omni-videos': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_OCEAN, CLIPS.H_CIRCUIT],
+  '/gemini-watermark-remover': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_OCEAN],
+  '/use-cases/gemini-omni-videos': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_OCEAN],
   '/use-cases/veo-videos': [CLIPS.H_JELLY, CLIPS.H_BOAT],
   '/use-cases/gemini-images': [PHOTOS[0], PHOTOS[1], PHOTOS[2], PHOTOS[3], PHOTOS[4], PHOTOS[5]],
 };
@@ -69,7 +69,7 @@ export function Landing({ path }: { path: string }) {
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
                 <span className="window-title">{demo.title} <em>· original vs. result</em></span>
               </div>
-              <MediaCompare key={demo.id} media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager onEnded={rot.rotates ? rot.next : undefined} />
+              <ClipStage rot={rot} rotate={rot.rotates} />
             </div>
             {demos.length > 1 && (
               <div className="ex-pick" role="group" aria-label="More examples">

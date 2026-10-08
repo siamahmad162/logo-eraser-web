@@ -1,3 +1,4 @@
+import { ClipStage } from '../components/ClipStage';
 import { useClipRotation } from '../components/useClipRotation';
 import { Gallery } from '../components/Gallery';
 import { ArrowRight, Check, Download, Frames, Gauge, Globe, Lock, Photo, Scan, Stack, Text, Upload } from '../components/Icons';
@@ -57,7 +58,7 @@ const Mark = ({ v }: { v: string }) => (
 );
 
 // whole frames only: the clips of the gallery are crops of the logo's corner, which look zoomed in here
-const HERO_CLIPS = [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_JELLY, CLIPS.H_OCEAN, CLIPS.H_CIRCUIT];
+const HERO_CLIPS = [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_OCEAN];
 
 export function Home() {
   // the first screen plays a few clips one after the other
@@ -97,7 +98,7 @@ export function Home() {
                 <span className="window-title">{hero.title} <em>· original vs. {SITE.name}</em></span>
                 <span className="window-live"><span className="live-dot" />Live preview</span>
               </div>
-              <MediaCompare key={hero.id} media={hero.media} logo={hero.logo} alt={hero.alt} variant="hero" zoom eager onEnded={rot.next} />
+              <ClipStage rot={rot} />
             </div>
             <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>

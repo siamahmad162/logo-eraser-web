@@ -13,9 +13,6 @@ import HeroJellyPoster from './assets/media/hero-jelly-poster.webp';
 import HeroOceanWebm from './assets/media/hero-ocean.webm';
 import HeroOceanMp4 from './assets/media/hero-ocean.mp4';
 import HeroOceanPoster from './assets/media/hero-ocean-poster.webp';
-import HeroCircuitWebm from './assets/media/hero-circuit.webm';
-import HeroCircuitMp4 from './assets/media/hero-circuit.mp4';
-import HeroCircuitPoster from './assets/media/hero-circuit-poster.webp';
 import HeroBoatWebm from './assets/media/hero-boat.webm';
 import HeroBoatMp4 from './assets/media/hero-boat.mp4';
 import HeroBoatPoster from './assets/media/hero-boat-poster.webp';
@@ -68,7 +65,6 @@ export const CLIPS = {
   H_GARDEN: { id: 'h-garden', source: 'Gemini', title: 'Garden robot', alt: 'A small robot watering glowing flowers at night', media: { kind: 'video', webm: HeroGardenWebm, mp4: FILE ? '' : HeroGardenMp4, poster: HeroGardenPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
   H_JELLY: { id: 'h-jelly', source: 'Veo', title: 'Jellyfish', alt: 'A glowing jellyfish drifting in the dark sea', media: { kind: 'video', webm: HeroJellyWebm, mp4: FILE ? '' : HeroJellyMp4, poster: HeroJellyPoster, w: 1280, h: 720 }, logo: { x: 0.979, y: 0.971 } },
   H_OCEAN: { id: 'h-ocean', source: 'Gemini', title: 'Moonlit shore', alt: 'Waves breaking on dark rocks under the moon', media: { kind: 'video', webm: HeroOceanWebm, mp4: FILE ? '' : HeroOceanMp4, poster: HeroOceanPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
-  H_CIRCUIT: { id: 'h-circuit', source: 'Gemini', title: 'Circuit board', alt: 'A glowing chip at the centre of a colourful circuit board', media: { kind: 'video', webm: HeroCircuitWebm, mp4: FILE ? '' : HeroCircuitMp4, poster: HeroCircuitPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
   H_BOAT: { id: 'h-boat', source: 'Veo', title: 'Lantern boat (9:16)', alt: 'An old boatman with a lantern on a misty river at dusk', media: { kind: 'video', webm: HeroBoatWebm, mp4: FILE ? '' : HeroBoatMp4, poster: HeroBoatPoster, w: 540, h: 960 }, logo: { x: 0.9625, y: 0.9836 } },
   G_OCEAN: { id: 'g-ocean', source: 'Gemini', title: 'Night ocean', alt: 'Waves on dark rocks at night', media: { kind: 'video', webm: GOceanWebm, mp4: FILE ? '' : GOceanMp4, poster: GOceanPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },
   G_GARDEN: { id: 'g-garden', source: 'Gemini', title: 'Glowing garden', alt: 'A 3D garden of glowing flowers', media: { kind: 'video', webm: GGardenWebm, mp4: FILE ? '' : GGardenMp4, poster: GGardenPoster, w: 640, h: 360 }, logo: { x: 0.75, y: 0.6 } },

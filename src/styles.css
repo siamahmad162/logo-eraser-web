@@ -765,3 +765,12 @@ body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
 .mc-card .mc-ptr-in svg { width: 26px; height: 26px; }
 @keyframes mc-point { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(9px, 9px); } }
 @media (prefers-reduced-motion: reduce) { .mc-ptr-in { animation: none; } }
+
+
+/* the next clip fades in over the one before */
+.mc-swap { display: grid; }
+.mc-layer { grid-area: 1 / 1; min-width: 0; position: relative; }
+.mc-in { z-index: 1; animation: mc-fade-in 0.9s ease both; }
+.mc-out { z-index: 0; pointer-events: none; }
+@keyframes mc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mc-in { animation-duration: 0.01s; } }
