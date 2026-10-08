@@ -86,7 +86,7 @@ export function Privacy() {
       <ul>
         <li><strong>Website logs.</strong> Our hosting provider processes technical data such as IP address, browser type and pages requested, to deliver and protect the website.</li>
         <li><strong>Advertising data.</strong> When ads are shown, the advertising companies behind them may use cookies, device identifiers and similar technologies, and may collect data such as your IP address, browser and the pages you view, to show and measure ads (see “Advertising” below).</li>
-        <li><strong>Support emails.</strong> If you write to us, we keep the conversation to help you.</li>
+        <li><strong>Messages to us.</strong> If you use the contact form or write to us, we keep the conversation to help you. The form’s name, email address and message are passed on to Web3Forms, the service that delivers them to our inbox; nothing else is sent, and it is only sent when you press “Send message”.</li>
       </ul>
       <p>We have no accounts and ask for no personal details to use the tools.</p>
 

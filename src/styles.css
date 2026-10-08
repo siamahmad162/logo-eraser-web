@@ -520,6 +520,35 @@ button { font: inherit; }
 .contact-card p { color: var(--muted); }
 .contact-card a { color: var(--ink); }
 
+/* contact form */
+.cf-card { margin-bottom: 28px; padding: clamp(22px, 4vw, 34px); border-radius: 24px; border: 1px solid var(--line-2); background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)); box-shadow: var(--shadow); }
+.cf-head h2 { font-size: clamp(22px, 3vw, 28px); font-weight: 600; letter-spacing: -0.03em; }
+.cf-head p { color: var(--muted); margin-top: 6px; }
+.cf { display: grid; gap: 16px; margin-top: 22px; }
+.cf-row { display: grid; gap: 16px; }
+@media (min-width: 640px) { .cf-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cf-field { display: grid; gap: 7px; }
+.cf-field > span { font-size: 13.5px; font-weight: 550; color: var(--muted); }
+.cf-field input, .cf-field select, .cf-field textarea {
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--field); border: 1px solid var(--line-2);
+  border-radius: 13px; padding: 12px 14px; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.cf-field textarea { resize: vertical; min-height: 140px; line-height: 1.55; }
+.cf-field input::placeholder, .cf-field textarea::placeholder { color: var(--faint); }
+.cf-field input:hover, .cf-field select:hover, .cf-field textarea:hover { border-color: rgba(255,255,255,0.24); }
+.cf-field input:focus, .cf-field select:focus, .cf-field textarea:focus { outline: none; border-color: var(--mask); box-shadow: 0 0 0 3px var(--mask-soft); }
+.cf-field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a3aabb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+.cf-bot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.cf-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.cf-note { color: var(--faint); font-size: 13.5px; margin: 0; }
+.cf-error { margin: 0; padding: 11px 14px; border-radius: 12px; color: var(--warn); background: var(--warn-soft); border: 1px solid rgba(245,165,91,0.3); font-size: 14.5px; }
+.cf-done { display: grid; justify-items: start; gap: 10px; padding-block: 8px; }
+.cf-done-icon { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-soft); color: var(--ok); }
+.cf-done-icon svg { width: 22px; height: 22px; }
+.cf-done h2 { font-size: 24px; font-weight: 600; letter-spacing: -0.03em; }
+.cf-done p { color: var(--muted); max-width: 52ch; }
+
+
 /* Tool page */
 .tool-page { padding-block: 24px 44px; display: grid; gap: 18px; }
 .wrap.tool-page { max-width: 1104px; }
