@@ -24,7 +24,7 @@ html = html.replace('href="./favicon.svg"', 'href="data:image/svg+xml;base64,' +
 // Something to see while the (large) page script is read, and the reason if it fails to start.
 const boot = `<div id="boot" style="min-height:100vh;display:grid;place-content:center;justify-items:center;gap:14px;background:#07080b;color:#f3f4f8;font:16px system-ui,sans-serif;text-align:center;padding:24px">
 <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:#ff4d8d;animation:bootspin .8s linear infinite"></div>
-<strong style="font-size:20px">Loading ClearFrame…</strong>
+<strong style="font-size:20px">Loading VanishLogo…</strong>
 <span id="boot-msg" style="color:#a3aabb;max-width:46ch">This test file holds the whole site, videos included, so it can take a few seconds.</span>
 <pre id="boot-err" style="display:none;white-space:pre-wrap;color:#ffb4c8;background:#1a0f15;border:1px solid #5a2036;border-radius:10px;padding:12px 14px;max-width:80ch;text-align:left;font-size:13px"></pre>
 <noscript><p style="color:#ffb4c8">JavaScript is turned off in this browser, so the site cannot start.</p></noscript>
@@ -35,6 +35,6 @@ window.__bootDone=function(){clearTimeout(t)};})();</script>`;
 html = html.replace('<!--head-->', bootScript).replace('<!--app-->', boot);
 if (/src="\.\/assets|href="\.\/assets/.test(html)) throw new Error('an asset was left un-inlined');
 
-const out = path.join(dir, 'ClearFrame-test.html');
+const out = path.join(dir, 'VanishLogo-test.html');
 fs.writeFileSync(out, html);
 console.log(`${path.relative(root, out)}  ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);

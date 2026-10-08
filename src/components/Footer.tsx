@@ -1,5 +1,6 @@
 import { Link } from '../router';
 import { SITE } from '../site';
+import { Wordmark } from './Wordmark';
 import { USE_CASES, USE_CASES_PATH } from '../content/tools';
 import { ArrowRight, ArrowUp, Lock, Mail, Stack, Check, LogoMark } from './Icons';
 import { ToolIcon } from './ToolIcon';
@@ -22,7 +23,7 @@ export function Footer() {
       </div>
       <div className="wrap footer-grid">
         <div className="footer-brand">
-          <Link to="/" className="brand"><LogoMark className="brand-mark" /><span>{SITE.name}</span></Link>
+          <Link to="/" className="brand"><LogoMark className="brand-mark" /><Wordmark /></Link>
           <p>Free watermark and logo removal for videos and photos. Runs in your browser; your files never leave your device.</p>
           <ul className="footer-badges" aria-label="Highlights">
             <li><Check /> Free</li>

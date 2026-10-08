@@ -1,4 +1,4 @@
-# ClearFrame
+# VanishLogo
 
 A website for removing AI watermarks (the corner sparkle in Gemini/Veo videos and photos, the Veo
 text logo, and other steady corner logos). The removal runs entirely in the visitor's browser: files
@@ -21,7 +21,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # production build in dist/
 npm run preview    # serve dist/ at http://localhost:4173
-npm run build:file # dist-file/ClearFrame-test.html: the whole site in one file, opens from disk
+npm run build:file # dist-file/VanishLogo-test.html: the whole site in one file, opens from disk
 ```
 
 ## Deploy (Cloudflare Pages, free)

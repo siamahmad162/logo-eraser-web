@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useRouter } from '../router';
-import { SITE } from '../site';
+import { Wordmark } from './Wordmark';
 import { TOOL_PATHS } from '../content/tools';
 import { ArrowRight, Close, LogoMark, Menu } from './Icons';
 import { ToolsMenu, UseCasesMenu } from './ToolsMenu';
@@ -20,7 +20,7 @@ export function Header() {
       <div className="wrap header-row">
         <Link to="/" className="brand" onClick={close}>
           <LogoMark className="brand-mark" />
-          <span>{SITE.name}</span>
+          <Wordmark />
         </Link>
         <button type="button" className="menu-btn" aria-expanded={open} aria-controls="site-nav" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen(!open)}>
           {open ? <Close /> : <Menu />}

@@ -3,10 +3,14 @@ import type { SVGProps } from 'react';
 type P = SVGProps<SVGSVGElement>;
 const base = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
+// The brand mark: a V that fades into dots (the logo vanishing), inside the dashed frame you select a logo with.
 export const LogoMark = (p: P) => (
   <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" {...p}>
-    <rect x="3" y="7" width="34" height="26" rx="4" stroke="currentColor" strokeWidth="2.6" strokeDasharray="5 3.4" />
-    <path d="M13 26 27 14" stroke="var(--ink)" strokeWidth="3.2" strokeLinecap="round" />
+    <rect x="3" y="3" width="34" height="34" rx="9.5" stroke="currentColor" strokeOpacity=".42" strokeWidth="2" strokeDasharray="5 3.6" />
+    <path d="M10.5 11 20 30" stroke="var(--ink)" strokeWidth="4" strokeLinecap="round" />
+    <path d="M20.2 29.6 24.2 21.6" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    <path d="M26.1 17.8 27.7 14.6" stroke="currentColor" strokeOpacity=".62" strokeWidth="4" strokeLinecap="round" />
+    <circle cx="29.7" cy="10.9" r="2" fill="currentColor" fillOpacity=".3" />
   </svg>
 );
 export const ArrowRight = (p: P) => (<svg {...base} {...p}><path d="M5 12h14M13 6l6 6-6 6" /></svg>);

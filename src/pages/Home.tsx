@@ -123,7 +123,7 @@ export function Home() {
 
       <section className="section" aria-labelledby="stats">
         <div className="wrap">
-          <h2 id="stats" className="sr-only">ClearFrame at a glance: free, private, no upload</h2>
+          <h2 id="stats" className="sr-only">{SITE.name} at a glance: free, private, no upload</h2>
           <dl className="stats" data-reveal>
             {STATS.map((s) => (
               <div key={s.value} className="stat"><dt>{s.value}</dt><dd>{s.label}</dd></div>

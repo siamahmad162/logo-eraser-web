@@ -96,6 +96,7 @@ button { font: inherit; }
 }
 .header-row { height: 64px; display: flex; align-items: center; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--f-display); font-weight: 650; font-size: 18px; letter-spacing: -0.03em; }
+.wordmark-accent { color: var(--mask); }
 .brand-mark { width: 28px; height: 28px; color: var(--mask); filter: drop-shadow(0 0 10px rgba(255, 77, 141, 0.45)); }
 .nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .nav-link { position: relative; text-decoration: none; color: var(--muted); font-weight: 500; font-size: 14.5px; padding: 8px 13px; border-radius: 999px; transition: color 0.15s, background 0.15s; }
