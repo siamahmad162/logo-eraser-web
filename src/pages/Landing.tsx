@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AdSlot } from '../components/AdSlot';
 import { MediaCompare } from '../components/MediaCompare';
 import { CLIPS, PHOTOS, TOOL_DEMOS, type Demo } from '../media';
@@ -13,11 +14,12 @@ import { GuideCards } from './Guides';
 
 // Use-case pages: who each remover is for and why it works, with a way on to the working page.
 const n = SITE.name;
-const DEMOS: Record<string, Demo> = {
-  '/gemini-watermark-remover': CLIPS.G_GARDEN,
-  '/use-cases/gemini-omni-videos': CLIPS.G_ALLEY,
-  '/use-cases/veo-videos': CLIPS.V_AURORA,
-  '/use-cases/gemini-images': PHOTOS[0],
+// The examples each page can show in its first screen: real output, one is shown at a time and the rest are a click away.
+const DEMOS: Record<string, Demo[]> = {
+  '/gemini-watermark-remover': [CLIPS.G_GARDEN, CLIPS.V_JELLY, PHOTOS[3], CLIPS.G_OCEAN],
+  '/use-cases/gemini-omni-videos': [CLIPS.G_ALLEY, CLIPS.G_OCEAN, CLIPS.G_GARDEN, CLIPS.HERO_WATCH, CLIPS.G_RAMEN],
+  '/use-cases/veo-videos': [CLIPS.V_AURORA, CLIPS.V_JELLY, CLIPS.V_LAVA, CLIPS.V_BOAT],
+  '/use-cases/gemini-images': [PHOTOS[0], PHOTOS[1], PHOTOS[2], PHOTOS[3], PHOTOS[4], PHOTOS[5]],
 };
 
 const Crumbs = ({ page }: { page: LandingData }) => (
@@ -26,7 +28,9 @@ const Crumbs = ({ page }: { page: LandingData }) => (
 
 export function Landing({ path }: { path: string }) {
   const p = landingByPath(path)!;
-  const demo = DEMOS[path] || TOOL_DEMOS.omni;
+  const demos = DEMOS[path] || [TOOL_DEMOS.omni];
+  const [pick, setPick] = useState(0);
+  const demo = demos[pick] || demos[0];
   const related = p.related.map((r) => landingByPath(r)!).filter(Boolean);
   const guides = p.guides.map((s) => GUIDES.find((g) => g.slug === s)!).filter(Boolean);
   const schema = {
@@ -59,13 +63,20 @@ export function Landing({ path }: { path: string }) {
           </div>
           <div className="product">
             <div className="product-glow" aria-hidden="true" />
-            <div className="window">
+            <div className="window" style={demo.media.h > demo.media.w ? { maxWidth: 300, marginInline: 'auto' } : undefined}>
               <div className="window-bar">
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
                 <span className="window-title">{demo.title} <em>· original vs. result</em></span>
               </div>
-              <MediaCompare media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager />
+              <MediaCompare key={demo.id} media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager />
             </div>
+            {demos.length > 1 && (
+              <div className="ex-pick" role="group" aria-label="More examples">
+                {demos.map((d, k) => (
+                  <button key={d.id} type="button" className="ex-chip" aria-pressed={k === pick} onClick={() => setPick(k)}>{d.title}</button>
+                ))}
+              </div>
+            )}
             <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>
         </div>

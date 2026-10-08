@@ -357,6 +357,10 @@ button { font: inherit; }
 .usecase-go svg { width: 16px; height: 16px; }
 
 /* use-case pages */
+.ex-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 0; }
+.ex-chip { font: inherit; font-size: 13.5px; color: var(--muted); padding: 6px 14px; border-radius: 999px; cursor: pointer; background: rgba(255,255,255,0.04); border: 1px solid var(--line-2); transition: color 0.15s, background 0.15s, border-color 0.15s; }
+.ex-chip:hover { color: var(--ink); background: rgba(255,255,255,0.08); }
+.ex-chip[aria-pressed="true"] { color: #fff; background: rgba(255, 77, 141, 0.16); border-color: rgba(255, 77, 141, 0.55); }
 .hero-slim { padding-block: 36px 8px; }
 @media (min-width: 980px) { .hero-slim { padding-block: 52px 12px; } }
 .hero-slim .lede { max-width: 62ch; }
