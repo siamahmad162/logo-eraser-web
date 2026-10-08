@@ -28,3 +28,5 @@ export const Sparkle = (p: P) => (<svg {...base} {...p}><path d="M12 3l1.8 5.2L1
 export const Cloud = (p: P) => (<svg {...base} {...p}><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5 4 4 0 0 1 17.5 18z" /></svg>);
 export const Film = (p: P) => (<svg {...base} {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M10 9.5v5l4-2.5z" /></svg>);
 export const Box = (p: P) => (<svg {...base} {...p}><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" strokeDasharray="2 2.4" /><rect x="8" y="8" width="8" height="8" rx="1" /></svg>);
+export const Mail = (p: P) => (<svg {...base} {...p}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3.5 7l8.5 6 8.5-6" /></svg>);
+export const ArrowUp = (p: P) => (<svg {...base} strokeWidth={2} {...p}><path d="M12 19V5M6 11l6-6 6 6" /></svg>);
