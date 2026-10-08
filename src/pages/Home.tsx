@@ -66,9 +66,9 @@ export function Home() {
             <Link to="/tools" className="pill">
               <span className="pill-dot" /> Three removers: Gemini Omni, Veo and Gemini photo <ArrowRight />
             </Link>
-            <h1>
-              Remove AI watermarks.{' '}<br />
-              <span className="grad">Keep every pixel.</span>
+            <h1 className="h1-home">
+              100% Free Gemini and Veo watermark remover{' '}
+              <span className="grad">for video and photo. Keep every pixel.</span>
             </h1>
             <p className="lede">
               {SITE.name} removes the Gemini and Veo watermark from your videos and images, frame by frame, right in your browser.
