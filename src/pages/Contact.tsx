@@ -29,6 +29,10 @@ export function Contact() {
               <p>Teams, partnerships, integrations or interviews: put “Business” in the subject line.</p>
             </div>
             <div className="contact-card">
+              <h2>Your files stay with you</h2>
+              <p>Cleaning runs inside your browser, so we never receive your videos or photos and can’t look at them. That is why a description and a screenshot are the best way to show us a problem.</p>
+            </div>
+            <div className="contact-card">
               <h2>Quick answers</h2>
               <p>Many questions are answered in the <Link to="/faq">FAQ</Link> and our <Link to="/guides">guides</Link>.</p>
             </div>
