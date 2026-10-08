@@ -1,13 +1,9 @@
 import { Link } from '../router';
 import { SITE } from '../site';
-import { TOOLS } from '../content/tools';
+import { USE_CASES } from '../content/tools';
 import { ArrowRight, ArrowUp, Lock, Mail, Stack, Check, LogoMark } from './Icons';
 import { ToolIcon } from './ToolIcon';
 import { asksFirst, setConsent } from '../ads';
-
-// The use cases: the Gemini overview page, then one page for each of the three removers.
-const OVERVIEW = { path: '/gemini-watermark-remover', name: 'Gemini watermark remover', note: 'Videos and images' };
-const SHORT: Record<string, string> = { omni: 'Gemini videos', veo: 'Veo clips', gphoto: 'Gemini images' };
 
 export function Footer() {
   return (
@@ -44,12 +40,9 @@ export function Footer() {
         </nav>
         <nav aria-label="Use cases">
           <h2>Use cases</h2>
-          <Link to={OVERVIEW.path} className="fl fl-uc">
-            <i className="fl-ic"><Stack /></i><span>{OVERVIEW.name}<small>{OVERVIEW.note}</small></span>
-          </Link>
-          {TOOLS.map((t) => (
-            <Link key={t.id} to={t.path} className="fl fl-uc">
-              <i className="fl-ic"><ToolIcon id={t.id} /></i><span>{t.name}<small>{SHORT[t.id]}</small></span>
+          {USE_CASES.map((u) => (
+            <Link key={u.path} to={u.path} className="fl fl-uc">
+              <i className="fl-ic">{u.icon === 'overview' ? <Stack /> : <ToolIcon id={u.icon} />}</i><span>{u.name}<small>{u.note}</small></span>
             </Link>
           ))}
         </nav>

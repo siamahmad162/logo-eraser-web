@@ -51,3 +51,10 @@ export const TOOLS: ToolInfo[] = [
 
 export const toolById = (id: ToolId) => TOOLS.find((t) => t.id === id)!;
 export const TOOL_PATHS: string[] = TOOLS.map((t) => t.path);
+
+// The use cases, as the header menu and the footer list them: the Gemini overview page, then one page for each remover.
+export type UseCase = { path: string; name: string; note: string; icon: ToolId | 'overview' };
+export const USE_CASES: UseCase[] = [
+  { path: '/gemini-watermark-remover', name: 'Gemini watermark remover', note: 'Videos and images, all in one place', icon: 'overview' },
+  ...TOOLS.map((t) => ({ path: t.path, name: t.name, note: { omni: 'For videos made with Gemini', veo: 'For Veo clips, wide or vertical', gphoto: 'For images made with Gemini' }[t.id], icon: t.id as ToolId })),
+];

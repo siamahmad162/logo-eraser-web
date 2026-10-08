@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useRouter } from '../router';
 import { SITE } from '../site';
 import { TOOL_PATHS } from '../content/tools';
-import { Close, LogoMark, Menu } from './Icons';
-import { ToolsMenu } from './ToolsMenu';
+import { ArrowRight, Close, LogoMark, Menu } from './Icons';
+import { ToolsMenu, UseCasesMenu } from './ToolsMenu';
 
 const NAV = [
   { to: '/how-it-works', label: 'How it works' },
@@ -27,6 +27,7 @@ export function Header() {
         </button>
         <nav id="site-nav" className={open ? 'nav is-open' : 'nav'} aria-label="Main">
           <ToolsMenu onNavigate={close} />
+          <UseCasesMenu onNavigate={close} />
           {NAV.map((n) => (
             <Link key={n.to} to={n.to} className="nav-link" aria-current={path === n.to || (n.to === '/guides' && path.startsWith('/guides/')) ? 'page' : undefined} onClick={close}>
               {n.label}
@@ -34,7 +35,7 @@ export function Header() {
           ))}
           {!TOOL_PATHS.includes(path) && (
             <Link to="/tools" className="btn btn-primary btn-sm nav-cta" onClick={close}>
-              Open a tool
+              Open a tool <ArrowRight />
             </Link>
           )}
         </nav>
