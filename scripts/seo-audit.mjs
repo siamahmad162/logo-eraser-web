@@ -31,6 +31,7 @@ for (const f of files) {
   const words = text(html.replace(/<(nav|header|footer)[\s\S]*?<\/\1>/g, ' ')).split(' ').length;
   const need = TOOLS.includes(r) ? 1100 : r.startsWith('/use-cases/') || r === '/gemini-watermark-remover' ? 900 : r === '/use-cases' ? 400 : r.startsWith('/guides/') ? 450 : r === '/' || r.endsWith('-watermark-remover') ? 600 : 150;
   if (words < need) fail(r, `${words} words of text, wants ${need}`);
+  if (!new RegExp(`<link rel="canonical" href="https://[^"]+${r === '/' ? '' : r}"`).test(html)) fail(r, 'missing or wrong canonical link');
   for (const tag of ['og:title', 'og:description', 'twitter:title', 'twitter:description', 'og:site_name']) if (!html.includes(tag)) fail(r, `missing ${tag}`);
   if (!/<html lang="en"/.test(html) || !/name="viewport"/.test(html)) fail(r, 'missing lang or viewport');
   const types = [];

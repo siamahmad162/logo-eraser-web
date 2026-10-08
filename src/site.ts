@@ -1,9 +1,9 @@
 // Everything brand- or business-specific lives here, so a rename or a price change is a one-file edit.
 export const SITE = {
   name: 'ClearFrame',
-  // Full origin of the live site, without a trailing slash (e.g. 'https://clearframe.app').
-  // Leave empty until the domain is bought; canonical links and the sitemap are added once it is set.
-  url: '',
+  // Full origin of the live site, without a trailing slash. Canonical links, og:url, the sitemap and the
+  // absolute URLs in the structured data all come from it; leave it empty only while there is no live domain.
+  url: 'https://vanishlogo.toollyo.com',
   supportEmail: 'support@example.com',
   // Who runs the service, as it should appear in the legal pages.
   operator: 'ClearFrame',
