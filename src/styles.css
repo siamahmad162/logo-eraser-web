@@ -151,8 +151,10 @@ button { font: inherit; }
 .hero h1 { font-size: clamp(42px, 6.6vw, 80px); font-weight: 650; line-height: 0.98; letter-spacing: -0.05em; margin-top: 20px; }
 .hero h1.h1-long { font-size: clamp(38px, 5vw, 60px); }
 /* the home page's H1 is a full sentence: smaller type, and lines that break evenly */
-.hero h1.h1-home { font-size: clamp(30px, 4.7vw, 60px); line-height: 1.04; letter-spacing: -0.04em; text-wrap: balance; }
+.hero h1.h1-home { font-size: clamp(26px, 3.4vw, 44px); line-height: 1.1; letter-spacing: -0.04em; margin-top: 16px; text-wrap: balance; }
 .hero h1.h1-home .grad { display: block; }
+/* wide enough for the H1 to take two lines on a desktop; the pill, text and buttons stay centred as before */
+.hero-center .hero-copy:has(.h1-home) { max-width: 1120px; }
 .hero-center .hero-copy { text-align: center; display: flex; flex-direction: column; align-items: center; max-width: 900px; margin-inline: auto; }
 .lede { color: var(--muted); font-size: clamp(17px, 1.6vw, 19px); line-height: 1.6; margin-top: 22px; max-width: 58ch; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
