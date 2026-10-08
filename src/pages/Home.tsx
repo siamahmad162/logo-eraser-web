@@ -5,7 +5,7 @@ import { ToolShowcase } from '../components/ToolShowcase';
 import { AdSlot } from '../components/AdSlot';
 import { JsonLd, abs, faqSchema } from '../components/Seo';
 import { GUIDES } from '../content/meta';
-import { TOOLS } from '../content/tools';
+import { LANDINGS } from '../content/landings';
 import { FAQ, FaqList } from '../faq';
 import { CLIPS, PHOTOS } from '../media';
 import { Link } from '../router';
@@ -247,11 +247,11 @@ export function Home() {
             <h2 id="made-for" className="section-title">Whatever you made with AI.</h2>
           </div>
           <ul className="usecases" data-reveal>
-            {TOOLS.map((t, k) => (
-              <li key={t.path}>
-                <Link to={t.path} className="usecase">
-                  <span className="usecase-kind">{['Gemini video', 'Veo video', 'Gemini image'][k]}</span>
-                  <span className="usecase-title">{t.name}</span>
+            {LANDINGS.filter((l) => l.icon !== 'overview').map((l) => (
+              <li key={l.path}>
+                <Link to={l.path} className="usecase">
+                  <span className="usecase-kind">{l.kind}</span>
+                  <span className="usecase-title">{l.name}</span>
                   <span className="usecase-go">Learn more <ArrowRight /></span>
                 </Link>
               </li>

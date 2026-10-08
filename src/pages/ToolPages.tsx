@@ -19,6 +19,7 @@ const n = SITE.name;
 const SHARED = ['allowed', 'free', 'google'];
 const shared = () => FAQ.filter((x) => SHARED.includes(x.id));
 
+const USE_CASE: Record<ToolMode, string> = { omni: '/use-cases/gemini-omni-videos', veo: '/use-cases/veo-videos', gphoto: '/use-cases/gemini-images' };
 function Page({ mode, sections, faq, other }: { mode: ToolMode; sections: { title: string; body: ReactNode }[]; faq: Qa[]; other: ReactNode }) {
   const tool = toolById(mode), seo = TOOL_SEO[mode];
   const trouble: Qa[] = seo.trouble.map((x, i) => ({ id: `fix-${mode}-${i}`, q: x.q, a: <p>{x.a}</p> }));
@@ -105,6 +106,7 @@ function Page({ mode, sections, faq, other }: { mode: ToolMode; sections: { titl
           <h2 id="read" className="section-title">Read more</h2>
           <GuideCards items={guides} />
           <p className="also">{other}</p>
+          <p className="also">Who it is for and where it helps: <Link to={USE_CASE[mode]}>read the use case</Link>.</p>
         </div>
       </section>
     </>

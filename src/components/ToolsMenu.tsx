@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouter } from '../router';
-import { TOOLS, USE_CASES } from '../content/tools';
+import { TOOLS, USE_CASES, USE_CASES_PATH } from '../content/tools';
 import { ArrowRight, ChevronDown, Stack } from './Icons';
 import { ToolIcon } from './ToolIcon';
 
@@ -63,7 +63,7 @@ export function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
 export function UseCasesMenu({ onNavigate }: { onNavigate: () => void }) {
   const { path } = useRouter();
   return (
-    <Dropdown id="usecases-menu" label="Use cases" active={USE_CASES.some((u) => u.path === path)}>
+    <Dropdown id="usecases-menu" label="Use cases" active={path === USE_CASES_PATH || USE_CASES.some((u) => u.path === path)}>
       {(close) => {
         const go = () => { close(); onNavigate(); };
         return (
@@ -76,6 +76,7 @@ export function UseCasesMenu({ onNavigate }: { onNavigate: () => void }) {
                 </Link>
               </li>
             ))}
+            <li><Link to={USE_CASES_PATH} className="tm-all" onClick={go}>All use cases <ArrowRight /></Link></li>
           </ul>
         );
       }}

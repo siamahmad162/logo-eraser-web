@@ -70,10 +70,7 @@ export const GUIDES: GuideMeta[] = [
 
 export type LandingMeta = { path: string; title: string; description: string };
 
-export const LANDINGS: LandingMeta[] = [
-  {
-    path: '/gemini-watermark-remover',
-    title: 'Gemini watermark remover for videos and images',
-    description: 'Remove the sparkle logo from Gemini videos and images. Each frame is restored, not blurred, and your files never leave your device.',
-  },
-];
+// the use-case pages (their content is in landings.ts)
+import { LANDINGS as LANDING_PAGES, USE_CASES_HUB } from './landings';
+export const LANDINGS: LandingMeta[] = LANDING_PAGES.map((l) => ({ path: l.path, title: l.title, description: l.description }));
+export const HUB: LandingMeta = USE_CASES_HUB;

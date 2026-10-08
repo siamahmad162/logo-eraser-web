@@ -1,4 +1,4 @@
-import { GUIDES, LANDINGS } from './content/meta';
+import { GUIDES, HUB, LANDINGS } from './content/meta';
 import { SITE } from './site';
 
 export type RouteMeta = { path: string; title: string; description: string };
@@ -35,6 +35,7 @@ export const ROUTES: RouteMeta[] = [
     title: `FAQ: Watermark Removal, Files, Privacy and Cost — ${n}`,
     description: `Answers about how ${n} removes watermarks, which videos and photos it takes, what stays private and why the tools are free.`,
   },
+  { path: HUB.path, title: `${HUB.title} — ${n}`, description: HUB.description },
   ...LANDINGS.map((l) => ({ path: l.path, title: `${l.title} — ${n}`, description: l.description })),
   {
     path: '/how-it-works',

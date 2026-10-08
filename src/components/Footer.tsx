@@ -1,6 +1,6 @@
 import { Link } from '../router';
 import { SITE } from '../site';
-import { USE_CASES } from '../content/tools';
+import { USE_CASES, USE_CASES_PATH } from '../content/tools';
 import { ArrowRight, ArrowUp, Lock, Mail, Stack, Check, LogoMark } from './Icons';
 import { ToolIcon } from './ToolIcon';
 import { asksFirst, setConsent } from '../ads';
@@ -45,6 +45,7 @@ export function Footer() {
               <i className="fl-ic">{u.icon === 'overview' ? <Stack /> : <ToolIcon id={u.icon} />}</i><span>{u.name}<small>{u.note}</small></span>
             </Link>
           ))}
+          <Link to={USE_CASES_PATH} className="fl"><span>All use cases</span><ArrowRight /></Link>
         </nav>
         <nav aria-label="Resources">
           <h2>Resources</h2>

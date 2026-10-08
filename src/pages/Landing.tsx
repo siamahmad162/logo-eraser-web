@@ -1,74 +1,60 @@
 import { AdSlot } from '../components/AdSlot';
-import type { ReactNode } from 'react';
 import { MediaCompare } from '../components/MediaCompare';
-import { CLIPS, type Demo } from '../media';
-import { ArrowRight, Check } from '../components/Icons';
-import { ToolCta } from '../components/Seo';
-import { FAQ, FaqList } from '../faq';
-import { GUIDES } from '../content/meta';
+import { CLIPS, PHOTOS, TOOL_DEMOS, type Demo } from '../media';
+import { ArrowRight, Check, Stack } from '../components/Icons';
+import { Breadcrumbs, JsonLd, ToolCta, abs } from '../components/Seo';
+import { ToolIcon } from '../components/ToolIcon';
+import { GUIDES, HUB } from '../content/meta';
+import { LANDINGS, landingByPath, type Landing as LandingData } from '../content/landings';
 import { TOOLS } from '../content/tools';
 import { Link } from '../router';
 import { SITE } from '../site';
 import { GuideCards } from './Guides';
-import { STEPS } from './Home';
 
-// Use-case pages: one per kind of watermark people search for.
-type Landing = {
-  eyebrow: string;
-  h1: ReactNode;
-  lede: string;
-  demo: Demo;
-  sections: { title: string; body: ReactNode }[];
-  faq: string[];
-  guides: string[];
-};
-
+// Use-case pages: who each remover is for and why it works, with a way on to the working page.
 const n = SITE.name;
-
-const PAGES: Record<string, Landing> = {
-  '/gemini-watermark-remover': {
-    eyebrow: 'Gemini videos & images',
-    h1: <>Remove the Gemini watermark from <span className="grad">videos and photos</span></>,
-    lede: `The sparkle in the corner of Gemini videos and images is see-through. ${n} measures it in your file and restores the real pixels underneath, frame by frame. Nothing is uploaded.`,
-    demo: CLIPS.G_GARDEN,
-    sections: [
-      {
-        title: 'What the Gemini watermark is',
-        body: <p>Gemini marks generated videos and images with a small four-pointed sparkle near the bottom-right corner. It is white and partly transparent, always the same shape, and on video it stays in exactly the same spot in every frame. That makes it ideal for exact removal: the shape is known, the transparency can be measured, and every frame can be corrected the same way.</p>,
-      },
-      {
-        title: 'Restored, not covered up',
-        body: <p>Instead of blurring the corner or inventing new pixels, {n} reverses the blend between the logo and your picture. The detail that was always there comes back: moving backgrounds stay sharp, and there is no smudge or flicker. <Link to="/how-it-works">See how it works</Link>.</p>,
-      },
-      {
-        title: 'Same video, minus the logo',
-        body: <p>Resolution, frame rate and the number of frames stay exactly the same, and the audio is copied untouched. Images keep their size; PNGs stay lossless. Add one file or a whole folder; batch mode handles the rest.</p>,
-      },
-    ],
-    faq: ['which-watermarks', 'clean', 'upload', 'quality', 'allowed'],
-    guides: ['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'visible-watermark-vs-synthid'],
-  },
+const DEMOS: Record<string, Demo> = {
+  '/gemini-watermark-remover': CLIPS.G_GARDEN,
+  '/use-cases/gemini-omni-videos': CLIPS.G_ALLEY,
+  '/use-cases/veo-videos': CLIPS.V_AURORA,
+  '/use-cases/gemini-images': PHOTOS[0],
 };
+
+const Crumbs = ({ page }: { page: LandingData }) => (
+  <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: HUB.path, label: 'Use cases' }, { to: page.path, label: page.name }]} />
+);
 
 export function Landing({ path }: { path: string }) {
-  const p = PAGES[path];
+  const p = landingByPath(path)!;
+  const demo = DEMOS[path] || TOOL_DEMOS.omni;
+  const related = p.related.map((r) => landingByPath(r)!).filter(Boolean);
+  const guides = p.guides.map((s) => GUIDES.find((g) => g.slug === s)!).filter(Boolean);
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'WebPage', name: p.title, url: abs(p.path), description: p.description, isPartOf: { '@type': 'WebSite', name: n, url: abs('/') } },
+      { '@type': 'FAQPage', mainEntity: p.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    ],
+  };
   return (
     <>
       <section className="hero">
         <div className="hero-bg" aria-hidden="true" />
         <div className="wrap hero-grid">
           <div className="hero-copy">
+            <Crumbs page={p} />
             <span className="eyebrow">{p.eyebrow}</span>
-            <h1 className="h1-long">{p.h1}</h1>
+            <h1 className="h1-long">{p.h1[0]}<span className="grad">{p.h1[1]}</span></h1>
             <p className="lede">{p.lede}</p>
             <div className="cta-row">
-              <Link to="/gemini-omni-watermark-remover" className="btn btn-primary btn-lg">Clean a video — free <ArrowRight /></Link>
-              <Link to="/gemini-photo-watermark-remover" className="btn btn-ghost btn-lg">Clean an image</Link>
+              {p.go.map((g, k) => (
+                <Link key={g.to} to={g.to} className={k === 0 ? 'btn btn-primary btn-lg' : 'btn btn-ghost btn-lg'}>{g.label} {k === 0 && <ArrowRight />}</Link>
+              ))}
             </div>
             <ul className="trust">
               <li><Check /> No upload</li>
-              <li><Check /> Same resolution &amp; frame rate</li>
-              <li><Check /> Audio untouched</li>
+              <li><Check /> Free, no sign-up</li>
+              <li><Check /> Real pixels restored</li>
             </ul>
           </div>
           <div className="product">
@@ -76,9 +62,9 @@ export function Landing({ path }: { path: string }) {
             <div className="window">
               <div className="window-bar">
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
-                <span className="window-title">{p.demo.title} <em>· original vs. result</em></span>
+                <span className="window-title">{demo.title} <em>· original vs. result</em></span>
               </div>
-              <MediaCompare media={p.demo.media} logo={p.demo.logo} alt={p.demo.alt} variant="hero" zoom eager />
+              <MediaCompare media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager />
             </div>
             <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>
@@ -91,7 +77,7 @@ export function Landing({ path }: { path: string }) {
             {p.sections.map((s) => (
               <div key={s.title} className="explain-item">
                 <h2>{s.title}</h2>
-                {s.body}
+                {s.paras.map((t) => <p key={t}>{t}</p>)}
               </div>
             ))}
           </div>
@@ -100,27 +86,66 @@ export function Landing({ path }: { path: string }) {
 
       <AdSlot place="article1" />
 
+      <section className="section" aria-labelledby="who">
+        <div className="wrap">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Who it is for</span>
+            <h2 id="who" className="section-title">Where people use it</h2>
+          </div>
+          <ul className="aud" data-reveal>
+            {p.audiences.map((a) => (
+              <li key={a.title}><h3>{a.title}</h3><p>{a.text}</p></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section className="section" aria-labelledby="steps">
         <div className="wrap">
-          <h2 id="steps" className="section-title">Three steps</h2>
+          <h2 id="steps" className="section-title">How it goes</h2>
           <ol className="steps">
-            {STEPS.map((s, k) => (
+            {p.steps.map((s, k) => (
               <li key={s.title} className="step-card">
                 <span className="step-num">{k + 1}</span>
-                <s.icon className="step-icon" />
                 <h3>{s.title}</h3>
                 <p>{s.text}</p>
               </li>
             ))}
           </ol>
-          <ToolCta title="Ready when you are" to="/tools" label="Choose your remover" />
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="versus">
+        <div className="wrap">
+          <h2 id="versus" className="section-title">Why not crop, blur or fill?</h2>
+          <div className="cmp-wrap" data-reveal>
+            <table className="cmp cmp-text">
+              <thead>
+                <tr><th scope="col">Way of removing it</th><th scope="col" className="cmp-us">{n}</th><th scope="col">The alternative</th></tr>
+              </thead>
+              <tbody>
+                {p.compare.map((r) => (
+                  <tr key={r.what}><th scope="row">{r.what}</th><td className="cmp-us">{r.us}</td><td>{r.other}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ToolCta title="Ready when you are" text="Free, with no sign-up. Nothing is uploaded: it all runs in your browser." to={p.go[0].to} label={p.go[0].label} />
         </div>
       </section>
 
       <section className="section" aria-labelledby="questions">
         <div className="wrap narrow">
           <h2 id="questions" className="section-title">Questions</h2>
-          <FaqList items={p.faq.map((id) => FAQ.find((q) => q.id === id)!)} />
+          <div className="faq">
+            {p.faq.map((f) => (
+              <details key={f.q} className="faq-item">
+                <summary>{f.q}</summary>
+                <div className="faq-a"><p>{f.a}</p></div>
+              </details>
+            ))}
+          </div>
+          <JsonLd data={schema} />
         </div>
       </section>
 
@@ -129,12 +154,80 @@ export function Landing({ path }: { path: string }) {
       <section className="section" aria-labelledby="read">
         <div className="wrap">
           <h2 id="read" className="section-title">Read next</h2>
-          <GuideCards items={p.guides.map((s) => GUIDES.find((g) => g.slug === s)!)} />
+          <GuideCards items={guides} />
           <p className="also">
-            The removers: {TOOLS.map((t, k) => (
-              <span key={t.path}>{k > 0 && ' · '}<Link to={t.path}>{t.name}</Link></span>
-            ))}
+            More use cases: {related.map((r, k) => (<span key={r.path}>{k > 0 && ' · '}<Link to={r.path}>{r.name}</Link></span>))}
           </p>
+        </div>
+      </section>
+    </>
+  );
+}
+
+// The hub: every use case, with a line on who it is for.
+export function UseCases() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage', name: HUB.title, url: abs(HUB.path), description: HUB.description,
+    mainEntity: { '@type': 'ItemList', itemListElement: LANDINGS.map((l, k) => ({ '@type': 'ListItem', position: k + 1, name: l.name, url: abs(l.path) })) },
+  };
+  return (
+    <>
+      <section className="hero hero-slim">
+        <div className="hero-bg" aria-hidden="true" />
+        <div className="wrap">
+          <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: HUB.path, label: 'Use cases' }]} />
+          <span className="eyebrow">Use cases</span>
+          <h1 className="h1-long">Clean AI videos and images <span className="grad">for the job you have</span></h1>
+          <p className="lede">The same free engine, explained for each kind of file: who it helps, what it keeps, and where to start. Everything runs in your browser, and nothing is uploaded.</p>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="cases">
+        <div className="wrap">
+          <h2 id="cases" className="sr-only">All use cases</h2>
+          <ul className="usecases usecases-4" data-reveal>
+            {LANDINGS.map((l) => (
+              <li key={l.path}>
+                <Link to={l.path} className="usecase">
+                  <span className="usecase-ico">{l.icon === 'overview' ? <Stack /> : <ToolIcon id={l.icon} />}</span>
+                  <span className="usecase-kind">{l.kind}</span>
+                  <span className="usecase-title">{l.name}</span>
+                  <span className="usecase-text">{l.description}</span>
+                  <span className="usecase-go">Read more <ArrowRight /></span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="choose">
+        <div className="wrap">
+          <div className="explain" data-reveal>
+            <div className="explain-item">
+              <h2 id="choose">How to pick one</h2>
+              <p>Start from the file you have. A video made with Gemini belongs to the Gemini Omni page, a clip made with Veo to the Veo page, and a still picture to the Gemini images page. If you are not sure, the overview explains what the Gemini watermark is and how the three differ.</p>
+            </div>
+            <div className="explain-item">
+              <h2>What they have in common</h2>
+              <p>Every page uses the same engine. It finds the logo, measures how it was blended into your picture, and reverses that blend, so the real pixels come back instead of a blur. It runs on your own device, so nothing is uploaded, and it is free.</p>
+            </div>
+            <div className="explain-item">
+              <h2>Ready to clean a file?</h2>
+              <p>The use-case pages explain; the tools do the work. Open the <Link to={TOOLS[0].path}>Gemini Omni remover</Link>, the <Link to={TOOLS[1].path}>Veo remover</Link> or the <Link to={TOOLS[2].path}>Gemini photo remover</Link>, or see <Link to="/tools">all tools with examples</Link>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <AdSlot place="article1" />
+
+      <section className="section" aria-labelledby="read">
+        <div className="wrap">
+          <h2 id="read" className="section-title">Read next</h2>
+          <GuideCards items={['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'label-ai-generated-content'].map((s) => GUIDES.find((g) => g.slug === s)!)} />
+          <JsonLd data={schema} />
         </div>
       </section>
     </>

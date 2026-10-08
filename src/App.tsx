@@ -8,7 +8,7 @@ import { Home } from './pages/Home';
 import { Faq } from './pages/Faq';
 import { Terms, Privacy } from './pages/Legal';
 import { NotFound } from './pages/NotFound';
-import { Landing } from './pages/Landing';
+import { Landing, UseCases } from './pages/Landing';
 import { Guide, Guides } from './pages/Guides';
 import { HowItWorks } from './pages/HowItWorks';
 import { About } from './pages/About';
@@ -25,6 +25,7 @@ const PAGES: Record<string, () => React.JSX.Element> = {
   '/veo-watermark-remover': VeoRemover,
   '/gemini-photo-watermark-remover': GeminiPhotoRemover,
   '/tools': Tools,
+  '/use-cases': UseCases,
   '/faq': Faq,
   '/terms': Terms,
   '/privacy': Privacy,

@@ -28,7 +28,7 @@ for (const f of files) {
   if (h1 !== 1) fail(r, `${h1} h1 headings`);
   if (h2 < 2 && !LEGAL.includes(r) && r !== '/contact') fail(r, `only ${h2} h2 headings`);
   const words = text(html.replace(/<(nav|header|footer)[\s\S]*?<\/\1>/g, ' ')).split(' ').length;
-  const need = TOOLS.includes(r) ? 1100 : r.startsWith('/guides/') ? 450 : r === '/' || r.endsWith('-watermark-remover') ? 600 : 150;
+  const need = TOOLS.includes(r) ? 1100 : r.startsWith('/use-cases/') || r === '/gemini-watermark-remover' ? 900 : r === '/use-cases' ? 400 : r.startsWith('/guides/') ? 450 : r === '/' || r.endsWith('-watermark-remover') ? 600 : 150;
   if (words < need) fail(r, `${words} words of text, wants ${need}`);
   for (const tag of ['og:title', 'og:description', 'twitter:title', 'twitter:description', 'og:site_name']) if (!html.includes(tag)) fail(r, `missing ${tag}`);
   if (!/<html lang="en"/.test(html) || !/name="viewport"/.test(html)) fail(r, 'missing lang or viewport');
@@ -37,6 +37,7 @@ for (const f of files) {
     try { const j = JSON.parse(m[1].replace(/\\u003c/g, '<')); for (const x of j['@graph'] || [j]) types.push(x['@type']); } catch (e) { fail(r, 'structured data is not valid JSON'); }
   }
   if (TOOLS.includes(r)) for (const t of ['WebApplication', 'HowTo', 'FAQPage', 'BreadcrumbList']) if (!types.includes(t)) fail(r, `missing ${t} structured data`);
+  if (r.startsWith('/use-cases/') || r === '/gemini-watermark-remover') for (const t of ['WebPage', 'FAQPage', 'BreadcrumbList']) if (!types.includes(t)) fail(r, `missing ${t} structured data`);
   if (r.startsWith('/guides/') && !types.includes('Article')) fail(r, 'missing Article structured data');
   if (r === '/' && !types.includes('WebSite')) fail(r, 'missing WebSite structured data');
   for (const m of html.matchAll(/<img\b[^>]*>/g)) if (!/\balt=/.test(m[0])) fail(r, 'an image has no alt attribute');
