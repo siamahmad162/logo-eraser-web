@@ -56,7 +56,8 @@ const Mark = ({ v }: { v: string }) => (
   <span className={`cmp-mark cmp-${v}`}>{v === 'yes' ? <Check /> : v === 'part' ? 'Partly' : '—'}<span className="sr-only">{v === 'yes' ? 'Yes' : v === 'part' ? 'Partly' : 'No'}</span></span>
 );
 
-const HERO_CLIPS = [CLIPS.HERO_WATCH, CLIPS.G_OCEAN, CLIPS.V_AURORA, CLIPS.G_GARDEN, CLIPS.V_JELLY, CLIPS.G_ALLEY];
+// whole frames only: the clips of the gallery are crops of the logo's corner, which look zoomed in here
+const HERO_CLIPS = [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_JELLY, CLIPS.H_OCEAN, CLIPS.H_CIRCUIT];
 
 export function Home() {
   // the first screen plays a few clips one after the other

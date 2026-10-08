@@ -16,9 +16,9 @@ import { GuideCards } from './Guides';
 const n = SITE.name;
 // The examples each page can show in its first screen: real output, one is shown at a time and the rest are a click away.
 const DEMOS: Record<string, Demo[]> = {
-  '/gemini-watermark-remover': [CLIPS.G_GARDEN, CLIPS.V_JELLY, PHOTOS[3], CLIPS.G_OCEAN],
-  '/use-cases/gemini-omni-videos': [CLIPS.G_ALLEY, CLIPS.G_OCEAN, CLIPS.G_GARDEN, CLIPS.HERO_WATCH, CLIPS.G_RAMEN],
-  '/use-cases/veo-videos': [CLIPS.V_AURORA, CLIPS.V_JELLY, CLIPS.V_LAVA, CLIPS.V_BOAT],
+  '/gemini-watermark-remover': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_JELLY, CLIPS.H_CIRCUIT],
+  '/use-cases/gemini-omni-videos': [CLIPS.HERO_WATCH, CLIPS.H_GARDEN, CLIPS.H_OCEAN, CLIPS.H_CIRCUIT],
+  '/use-cases/veo-videos': [CLIPS.H_JELLY, CLIPS.H_BOAT],
   '/use-cases/gemini-images': [PHOTOS[0], PHOTOS[1], PHOTOS[2], PHOTOS[3], PHOTOS[4], PHOTOS[5]],
 };
 
