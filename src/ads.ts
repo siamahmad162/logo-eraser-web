@@ -54,5 +54,5 @@ export function whenToolFree(): Promise<void> {
 
 // the page that goes into a unit's frame
 export function frameDoc(u: AdUnit): string {
-  return '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}body{display:flex;justify-content:center;align-items:flex-start}</style></head><body>' + u.code + '</body></html>';
+  return '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><meta name="color-scheme" content="dark"><style>:root{color-scheme:dark}html,body{margin:0;padding:0;background:transparent;overflow:hidden}body{display:flex;justify-content:center;align-items:flex-start}</style></head><body>' + u.code + '</body></html>';
 }
