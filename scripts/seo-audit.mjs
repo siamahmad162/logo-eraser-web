@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const dist = path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), 'dist');
 const files = [];
-(function walk(d) { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) { if (f.name !== 'assets') walk(p); } else if (f.name.endsWith('.html')) files.push(p); } })(dist);
+(function walk(d) { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) { if (f.name !== 'assets') walk(p); } else if (f.name.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(f.name)) files.push(p); } })(dist);
 const route = (f) => { const r = '/' + path.relative(dist, f).replace(/\.html$/, ''); return r === '/index' ? '/' : r; };
 const routes = new Set(files.map(route));
 const TOOLS = ['/gemini-omni-watermark-remover', '/veo-watermark-remover', '/gemini-photo-watermark-remover'];
