@@ -14,13 +14,15 @@ type Props = {
   variant?: 'hero' | 'card';
   zoom?: boolean;
   eager?: boolean;
+  /** a looping arrow that points at the logo on the original side (default: on the hero) */
+  pointer?: boolean;
 };
 
 const ZOOM_MS = 700;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
-export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false }: Props) {
+export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false, pointer = variant === 'hero' }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const cv = useRef<HTMLCanvasElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
@@ -75,6 +77,12 @@ export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false,
       ctx.drawImage(after, sx, sy + dy, sw, sh, 0, 0, W, H);
       if (split > 0) ctx.drawImage(before, sx, sy, (sw * Math.min(W, split)) / W, sh, 0, 0, Math.min(W, split), H);
       if (!st.drawn) { st.drawn = true; setReady(true); }
+      // where the logo is on screen now, for the arrow that points at it. It says "Logo" while the original shows there
+      // (the divider is to the right of the logo) and "Removed" once the divider has passed; hidden when zoomed in
+      const lxs = ((logo.x * media.w - sx) / sw) * 100, lys = ((logo.y * media.h - sy) / sh) * 100;
+      el.style.setProperty('--lx', `${lxs}%`);
+      el.style.setProperty('--ly', `${lys}%`);
+      el.dataset.ptr = st.z > 1.01 ? 'zoom' : st.pos > lxs + 4 ? 'before' : 'after';
       if (zoom) {
         el.style.setProperty('--vx', `${(sx / media.w) * 100}%`);
         el.style.setProperty('--vy', `${(sy / media.h) * 100}%`);
@@ -140,7 +148,7 @@ export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false,
     const start2 = () => {
       started = true;
       if (st.visible && v) v.play().catch(() => {});
-      if (st.visible && sweepT0 < 0 && !reduced() && !st.touched) sweepT0 = performance.now() + 300;
+      if (st.visible && sweepT0 < 0 && !reduced() && !st.touched) sweepT0 = performance.now() + 2200;   // the arrow says "Logo" for a moment first
       run();
     };
     if (!started) {
@@ -211,6 +219,16 @@ export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false,
             <source src={media.webm} type="video/webm" />
             {media.mp4 && <source src={media.mp4} type="video/mp4" />}
           </video>
+        )}
+        {pointer && (
+          <span className="mc-ptr" aria-hidden="true">
+            <span className="mc-ptr-ring" />
+            <span className="mc-ptr-in">
+              <b className="mc-ptr-a">Logo</b>
+              <b className="mc-ptr-b">Removed</b>
+              <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6 32 32M32 14v18H14" /></svg>
+            </span>
+          </span>
         )}
         <span className="mc-tag mc-tag-l">Original</span>
         <span className="mc-tag mc-tag-r">Logo removed</span>
