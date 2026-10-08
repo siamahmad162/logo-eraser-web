@@ -27,12 +27,20 @@ const TOOLS_FAQ: Qa[] = [
 export function Tools() {
   return (
     <>
-      <section className="page-head">
+      <section className="page-head page-head-compact">
         <div className="wrap">
           <h1>Free AI watermark removers: Gemini, Veo and images</h1>
-          <p className="lede">Three removers, one for each kind of file: Gemini videos, Veo clips and Gemini images. They all run in your browser, so nothing is uploaded. Pick the one that matches your file.</p>
+          <p className="lede">Pick the remover for your file and open it. Move across a picture to compare the original with the result. Everything runs in your browser, so nothing is uploaded.</p>
         </div>
       </section>
+      <section className="section section-tight" aria-labelledby="examples">
+        <div className="wrap">
+          <h2 id="examples" className="sr-only">Free watermark removers, with real before and after</h2>
+          <ToolShowcase />
+        </div>
+      </section>
+      <AdSlot place="tools1" />
+
       <section className="section section-tight" aria-labelledby="which">
         <div className="wrap">
           <h2 id="which" className="section-title">Which watermark remover do I need?</h2>
@@ -59,15 +67,6 @@ export function Tools() {
               );
             })}
           </ul>
-        </div>
-      </section>
-      <AdSlot place="tools1" />
-
-      <section className="section section-tight" aria-labelledby="examples">
-        <div className="wrap">
-          <h2 id="examples" className="section-title">Free watermark removers, with real before and after</h2>
-          <p className="section-lede">Pick the remover for your file and open it. Move across a picture to compare the original with the result.</p>
-          <ToolShowcase />
         </div>
       </section>
       <AdSlot place="tools2" />

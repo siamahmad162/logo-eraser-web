@@ -473,6 +473,10 @@ button { font: inherit; }
 }
 .page-head + .section-tight { padding-top: 8px; }
 @media (min-width: 980px) { .page-head { padding-block: 56px 24px; } .page-head + .section-tight { padding-top: 8px; } }
+.page-head-compact { padding-block: 24px 6px; }
+@media (min-width: 980px) { .page-head-compact { padding-block: 34px 8px; } }
+.page-head-compact h1 { font-size: clamp(28px, 3.6vw, 44px); line-height: 1.08; letter-spacing: -0.04em; }
+.page-head-compact .lede { margin-top: 12px; font-size: clamp(15px, 1.4vw, 17px); }
 .page-head h1 { font-size: clamp(38px, 5.4vw, 64px); font-weight: 650; letter-spacing: -0.05em; line-height: 1.02; }
 .page-head .lede a { color: var(--ink); }
 .page-head.not-found { padding-block: 64px; }
