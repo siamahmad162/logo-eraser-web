@@ -85,7 +85,7 @@ export function Home() {
               <Link to="/how-it-works" className="btn btn-ghost btn-lg">How it works</Link>
             </div>
             <ul className="trust">
-              <li><Check /> No upload</li>
+              <li><Check /> Runs in your browser</li>
               <li><Check /> Free, no sign-up</li>
               <li><Check /> Videos and photos</li>
             </ul>

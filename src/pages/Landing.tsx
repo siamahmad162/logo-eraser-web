@@ -57,7 +57,7 @@ export function Landing({ path }: { path: string }) {
               ))}
             </div>
             <ul className="trust">
-              <li><Check /> No upload</li>
+              <li><Check /> Runs in your browser</li>
               <li><Check /> Free, no sign-up</li>
               <li><Check /> Real pixels restored</li>
             </ul>
