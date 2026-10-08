@@ -16,13 +16,15 @@ type Props = {
   eager?: boolean;
   /** a looping arrow that points at the logo on the original side (default: on the hero) */
   pointer?: boolean;
+  /** called when a video has played to its end (the clip then does not loop); not called once the visitor has used the divider or zoom, then it loops */
+  onEnded?: () => void;
 };
 
 const ZOOM_MS = 700;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
-export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false, pointer = variant === 'hero' }: Props) {
+export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false, pointer = variant === 'hero', onEnded }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const cv = useRef<HTMLCanvasElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
@@ -215,14 +217,17 @@ export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false,
         {poster && <img className="mc-poster" src={poster} alt="" width={media.w} height={media.h} loading={eager ? 'eager' : 'lazy'} decoding="async" />}
         <canvas ref={cv} className="mc-canvas" width={media.w} height={media.h} role="img" aria-label={`${alt}: original on the left of the divider, logo removed on the right`} />
         {media.kind === 'video' && (
-          <video ref={vid} className="mc-video" muted loop playsInline preload={eager ? 'auto' : 'none'} aria-hidden="true" tabIndex={-1}>
+          <video ref={vid} className="mc-video" muted loop={!onEnded} onEnded={() => {
+            // someone who is looking closely keeps the clip: it starts again instead of moving on
+            const v = vid.current;
+            if (state.current.touched && v) { v.currentTime = 0; v.play().catch(() => {}); } else onEnded?.();
+          }} playsInline preload={eager ? 'auto' : 'none'} aria-hidden="true" tabIndex={-1}>
             <source src={media.webm} type="video/webm" />
             {media.mp4 && <source src={media.mp4} type="video/mp4" />}
           </video>
         )}
         {pointer && (
           <span className="mc-ptr" aria-hidden="true">
-            <span className="mc-ptr-ring" />
             <span className="mc-ptr-in">
               <b className="mc-ptr-a">Logo</b>
               <b className="mc-ptr-b">Removed</b>

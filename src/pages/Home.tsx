@@ -1,3 +1,4 @@
+import { useClipRotation } from '../components/useClipRotation';
 import { Gallery } from '../components/Gallery';
 import { ArrowRight, Check, Download, Frames, Gauge, Globe, Lock, Photo, Scan, Stack, Text, Upload } from '../components/Icons';
 import { MediaCompare } from '../components/MediaCompare';
@@ -55,8 +56,12 @@ const Mark = ({ v }: { v: string }) => (
   <span className={`cmp-mark cmp-${v}`}>{v === 'yes' ? <Check /> : v === 'part' ? 'Partly' : '—'}<span className="sr-only">{v === 'yes' ? 'Yes' : v === 'part' ? 'Partly' : 'No'}</span></span>
 );
 
+const HERO_CLIPS = [CLIPS.HERO_WATCH, CLIPS.G_OCEAN, CLIPS.V_AURORA, CLIPS.G_GARDEN, CLIPS.V_JELLY, CLIPS.G_ALLEY];
+
 export function Home() {
-  const hero = CLIPS.HERO_WATCH;
+  // the first screen plays a few clips one after the other
+  const rot = useClipRotation(HERO_CLIPS);
+  const hero = rot.clip;
   return (
     <>
       <section className="hero hero-center">
@@ -88,10 +93,10 @@ export function Home() {
             <div className="window">
               <div className="window-bar">
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
-                <span className="window-title">watch.mp4 <em>· original vs. {SITE.name}</em></span>
+                <span className="window-title">{hero.title} <em>· original vs. {SITE.name}</em></span>
                 <span className="window-live"><span className="live-dot" />Live preview</span>
               </div>
-              <MediaCompare media={hero.media} logo={hero.logo} alt={hero.alt} variant="hero" zoom eager />
+              <MediaCompare key={hero.id} media={hero.media} logo={hero.logo} alt={hero.alt} variant="hero" zoom eager onEnded={rot.next} />
             </div>
             <p className="product-note">Real output, unedited. Drag the divider, or zoom in on the logo.</p>
           </div>

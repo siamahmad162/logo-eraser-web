@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useClipRotation } from '../components/useClipRotation';
 import { AdSlot } from '../components/AdSlot';
 import { MediaCompare } from '../components/MediaCompare';
 import { CLIPS, PHOTOS, TOOL_DEMOS, type Demo } from '../media';
@@ -29,8 +29,9 @@ const Crumbs = ({ page }: { page: LandingData }) => (
 export function Landing({ path }: { path: string }) {
   const p = landingByPath(path)!;
   const demos = DEMOS[path] || [TOOL_DEMOS.omni];
-  const [pick, setPick] = useState(0);
-  const demo = demos[pick] || demos[0];
+  const rot = useClipRotation(demos);
+  const pick = rot.index;
+  const demo = rot.clip;
   const related = p.related.map((r) => landingByPath(r)!).filter(Boolean);
   const guides = p.guides.map((s) => GUIDES.find((g) => g.slug === s)!).filter(Boolean);
   const schema = {
@@ -68,12 +69,12 @@ export function Landing({ path }: { path: string }) {
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
                 <span className="window-title">{demo.title} <em>· original vs. result</em></span>
               </div>
-              <MediaCompare key={demo.id} media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager />
+              <MediaCompare key={demo.id} media={demo.media} logo={demo.logo} alt={demo.alt} variant="hero" zoom eager onEnded={rot.rotates ? rot.next : undefined} />
             </div>
             {demos.length > 1 && (
               <div className="ex-pick" role="group" aria-label="More examples">
                 {demos.map((d, k) => (
-                  <button key={d.id} type="button" className="ex-chip" aria-pressed={k === pick} onClick={() => setPick(k)}>{d.title}</button>
+                  <button key={d.id} type="button" className="ex-chip" aria-pressed={k === pick} onClick={() => rot.setIndex(k)}>{d.title}</button>
                 ))}
               </div>
             )}

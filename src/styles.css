@@ -751,19 +751,17 @@ body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
 .spec td { color: var(--muted); }
 @media (max-width: 640px) { .spec th, .spec td { display: block; width: auto; } .spec th { border-bottom: 0; padding-bottom: 2px; } }
 
-/* an arrow that loops toward the logo on the original side, so a visitor sees at once where it is */
+/* an arrow that bounces toward the logo, so a visitor sees at once where it is: "Logo" while the original shows there,
+   "Removed" in green once the divider has passed. Only the arrow moves. */
 .mc-ptr { position: absolute; left: var(--lx, 90%); top: var(--ly, 90%); width: 0; height: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
 .mc-stage[data-ptr="before"] .mc-ptr, .mc-stage[data-ptr="after"] .mc-ptr { opacity: 1; }
-.mc-ptr-b, .mc-stage[data-ptr="after"] .mc-ptr-a { display: none; }
-.mc-stage[data-ptr="after"] .mc-ptr-b { display: block; background: var(--ok); color: #04170d; }
-.mc-stage[data-ptr="after"] .mc-ptr-in { color: var(--ok); }
-.mc-stage[data-ptr="after"] .mc-ptr-ring { border-color: var(--ok); box-shadow: 0 0 14px rgba(61, 220, 151, 0.7); }
-.mc-ptr-ring { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--mask); box-shadow: 0 0 14px rgba(255, 77, 141, 0.7); animation: mc-ring 1.6s ease-out infinite; }
 .mc-ptr-in { position: absolute; right: 26px; bottom: 26px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; color: var(--mask); animation: mc-point 1.1s ease-in-out infinite; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7)); }
 .mc-ptr-in b { font: 650 12px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: #1c0610; background: var(--mask); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
 .mc-ptr-in svg { width: 34px; height: 34px; margin-right: -2px; }
+.mc-ptr-b, .mc-stage[data-ptr="after"] .mc-ptr-a { display: none; }
+.mc-stage[data-ptr="after"] .mc-ptr-b { display: block; background: var(--ok); color: #04170d; }
+.mc-stage[data-ptr="after"] .mc-ptr-in { color: var(--ok); }
 .mc-card .mc-ptr-in b { font-size: 10px; padding: 4px 7px; }
 .mc-card .mc-ptr-in svg { width: 26px; height: 26px; }
 @keyframes mc-point { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(9px, 9px); } }
-@keyframes mc-ring { 0% { transform: scale(0.55); opacity: 0.95; } 100% { transform: scale(1.35); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .mc-ptr-in, .mc-ptr-ring { animation: none; } .mc-ptr-ring { opacity: 0.7; } }
+@media (prefers-reduced-motion: reduce) { .mc-ptr-in { animation: none; } }
