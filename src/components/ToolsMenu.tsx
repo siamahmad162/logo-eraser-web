@@ -4,7 +4,7 @@ import { TOOLS } from '../content/tools';
 import { ArrowRight, ChevronDown } from './Icons';
 import { ToolIcon } from './ToolIcon';
 
-// The "Tools" entry of the header. On a wide screen it opens a panel with the four removers; in the phone menu the
+// The "Tools" entry of the header. On a wide screen it opens a panel with the three removers; in the phone menu the
 // same list is shown open, so every tool is one tap away from any page.
 export function ToolsMenu({ onNavigate, inline = false }: { onNavigate: () => void; inline?: boolean }) {
   const { path } = useRouter();

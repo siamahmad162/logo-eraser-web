@@ -1,6 +1,7 @@
-// The four removers, in one place: the header menu, the tools page, the footer and the home page all read this.
+// The three removers, in one place: the header menu, the tools page, the footer and the home page all read this.
+// They share one engine; each has its own page, so each can say exactly what it is for.
 // (No JSX here, so the route table can import it.)
-export type ToolId = 'gemini' | 'sora' | 'video' | 'photo';
+export type ToolId = 'omni' | 'veo' | 'gphoto';
 
 export type ToolInfo = {
   id: ToolId;
@@ -17,44 +18,34 @@ export type ToolInfo = {
 
 export const TOOLS: ToolInfo[] = [
   {
-    id: 'gemini',
-    path: '/app',
-    name: 'Gemini & Veo remover',
-    files: 'Videos · Photos',
+    id: 'omni',
+    path: '/gemini-omni-watermark-remover',
+    name: 'Gemini Omni watermark remover',
+    files: 'Videos',
     how: 'Automatic',
-    short: 'The Gemini sparkle and the Veo text mark, restored to the exact pixels.',
-    long: 'Finds the Gemini sparkle and the Veo text mark by itself and undoes them, so the real picture comes back. Nothing to draw.',
+    short: 'Finds the Gemini sparkle in a video and restores the real picture under it, frame by frame.',
+    long: 'The sparkle in the corner of a Gemini video is see-through, so the real picture is still there. It is found by its shape, measured in your file and undone in every frame. Nothing to draw.',
     points: ['The real pixels come back, not a guess', 'Steady in motion: no smudge, no flicker', 'Whole folders at once, one ZIP out'],
   },
   {
-    id: 'sora',
-    path: '/sora-watermark-remover',
-    name: 'Sora watermark remover',
+    id: 'veo',
+    path: '/veo-watermark-remover',
+    name: 'Veo watermark remover',
     files: 'Videos',
     how: 'Automatic',
-    short: 'Finds the moving Sora mark at every moment and rebuilds the picture under it.',
-    long: 'The Sora mark jumps around the frame. It is found at every moment and removed from every frame; where the scene stands still the picture is copied back from the moments when the mark was elsewhere.',
-    points: ['Found by itself, even while it moves', 'Same size, frame rate, length and sound', 'Nothing is uploaded'],
+    short: 'Removes the sparkle and the “Veo” text mark from Veo clips, wide or vertical, without losing quality.',
+    long: 'A Veo clip can carry the sparkle, the “Veo” text mark, or both. Each one is found by itself and removed from every frame, and the clip keeps its size, frame rate, length and sound.',
+    points: ['Sparkle and Veo text mark, found by itself', 'Wide and vertical clips alike', 'Same size, frame rate, length and sound'],
   },
   {
-    id: 'video',
-    path: '/remove-logo-from-video',
-    name: 'Video logo remover',
-    files: 'Videos',
-    how: 'Draw a box',
-    short: 'Drag a box around any steady logo, badge or date stamp. It is rebuilt in every frame.',
-    long: 'For logos the tool does not know: draw a box and the logo is removed from every frame. Moving scenes show the hidden pixels in other frames, and they are copied back.',
-    points: ['Any logo that stays in one place', 'Only the logo itself is rebuilt', 'See the result before you download'],
-  },
-  {
-    id: 'photo',
-    path: '/remove-logo-from-photo',
-    name: 'Photo logo remover',
+    id: 'gphoto',
+    path: '/gemini-photo-watermark-remover',
+    name: 'Gemini photo watermark remover',
     files: 'Photos',
-    how: 'Draw a box',
-    short: 'Box in a logo or watermark; only its own pixels are rebuilt from the picture around them.',
-    long: 'Draw a box around a logo, a stamp or a watermark. Its own pixels are told apart from the picture and rebuilt from around them, with the photo’s grain put back. Add as many boxes as you need.',
-    points: ['As many boxes as you need on one photo', 'PNG stays lossless, JPG stays high quality', 'Nothing is uploaded'],
+    how: 'Automatic',
+    short: 'Removes the Gemini sparkle from an image: fitted to your picture and reversed, with no blur.',
+    long: 'A photo has one frame only, so the sparkle’s known shape is fitted to your image (its place, size, softness and strength) and reversed on each colour channel. PNG stays lossless.',
+    points: ['Fitted to your image, not painted over', 'PNG stays lossless, JPG stays high quality', 'As many images as you like, one ZIP out'],
   },
 ];
 

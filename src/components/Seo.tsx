@@ -29,7 +29,7 @@ export function Breadcrumbs({ items }: { items: { to: string; label: string }[] 
   );
 }
 
-export function ToolCta({ title = 'Try it on your own video', text = 'Free, with no sign-up. Nothing is uploaded: it all runs in your browser.', to = '/app', label = 'Open the remover' }: { title?: string; text?: string; to?: string; label?: string }) {
+export function ToolCta({ title = 'Try it on your own video', text = 'Free, with no sign-up. Nothing is uploaded: it all runs in your browser.', to = '/tools', label = 'Choose a remover' }: { title?: string; text?: string; to?: string; label?: string }) {
   return (
     <aside className="tool-cta">
       <div>

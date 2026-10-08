@@ -40,7 +40,7 @@ export function Gallery() {
                 <li><Check /> No crop, so captions and framing stay put</li>
                 <li><Check /> A whole series in one batch, one ZIP out</li>
               </ul>
-              <Link to="/app" className="btn btn-primary">Try it on a vertical clip <ArrowRight /></Link>
+              <Link to="/veo-watermark-remover" className="btn btn-primary">Try it on a vertical clip <ArrowRight /></Link>
             </div>
           </div>
         </div>

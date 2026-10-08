@@ -17,6 +17,10 @@ export function mountTool(root, opts = {}) {
     logo: { ask: false, box: true, videos: true, images: false, sample: false, same: false },
     photo: { ask: false, box: true, videos: false, images: true, sample: false, same: false },
   }[MODE];
+  // The Gemini family has three pages that run the very same engine as 'gemini' above: Gemini Omni videos, Veo videos and
+  // Gemini images. A page can take only videos or only photos, and has its own words on the start screen.
+  const ONLY = opts.mode === 'omni' || opts.mode === 'veo' ? 'video' : opts.mode === 'gphoto' ? 'photo' : null;
+  if (ONLY) { CFG.videos = ONLY === 'video'; CFG.images = ONLY === 'photo'; }
   const OTHER = MODE !== 'gemini';
   const BOXED = MODE === 'logo' || MODE === 'photo';               // the person points out the logo with a box
   root.dataset.mode = MODE;
@@ -45,16 +49,17 @@ export function mountTool(root, opts = {}) {
     logo: { steps: ['Add videos', 'Mark the logo', 'Download'], how: ['Drop in your <b>videos</b>.', '<b>Drag a box</b> around the logo.', '<b>Download</b> the clean videos, or all of them as one ZIP.'] },
     photo: { steps: ['Add photos', 'Mark the logo', 'Download'], how: ['Drop in your <b>photos</b>.', '<b>Drag a box</b> around each logo or watermark.', '<b>Download</b> the clean photos, or all of them as one ZIP.'] },
   }[MODE];
+  if (ONLY) { GUIDE.steps[0] = ONLY === 'video' ? 'Add videos' : 'Add images'; GUIDE.how[0] = ONLY === 'video' ? 'Drop in your <b>videos</b>.' : 'Drop in your <b>images</b>.'; }
   root.querySelectorAll('#stepper .st-l').forEach((el, i) => { el.textContent = GUIDE.steps[i]; });
   $('#howList').innerHTML = GUIDE.how.map((h) => '<li><span>' + h + '</span></li>').join('');
 
   // the start page says what this remover is for
-  if (OTHER) {
-    const copy = COPY[MODE];
+  if (OTHER || ONLY) {
+    const copy = COPY[ONLY ? opts.mode : MODE];
     $('.hero-drop h2').textContent = copy.h; $('.hero-sub').textContent = copy.sub;
     $('.formats').innerHTML = copy.formats.map((f) => '<b>' + f + '</b>').join('');
     $('#file').setAttribute('accept', copy.accept);
-    sampleCard.hidden = true;
+    sampleCard.hidden = !(ONLY && opts.mode === 'omni');   // the sample is a Gemini video: it belongs on that page only
     if (!CFG.videos) { for (const el of root.querySelectorAll('#welcomeQuality, #options')) el.hidden = true; }   // nothing to set for photos
     if (BOXED) redetectBtn.textContent = MODE === 'photo' ? 'Clear boxes' : 'Clear box';
   }

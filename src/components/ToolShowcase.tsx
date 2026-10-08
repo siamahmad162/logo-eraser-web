@@ -5,7 +5,7 @@ import { ArrowRight, Check } from './Icons';
 import { MediaCompare } from './MediaCompare';
 import { ToolIcon } from './ToolIcon';
 
-// The four removers, each with its own before/after example and a link to open it.
+// The three removers, each with its own before/after example and a link to open it.
 export function ToolShowcase({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
   const H = `h${headingLevel}` as 'h2' | 'h3';
   return (
@@ -31,7 +31,7 @@ export function ToolShowcase({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
             </div>
             <figure className="sc-demo" data-portrait={portrait || undefined}>
               <MediaCompare media={d.media} logo={d.logo} alt={d.alt} />
-              <figcaption><span className={`src src-${d.source.toLowerCase()}`}>{d.source === 'Logo' ? 'Video' : d.source}</span><span className="g-title">{d.title}</span></figcaption>
+              <figcaption><span className={`src src-${d.source.toLowerCase()}`}>{d.source}</span><span className="g-title">{d.title}</span></figcaption>
             </figure>
           </li>
         );

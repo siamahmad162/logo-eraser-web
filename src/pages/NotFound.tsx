@@ -9,7 +9,7 @@ export function NotFound() {
         <p className="lede">It may have moved, or the link has a typo.</p>
         <div className="cta-row">
           <Link to="/" className="btn btn-primary">Go home</Link>
-          <Link to="/app" className="btn btn-ghost">Open the remover</Link>
+          <Link to="/tools" className="btn btn-ghost">See all tools</Link>
         </div>
       </div>
     </section>

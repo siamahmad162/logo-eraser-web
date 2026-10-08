@@ -10,8 +10,8 @@ export const FAQ: Qa[] = [
     q: 'Which watermarks can it remove?',
     a: (
       <>
-        <p>The four-pointed sparkle that Google Gemini and Veo put in the corner of generated videos and images, and the “Veo” text logo. The <Link to="/app">Gemini and Veo remover</Link> finds them on its own.</p>
-        <p>Three more tools cover the rest: the <Link to="/sora-watermark-remover">Sora remover</Link> finds the moving Sora mark by itself, and the <Link to="/remove-logo-from-video">video</Link> and <Link to="/remove-logo-from-photo">photo</Link> logo removers take any other logo you draw a box around. See <Link to="/tools">all tools</Link>.</p>
+        <p>The four-pointed sparkle that Google Gemini puts in the corner of generated videos and images, and the “Veo” text logo that Veo clips can carry. Each has its own remover, and all three find the logo on their own: the <Link to="/gemini-omni-watermark-remover">Gemini Omni watermark remover</Link> for videos, the <Link to="/veo-watermark-remover">Veo watermark remover</Link> for Veo clips and the <Link to="/gemini-photo-watermark-remover">Gemini photo watermark remover</Link> for images.</p>
+        <p>See <Link to="/tools">all tools</Link> to pick the one that matches your file.</p>
       </>
     ),
   },

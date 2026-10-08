@@ -4,7 +4,8 @@ import { MediaCompare } from '../components/MediaCompare';
 import { ToolShowcase } from '../components/ToolShowcase';
 import { AdSlot } from '../components/AdSlot';
 import { JsonLd, abs, faqSchema } from '../components/Seo';
-import { GUIDES, LANDINGS } from '../content/meta';
+import { GUIDES } from '../content/meta';
+import { TOOLS } from '../content/tools';
 import { FAQ, FaqList } from '../faq';
 import { CLIPS, PHOTOS } from '../media';
 import { Link } from '../router';
@@ -41,7 +42,7 @@ const SCHEMA = {
     {
       '@type': 'SoftwareApplication',
       name: SITE.name,
-      url: abs('/app'),
+      url: abs('/tools'),
       applicationCategory: 'MultimediaApplication',
       operatingSystem: 'Any (runs in a web browser)',
       description: 'Removes visible AI watermarks from videos and photos by restoring the pixels under the logo, frame by frame, on your own device.',
@@ -63,18 +64,18 @@ export function Home() {
         <div className="wrap">
           <div className="hero-copy">
             <Link to="/tools" className="pill">
-              <span className="pill-dot" /> New: Sora, any-logo and photo removers <ArrowRight />
+              <span className="pill-dot" /> Three removers: Gemini Omni, Veo and Gemini photo <ArrowRight />
             </Link>
             <h1>
               Remove AI watermarks.<br />
               <span className="grad">Keep every pixel.</span>
             </h1>
             <p className="lede">
-              {SITE.name} removes the logo from Gemini, Veo and Sora videos, from any other video and from photos, frame by frame, right in your browser.
+              {SITE.name} removes the Gemini and Veo watermark from your videos and images, frame by frame, right in your browser.
             </p>
             <div className="cta-row">
-              <Link to="/app" className="btn btn-primary btn-lg">Remove a watermark free <ArrowRight /></Link>
-              <Link to="/tools" className="btn btn-ghost btn-lg">See all tools</Link>
+              <Link to="/tools" className="btn btn-primary btn-lg">Remove a watermark free <ArrowRight /></Link>
+              <Link to="/how-it-works" className="btn btn-ghost btn-lg">How it works</Link>
             </div>
             <ul className="trust">
               <li><Check /> No upload</li>
@@ -100,7 +101,7 @@ export function Home() {
       <section className="works" aria-label="Works with">
         <div className="wrap works-row">
           <span className="works-label">Works with</span>
-          <span>Gemini</span><span>Veo</span><span>Sora</span><span>Any logo in a video</span><span>Any logo in a photo</span>
+          <span>Gemini Omni videos</span><span>Veo clips</span><span>Gemini images</span>
         </div>
       </section>
 
@@ -109,9 +110,9 @@ export function Home() {
       <section className="section" aria-labelledby="tools">
         <div className="wrap">
           <div className="section-head" data-reveal>
-            <span className="eyebrow">Four tools</span>
+            <span className="eyebrow">Three tools</span>
             <h2 id="tools" className="section-title">Pick the remover that fits your file.</h2>
-            <p className="section-lede">One for each kind of logo, each with a real before-and-after. Move across a picture to compare, then open the tool.</p>
+            <p className="section-lede">One for Gemini videos, one for Veo clips and one for Gemini images, each with a real before-and-after. Move across a picture to compare, then open the tool.</p>
           </div>
           <ToolShowcase />
           <p className="more"><Link to="/tools">All tools <ArrowRight /></Link></p>
@@ -207,7 +208,7 @@ export function Home() {
             <article className="bento-card">
               <Text className="bento-icon" />
               <h3>Veo text mark</h3>
-              <p>Found on its own, wide or vertical. Box in any other steady logo yourself.</p>
+              <p>Found on its own in wide and vertical Veo clips, together with the sparkle.</p>
             </article>
             <article className="bento-card">
               <Globe className="bento-icon" />
@@ -246,11 +247,11 @@ export function Home() {
             <h2 id="made-for" className="section-title">Whatever you made with AI.</h2>
           </div>
           <ul className="usecases" data-reveal>
-            {LANDINGS.map((l, k) => (
-              <li key={l.path}>
-                <Link to={l.path} className="usecase">
-                  <span className="usecase-kind">{['Gemini', 'Veo', 'AI images'][k]}</span>
-                  <span className="usecase-title">{l.title}</span>
+            {TOOLS.map((t, k) => (
+              <li key={t.path}>
+                <Link to={t.path} className="usecase">
+                  <span className="usecase-kind">{['Gemini video', 'Veo video', 'Gemini image'][k]}</span>
+                  <span className="usecase-title">{t.name}</span>
                   <span className="usecase-go">Learn more <ArrowRight /></span>
                 </Link>
               </li>
@@ -269,7 +270,7 @@ export function Home() {
           <ul className="ticks free-ticks" data-reveal>
             <li><Check /> No account, no limit on files, no watermark of ours on your results</li>
             <li><Check /> Everything runs in your browser, so there is no upload to wait for</li>
-            <li><Check /> Four tools: Gemini and Veo, Sora, any logo in a video, any logo in a photo</li>
+            <li><Check /> Three tools: Gemini Omni videos, Veo clips and Gemini images</li>
           </ul>
           <p className="more"><Link to="/tools">Open a tool <ArrowRight /></Link></p>
         </div>
@@ -309,7 +310,7 @@ export function Home() {
             <div className="cta-glow" aria-hidden="true" />
             <h2>Clean your first video in a minute.</h2>
             <p>No sign-up, no upload. Just drop it in.</p>
-            <Link to="/app" className="btn btn-primary btn-lg">Open the remover <ArrowRight /></Link>
+            <Link to="/tools" className="btn btn-primary btn-lg">Open a remover <ArrowRight /></Link>
           </div>
           <p className="fine center">Use {SITE.name} only on content you have the right to edit. It removes the visible logo, not invisible watermarks such as SynthID, so label AI-generated content where required.</p>
         </div>

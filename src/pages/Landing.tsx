@@ -1,11 +1,12 @@
 import { AdSlot } from '../components/AdSlot';
 import type { ReactNode } from 'react';
 import { MediaCompare } from '../components/MediaCompare';
-import { CLIPS, PHOTOS, type Demo } from '../media';
+import { CLIPS, type Demo } from '../media';
 import { ArrowRight, Check } from '../components/Icons';
 import { ToolCta } from '../components/Seo';
 import { FAQ, FaqList } from '../faq';
-import { GUIDES, LANDINGS } from '../content/meta';
+import { GUIDES } from '../content/meta';
+import { TOOLS } from '../content/tools';
 import { Link } from '../router';
 import { SITE } from '../site';
 import { GuideCards } from './Guides';
@@ -47,55 +48,10 @@ const PAGES: Record<string, Landing> = {
     faq: ['which-watermarks', 'clean', 'upload', 'quality', 'allowed'],
     guides: ['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'visible-watermark-vs-synthid'],
   },
-  '/veo-watermark-remover': {
-    eyebrow: 'Veo videos',
-    h1: <>Remove the Veo watermark, <span className="grad">frame by frame</span></>,
-    lede: `Clean the sparkle and the “Veo” text logo off Veo clips without cropping, blurring or losing quality. ${n} runs in your browser, so your clips stay on your device.`,
-    demo: CLIPS.V_LAVA,
-    sections: [
-      {
-        title: 'Both kinds of Veo mark',
-        body: <p>Depending on where a Veo video was made, it may carry the sparkle in the corner or a small “Veo” text logo. {n} finds the sparkle by its shape, and other steady logos such as the text mark by noticing what stays still while the scene moves. If it ever misses, drag a box around the logo and {n} learns it from your video.</p>,
-      },
-      {
-        title: 'Made for moving pictures',
-        body: <p>Veo clips are full of motion: camera moves, particles, water, light. Covering the logo leaves a patch that stands still while everything else moves. Reversing the blend works on each frame from that frame’s own pixels, so whatever passes behind the logo comes through sharp.</p>,
-      },
-      {
-        title: 'Keep the clip exactly as it was',
-        body: <p>Your clip keeps its resolution, frame rate, length and audio. Best quality encodes at about 2.5 times the original bitrate, so the new file can’t be told apart from the original anywhere outside the logo.</p>,
-      },
-    ],
-    faq: ['which-watermarks', 'clean', 'quality', 'formats', 'allowed'],
-    guides: ['remove-gemini-watermark-from-video', 'batch-remove-watermarks', 'label-ai-generated-content'],
-  },
-  '/ai-image-watermark-remover': {
-    eyebrow: 'AI images',
-    h1: <>Remove the sparkle watermark from <span className="grad">AI images</span></>,
-    lede: `Drop in a PNG, JPG or WebP. The corner logo is found, fitted to your image and reversed in seconds, with no blur and no upload.`,
-    demo: PHOTOS[3],
-    sections: [
-      {
-        title: 'Fitted to your image',
-        body: <p>A photo has only one frame, so there is nothing to learn the logo from over time. Instead, {n} starts from the known shape of the sparkle and fits its exact position, size, sharpness and strength to your image, then reverses it on each colour channel.</p>,
-      },
-      {
-        title: 'No quality loss',
-        body: <p>Your image keeps its exact dimensions. PNGs are saved losslessly, JPEGs at 95% quality, and WebP images come back as PNG. Only the pixels inside the logo change.</p>,
-      },
-      {
-        title: 'One image or a hundred',
-        body: <p>Drop in as many images as you like, together with videos if you have them, and download everything as one ZIP when it is done.</p>,
-      },
-    ],
-    faq: ['which-watermarks', 'clean', 'upload', 'formats', 'allowed'],
-    guides: ['blur-crop-or-restore', 'visible-watermark-vs-synthid', 'batch-remove-watermarks'],
-  },
 };
 
 export function Landing({ path }: { path: string }) {
   const p = PAGES[path];
-  const others = LANDINGS.filter((l) => l.path !== path);
   return (
     <>
       <section className="hero">
@@ -106,8 +62,8 @@ export function Landing({ path }: { path: string }) {
             <h1 className="h1-long">{p.h1}</h1>
             <p className="lede">{p.lede}</p>
             <div className="cta-row">
-              <Link to="/app" className="btn btn-primary btn-lg">Remove it now — free <ArrowRight /></Link>
-              <Link to="/how-it-works" className="btn btn-ghost btn-lg">How it works</Link>
+              <Link to="/gemini-omni-watermark-remover" className="btn btn-primary btn-lg">Clean a video — free <ArrowRight /></Link>
+              <Link to="/gemini-photo-watermark-remover" className="btn btn-ghost btn-lg">Clean an image</Link>
             </div>
             <ul className="trust">
               <li><Check /> No upload</li>
@@ -157,7 +113,7 @@ export function Landing({ path }: { path: string }) {
               </li>
             ))}
           </ol>
-          <ToolCta title="Ready when you are" />
+          <ToolCta title="Ready when you are" to="/tools" label="Choose your remover" />
         </div>
       </section>
 
@@ -175,8 +131,8 @@ export function Landing({ path }: { path: string }) {
           <h2 id="read" className="section-title">Read next</h2>
           <GuideCards items={p.guides.map((s) => GUIDES.find((g) => g.slug === s)!)} />
           <p className="also">
-            Also: {others.map((o, k) => (
-              <span key={o.path}>{k > 0 && ' · '}<Link to={o.path}>{o.title}</Link></span>
+            The removers: {TOOLS.map((t, k) => (
+              <span key={t.path}>{k > 0 && ' · '}<Link to={t.path}>{t.name}</Link></span>
             ))}
           </p>
         </div>

@@ -50,31 +50,6 @@ export const GUIDES: GuideMeta[] = [
     minutes: 5,
   },
   {
-    slug: 'remove-sora-watermark',
-    seoTitle: 'Remove the Sora Watermark from a Video, Free',
-    title: 'How to remove the Sora watermark from a video (free, no upload)',
-    description: 'What the moving Sora watermark is, how it can be found and removed at every moment, and what to expect from the result.',
-    published: '2026-10-07',
-    updated: '2026-10-07',
-    minutes: 5,
-  },
-  {
-    slug: 'remove-logo-from-video',
-    title: 'How to remove a logo or date stamp from a video',
-    description: 'Draw a box around a steady logo, badge or date stamp and remove it from every frame. Step by step, with tips for the cleanest result.',
-    published: '2026-10-07',
-    updated: '2026-10-07',
-    minutes: 5,
-  },
-  {
-    slug: 'remove-logo-from-photo',
-    title: 'How to remove a logo or watermark from a photo',
-    description: 'Remove a logo, stamp or watermark from a photo by rebuilding only the logo’s own pixels. Steps, tips and what works best.',
-    published: '2026-10-07',
-    updated: '2026-10-07',
-    minutes: 5,
-  },
-  {
     slug: 'watermark-remover-without-upload',
     seoTitle: 'Watermark Remover Without Upload: Is It Safe?',
     title: 'Watermark remover without upload: is it safe, and how does it work?',
@@ -98,17 +73,7 @@ export type LandingMeta = { path: string; title: string; description: string };
 export const LANDINGS: LandingMeta[] = [
   {
     path: '/gemini-watermark-remover',
-    title: 'Gemini watermark remover for videos and photos',
+    title: 'Gemini watermark remover for videos and images',
     description: 'Remove the sparkle logo from Gemini videos and images. Each frame is restored, not blurred, and your files never leave your device.',
-  },
-  {
-    path: '/veo-watermark-remover',
-    title: 'Veo watermark remover: clean AI videos frame by frame',
-    description: 'Remove the sparkle and the “Veo” text logo from Veo videos while keeping the resolution, frame rate and audio exactly as they were.',
-  },
-  {
-    path: '/ai-image-watermark-remover',
-    title: 'Remove the sparkle watermark from AI images',
-    description: 'Clean the corner logo off AI-generated PNG, JPG and WebP images in seconds. Lossless for PNG, private and in your browser.',
   },
 ];

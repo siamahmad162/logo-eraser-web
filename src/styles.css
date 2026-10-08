@@ -553,7 +553,9 @@ body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
   .sc-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 40px; padding: 26px 30px; }
   .sc-row[data-flip] .sc-demo { order: -1; }
 }
-.sc-copy { display: grid; gap: 14px; align-content: center; }
+.sc-copy { display: grid; gap: 14px; align-content: center; min-width: 0; }
+/* the names of the tools are long: on a phone the button may take two lines instead of widening the page */
+.sc-cta .btn { white-space: normal; text-align: left; justify-content: flex-start; }
 .sc-copy p { margin: 0; color: var(--muted); }
 .sc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sc-ico { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; color: var(--mask); background: var(--mask-soft); border: 1px solid rgba(255, 77, 141, 0.25); }
@@ -573,8 +575,6 @@ body:has(.studio.docked.on) .header-row.wrap { max-width: 1520px; }
 .choose-q { font-weight: 550; }
 .choose-a { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
 .choose-a svg { width: 15px; height: 15px; }
-.src-sora { color: #9fd0ff; border-color: rgba(90, 170, 255, 0.35); background: rgba(90, 170, 255, 0.08); }
-.src-logo { color: #ffd08a; border-color: rgba(245, 165, 91, 0.35); background: rgba(245, 165, 91, 0.08); }
 
 /* Ads: every ad has its space reserved (nothing jumps when it arrives), is labelled, and stays away from the tools' buttons.
    They sit on a quiet panel so they look like part of the page in the dark theme. */

@@ -13,7 +13,7 @@ import { Guide, Guides } from './pages/Guides';
 import { HowItWorks } from './pages/HowItWorks';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
-import { GeminiRemover, SoraRemover, LogoRemover, PhotoRemover } from './pages/OtherTools';
+import { OmniRemover, VeoRemover, GeminiPhotoRemover } from './pages/ToolPages';
 import { Tools } from './pages/Tools';
 import { TOOL_PATHS as TOOL_LIST } from './content/tools';
 import { GUIDES, LANDINGS } from './content/meta';
@@ -21,10 +21,9 @@ import { GUIDES, LANDINGS } from './content/meta';
 const TOOL_PATHS = new Set(TOOL_LIST);
 const PAGES: Record<string, () => React.JSX.Element> = {
   '/': Home,
-  '/app': GeminiRemover,
-  '/sora-watermark-remover': SoraRemover,
-  '/remove-logo-from-video': LogoRemover,
-  '/remove-logo-from-photo': PhotoRemover,
+  '/gemini-omni-watermark-remover': OmniRemover,
+  '/veo-watermark-remover': VeoRemover,
+  '/gemini-photo-watermark-remover': GeminiPhotoRemover,
   '/tools': Tools,
   '/faq': Faq,
   '/terms': Terms,

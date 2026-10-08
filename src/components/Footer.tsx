@@ -6,8 +6,6 @@ import { asksFirst, setConsent } from '../ads';
 
 const USE_CASES: Record<string, string> = {
   '/gemini-watermark-remover': 'Gemini watermark remover',
-  '/veo-watermark-remover': 'Veo watermark remover',
-  '/ai-image-watermark-remover': 'AI image watermark remover',
 };
 
 export function Footer() {
@@ -22,10 +20,9 @@ export function Footer() {
         <nav aria-label="Product">
           <h2>Product</h2>
           <Link to="/tools">All tools</Link>
-          <Link to="/app">Gemini &amp; Veo remover</Link>
-          <Link to="/sora-watermark-remover">Sora watermark remover</Link>
-          <Link to="/remove-logo-from-video">Video logo remover</Link>
-          <Link to="/remove-logo-from-photo">Photo logo remover</Link>
+          <Link to="/gemini-omni-watermark-remover">Gemini Omni remover</Link>
+          <Link to="/veo-watermark-remover">Veo remover</Link>
+          <Link to="/gemini-photo-watermark-remover">Gemini photo remover</Link>
           <Link to="/how-it-works">How it works</Link>
           <Link to="/faq">FAQ</Link>
         </nav>
@@ -49,7 +46,7 @@ export function Footer() {
       <div className="wrap">
         <div className="footer-base">
           <p>© <span suppressHydrationWarning>{new Date().getFullYear()}</span> {SITE.operator}. All rights reserved.</p>
-          <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC and Sora is a trademark of OpenAI, mentioned only to describe compatibility.</p>
+          <p>{SITE.name} is an independent tool and is not affiliated with or endorsed by Google. Gemini and Veo are trademarks of Google LLC, mentioned only to describe compatibility.</p>
         </div>
       </div>
     </footer>

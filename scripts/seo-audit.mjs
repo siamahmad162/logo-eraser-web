@@ -9,7 +9,7 @@ const files = [];
 (function walk(d) { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) { if (f.name !== 'assets') walk(p); } else if (f.name.endsWith('.html')) files.push(p); } })(dist);
 const route = (f) => { const r = '/' + path.relative(dist, f).replace(/\.html$/, ''); return r === '/index' ? '/' : r; };
 const routes = new Set(files.map(route));
-const TOOLS = ['/app', '/sora-watermark-remover', '/remove-logo-from-video', '/remove-logo-from-photo'];
+const TOOLS = ['/gemini-omni-watermark-remover', '/veo-watermark-remover', '/gemini-photo-watermark-remover'];
 const LEGAL = ['/terms', '/privacy'];
 const text = (html) => html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
 const titles = new Map(), descs = new Map();

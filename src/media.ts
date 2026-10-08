@@ -40,24 +40,12 @@ import PBreakfastBefore from './assets/media/p-breakfast-before.webp';
 import PBreakfastAfter from './assets/media/p-breakfast-after.webp';
 import PBoatBefore from './assets/media/p-boat-before.webp';
 import PBoatAfter from './assets/media/p-boat-after.webp';
-import PBikeBefore from './assets/media/p-bike-before.webp';
-import PBikeAfter from './assets/media/p-bike-after.webp';
-import PCarBefore from './assets/media/p-car-before.webp';
-import PCarAfter from './assets/media/p-car-after.webp';
-import TSoraWebm from './assets/media/t-sora.webm';
-import TSoraMp4 from './assets/media/t-sora.mp4';
-import TSoraPoster from './assets/media/t-sora-poster.webp';
-import TVideoWebm from './assets/media/t-video.webm';
-import TVideoMp4 from './assets/media/t-video.mp4';
-import TVideoPoster from './assets/media/t-video-poster.webp';
-import TPhotoBefore from './assets/media/t-photo-before.webp';
-import TPhotoAfter from './assets/media/t-photo-after.webp';
 import type { ToolId } from './content/tools';
 
 // (the single-file test build carries only WebM, which every browser it targets plays)
 const FILE = import.meta.env.MODE === 'file';
 
-export type Demo = { id: string; source: 'Gemini' | 'Veo' | 'Photo' | 'Sora' | 'Logo'; title: string; alt: string; media: CompareMedia; logo: { x: number; y: number } };
+export type Demo = { id: string; source: 'Gemini' | 'Veo' | 'Photo'; title: string; alt: string; media: CompareMedia; logo: { x: number; y: number } };
 
 export const CLIPS = {
   HERO_WATCH: { id: 'hero-watch', source: 'Gemini', title: 'Luxury watch', alt: 'A luxury watch turning on a pedestal', media: { kind: 'video', webm: HeroWatchWebm, mp4: FILE ? '' : HeroWatchMp4, poster: HeroWatchPoster, w: 1280, h: 720 }, logo: { x: 0.906, y: 0.833 } },
@@ -78,20 +66,14 @@ export const PHOTOS: Demo[] = [
   { id: 'p-sneaker', source: 'Photo', title: 'Sneaker', alt: 'Sneaker (AI image)', media: { kind: 'image', before: PSneakerBefore, after: PSneakerAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
   { id: 'p-breakfast', source: 'Photo', title: 'Breakfast', alt: 'Breakfast (AI image)', media: { kind: 'image', before: PBreakfastBefore, after: PBreakfastAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
   { id: 'p-boat', source: 'Photo', title: 'Lantern boat', alt: 'Lantern boat (AI image)', media: { kind: 'image', before: PBoatBefore, after: PBoatAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  // A big brand overlay in a corner, on a dark picture: the kind a shop puts on its own photos
-  { id: 'p-bike', source: 'Photo', title: 'Motorcycle at night', alt: 'A motorcycle on a city street at night, with a brand overlay in the corner', media: { kind: 'image', before: PBikeBefore, after: PBikeAfter, w: 480, h: 270 }, logo: { x: 0.14, y: 0.13 } },
-  { id: 'p-car', source: 'Photo', title: 'Sports car at night', alt: 'A sports car on a city road at night, with a brand overlay in the corner', media: { kind: 'image', before: PCarBefore, after: PCarAfter, w: 480, h: 270 }, logo: { x: 0.23, y: 0.2 } },
 ];
 
 export const GALLERY_VIDEOS: Demo[] = [CLIPS.G_OCEAN, CLIPS.G_GARDEN, CLIPS.G_ALLEY, CLIPS.V_JELLY, CLIPS.V_AURORA, CLIPS.V_LAVA];
 export const GALLERY_VERTICAL: Demo[] = [CLIPS.G_RAMEN, CLIPS.V_BOAT];
 
-// One example per remover, for the tools section of the home page and the tools page. The logos in the Sora example
-// are the real Sora watermark; the video and photo examples carry a made-up badge, drawn on a clean picture, so
-// the result can be judged against the original.
+// One example per remover, for the tools section of the home page and the tools page: real output from the engine.
 export const TOOL_DEMOS: Record<ToolId, Demo> = {
-  gemini: CLIPS.G_GARDEN,
-  sora: { id: 't-sora', source: 'Sora', title: 'Sora clip, mark on the move', alt: 'A Sora video with its moving watermark', media: { kind: 'video', webm: TSoraWebm, mp4: FILE ? '' : TSoraMp4, poster: TSoraPoster, w: 360, h: 654 }, logo: { x: 0.82, y: 0.93 } },
-  video: { id: 't-video', source: 'Logo', title: 'Badge in a corner', alt: 'A video with a badge in the top corner', media: { kind: 'video', webm: TVideoWebm, mp4: FILE ? '' : TVideoMp4, poster: TVideoPoster, w: 640, h: 360 }, logo: { x: 0.14, y: 0.15 } },
-  photo: { id: 't-photo', source: 'Photo', title: 'Two watermarks on a photo', alt: 'A burger photo with two watermarks', media: { kind: 'image', before: TPhotoBefore, after: TPhotoAfter, w: 800, h: 446 }, logo: { x: 0.16, y: 0.1 } },
+  omni: CLIPS.G_GARDEN,
+  veo: CLIPS.V_LAVA,
+  gphoto: PHOTOS[3],
 };

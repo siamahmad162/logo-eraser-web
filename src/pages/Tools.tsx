@@ -9,18 +9,18 @@ import { FaqList, type Qa } from '../faq';
 import { SITE } from '../site';
 
 const CHOOSE: [string, string][] = [
-  ['A video or a photo from Gemini, or a Veo video', '/app'],
-  ['A video from Sora', '/sora-watermark-remover'],
-  ['A logo, badge or date stamp in another video', '/remove-logo-from-video'],
-  ['A logo or watermark in a photo', '/remove-logo-from-photo'],
+  ['A video from Gemini, with the sparkle in the corner', '/gemini-omni-watermark-remover'],
+  ['A Veo clip, with the “Veo” text or the sparkle', '/veo-watermark-remover'],
+  ['An image from Gemini, with the sparkle in the corner', '/gemini-photo-watermark-remover'],
 ];
 
 const TOOLS_FAQ: Qa[] = [
-  { id: 'tools-which', q: 'Which watermark remover should I use?', a: <p>Use the <Link to="/app">Gemini and Veo remover</Link> for the Gemini sparkle and the Veo text mark, the <Link to="/sora-watermark-remover">Sora remover</Link> for the moving Sora watermark, the <Link to="/remove-logo-from-video">video logo remover</Link> for any other steady logo in a video, and the <Link to="/remove-logo-from-photo">photo logo remover</Link> for a logo or watermark in a photo.</p> },
-  { id: 'tools-diff', q: 'What is the difference between restoring and rebuilding?', a: <p>A see-through logo such as the Gemini sparkle still lets the real picture show through, so it can be restored exactly. A solid logo hides the pixels completely, so the picture under it is rebuilt from other frames and from around it. The first is exact; the second is very good on most scenes and can look soft on fine detail.</p> },
-  { id: 'tools-free', q: 'Are the tools free, and are my files uploaded?', a: <p>All four tools are free with no sign-up and no limit on files. Everything runs in your browser, so your videos and photos never leave your device.</p> },
-  { id: 'tools-files', q: 'Which videos and photos can I use?', a: <p>Videos: MP4, MOV, WebM and MKV. Photos: PNG, JPG and WebP. A recent Chrome or Edge on a computer works best.</p> },
-  { id: 'tools-allowed', q: 'Can I remove any watermark?', a: <p>Only from videos and photos you made or have the right to edit. Read our <Link to="/guides/label-ai-generated-content">guide to labelling AI content</Link> and our <Link to="/terms">Terms</Link>.</p> },
+  { id: 'tools-which', q: 'Which watermark remover should I use?', a: <p>Use the <Link to="/gemini-omni-watermark-remover">Gemini Omni watermark remover</Link> for a Gemini video, the <Link to="/veo-watermark-remover">Veo watermark remover</Link> for a Veo clip (it removes the text mark and the sparkle), and the <Link to="/gemini-photo-watermark-remover">Gemini photo watermark remover</Link> for a Gemini image.</p> },
+  { id: 'tools-diff', q: 'What is the difference between the three?', a: <p>They run the same engine and find the logo by themselves. What differs is the file: the first two take videos (a video is cleaned frame by frame, and Veo clips can carry a text mark as well as the sparkle), and the third takes images (one picture, so the sparkle is fitted to it and reversed).</p> },
+  { id: 'tools-restore', q: 'Why is the picture restored instead of covered up?', a: <p>The sparkle is see-through, so the real picture is still in every frame, only blended with white. Reversing that blend gives the real pixels back, which a blur or a patch cannot. Where a mark is fully solid there is nothing to recover, and those few pixels are filled in from around them.</p> },
+  { id: 'tools-free', q: 'Are the tools free, and are my files uploaded?', a: <p>All three tools are free with no sign-up and no limit on files. Everything runs in your browser, so your videos and images never leave your device.</p> },
+  { id: 'tools-files', q: 'Which videos and images can I use?', a: <p>Videos: MP4, MOV, WebM and MKV. Images: PNG, JPG and WebP. A recent Chrome or Edge on a computer works best.</p> },
+  { id: 'tools-allowed', q: 'Can I remove any watermark?', a: <p>Only from videos and images you made or have the right to edit. Read our <Link to="/guides/label-ai-generated-content">guide to labelling AI content</Link> and our <Link to="/terms">Terms</Link>.</p> },
 ];
 
 export function Tools() {
@@ -29,7 +29,7 @@ export function Tools() {
       <section className="page-head">
         <div className="wrap">
           <h1>All tools</h1>
-          <p className="lede">Four removers, one for each kind of logo. They all run in your browser, so nothing is uploaded. Pick the one that matches your file.</p>
+          <p className="lede">Three removers, one for each kind of file: Gemini videos, Veo clips and Gemini images. They all run in your browser, so nothing is uploaded. Pick the one that matches your file.</p>
         </div>
       </section>
       <section className="section section-tight" aria-labelledby="which">

@@ -1,9 +1,10 @@
 // What each remover page says besides the tool itself: how to use it step by step, what it is for, which files it takes,
 // tips, fixes for common problems and where to read more. The same words feed the page and its structured data.
+// The three removers share one engine, so each page is written for its own kind of file and its own questions.
 import type { ToolId } from './tools';
 
 export type ToolSeo = {
-  /** the page's one-line description for search results and the structured data */
+  /** the page's one-line description for the structured data */
   summary: string;
   features: string[];
   howTo: { name: string; steps: { name: string; text: string }[] };
@@ -15,120 +16,94 @@ export type ToolSeo = {
 };
 
 export const TOOL_SEO: Record<ToolId, ToolSeo> = {
-  gemini: {
-    summary: 'A free online remover for the Gemini sparkle and the Veo text mark. It finds the logo by itself and restores the real picture under it, frame by frame, in your browser.',
-    features: ['Finds the Gemini sparkle and the Veo text mark automatically', 'Restores the real pixels under the logo instead of blurring it', 'Videos (MP4, MOV, WebM, MKV) and photos (PNG, JPG, WebP)', 'Batch mode with one ZIP download', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
+  omni: {
+    summary: 'A free online Gemini Omni watermark remover. It finds the Gemini sparkle in your video by its shape and restores the real picture under it, frame by frame, in your browser.',
+    features: ['Finds the Gemini sparkle in a video automatically', 'Restores the real pixels under the logo instead of blurring it', 'Same resolution, frame rate, length and sound', 'Batch mode: a whole folder, one ZIP out', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
     howTo: {
-      name: 'How to remove the Gemini or Veo watermark from a video or photo',
+      name: 'How to remove the Gemini Omni watermark from a video',
       steps: [
-        { name: 'Add your files', text: 'Drag your videos or photos onto the page, or choose files or a whole folder. Use the original files you downloaded, not screen recordings.' },
-        { name: 'Let it find the logo', text: 'The sparkle or the Veo text mark is found by its shape, and its exact strength is measured in your file. Cleaning starts by itself.' },
-        { name: 'Check the result', text: 'Use the Compare view to slide between the original and the clean picture, and zoom in on the spot where the logo was.' },
-        { name: 'Download', text: 'Download each clean file, or all of them together as one ZIP. Size, frame rate and sound are kept.' },
+        { name: 'Add your videos', text: 'Drag your Gemini videos onto the page, or choose files or a whole folder. Use the original files you downloaded, not screen recordings.' },
+        { name: 'Let it find the sparkle', text: 'The sparkle is found by its shape in frames from across the whole video, and its exact strength is measured in your file. Cleaning starts by itself; there is nothing to draw.' },
+        { name: 'Check the result', text: 'Use the Compare view to slide between the original and the clean picture, and zoom in on the corner where the sparkle was.' },
+        { name: 'Download', text: 'Download each clean video, or all of them together as one ZIP. Resolution, frame rate, length and sound are kept.' },
       ],
     },
     uses: [
-      { title: 'Clips for social media', text: 'Post Reels, Shorts and TikToks without a corner logo covering the picture, keeping the clip at its original size and framing.' },
-      { title: 'Product and ad videos', text: 'Use AI-made product shots and promos you own in your own edit, without a distracting mark in the corner.' },
-      { title: 'AI images and thumbnails', text: 'Clean the sparkle off Gemini images for blog posts, thumbnails and presentations. PNGs stay lossless.' },
-      { title: 'Whole batches', text: 'Drop in a folder of generated clips and download them all as one ZIP when they are done.' },
+      { title: 'Reels, Shorts and TikToks', text: 'Post a Gemini clip without a corner logo sitting on the picture, at its original size and framing, wide or vertical.' },
+      { title: 'Product and ad videos', text: 'Use AI-made product shots and promos you own in your own edit, without a mark in the corner to distract from the product.' },
+      { title: 'Footage for a longer edit', text: 'Cut several Gemini clips together, or mix them with other footage, without the same logo flashing in the corner of every shot.' },
+      { title: 'A whole folder at once', text: 'Drop in every clip from a session. The first video shows the rest where the logo sits, and one ZIP comes out at the end.' },
     ],
-    files: [['Videos', 'MP4, MOV, WebM and MKV, in any codec your browser can decode (H.264, HEVC, VP9, AV1)'], ['Photos', 'PNG, JPG and WebP'], ['What you get', 'Videos as MP4 with the same resolution, frame rate and sound; PNG stays lossless, JPG is saved at 95% quality, WebP comes back as PNG'], ['How many', 'As many files as your computer can hold, one after another, or a whole folder'], ['Best on', 'A recent Chrome or Edge on a computer; Safari and Firefox work for most files'], ['Price', 'Free, no sign-up, no limit on files']],
-    tips: ['Use the original download, not a screen recording or a re-upload. Every extra round of compression makes the logo’s edge fuzzier.', 'Keep the tab open and visible while a long video is cleaned; browsers slow down background tabs.', 'Leave “Best quality” on for videos you will publish. “Smaller files” is for drafts.', 'Look at the Compare view before you download, and zoom in on the corner where the logo was.', 'For a logo this tool does not know, use the video or photo logo remover and draw a box around it.'],
+    files: [['Videos', 'MP4, MOV, WebM and MKV, in any codec your browser can decode (H.264, HEVC, VP9, AV1)'], ['What it finds', 'The four-pointed Gemini sparkle near the bottom-right corner'], ['What you get', 'An MP4 with the same resolution, frame rate, length and sound as the original'], ['Quality', 'Best quality (about 2.5 times the original bitrate) or Smaller files, chosen before you add a video'], ['Photos', 'Not for this page: use the Gemini photo watermark remover'], ['Best on', 'A recent Chrome or Edge on a computer; Safari and Firefox work for most files'], ['Price', 'Free, no sign-up, no limit on files']],
+    tips: ['Use the original download, not a screen recording or a re-upload. Every extra round of compression makes the sparkle’s edge fuzzier and harder to undo.', 'Keep the tab open and visible while a long video is cleaned; browsers slow down background tabs.', 'Leave “Best quality” on for anything you will publish. “Smaller files” is for drafts and quick shares.', 'Look at the Compare view before you download, and zoom in to 2× or 4× on the corner where the sparkle was.', 'Very dark scenes are handled with a separate correction measured from your own video’s dark frames, so they do not turn grey or black around the spot.'],
     trouble: [
-      { q: 'It says “No logo found”. What now?', a: 'The video may be clean already, or the logo may be faint on a light picture. Choose “Draw a box”, drag a rectangle around the spot where the logo should be, and the tool learns it from your box.' },
-      { q: 'A faint trace of the sparkle is left. How do I fix it?', a: 'Heavily compressed videos can keep a faint trace because the compression already damaged the detail under the logo. Try the original download, switch the video quality to Best quality, or draw a box around the logo to measure it again.' },
+      { q: 'It says “No logo found”. What now?', a: 'The video may be clean already, or the sparkle may be faint on a light picture. The card shows the spot where it normally sits and asks “Is the logo here?”. Choose “Yes, remove it” if you can see it, or “Draw a box” and drag a rectangle around the place; the tool learns the sparkle from your box.' },
+      { q: 'A faint trace of the sparkle is left. How do I fix it?', a: 'Heavily compressed videos can keep a faint trace because the compression already damaged the detail under the logo. Try the original download, make sure Best quality is on, or redo the file after drawing a box around the sparkle so it is measured again.' },
+      { q: 'The cleaned spot looks a little dark or grey.', a: 'That can happen on very dark scenes. The card turns amber and says “needs a look” and shows the worst moment; open Review and use “Go to that moment”. Redoing the file with Best quality usually settles it.' },
       { q: 'The cleaning is slow. Can I speed it up?', a: 'Speed depends on your computer and on the video’s length and resolution. Close heavy tabs, keep the page visible and plug your laptop in. Long 4K videos take the longest.' },
       { q: 'My browser ran out of memory.', a: 'Process long or very large videos a few at a time instead of all at once, and close other tabs.' },
-      { q: 'The downloaded file will not play.', a: 'Results are MP4 files with H.264 video where your browser supports it. If a player cannot open one, try VLC or another modern player.' },
+      { q: 'The downloaded file will not play.', a: 'Results are MP4 files with H.264 video where your browser can write it. If a player cannot open one, try VLC or another modern player.' },
     ],
     guides: ['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'batch-remove-watermarks'],
   },
-  sora: {
-    summary: 'A free online Sora watermark remover. It finds the moving Sora mark at every moment and rebuilds the picture under it, frame by frame, in your browser.',
-    features: ['Finds the moving Sora watermark automatically', 'Removes it from every frame, including while it fades', 'Rebuilds the picture from other moments of the same shot', 'Keeps size, frame rate, length and sound', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
+  veo: {
+    summary: 'A free online Veo watermark remover. It finds the sparkle and the “Veo” text mark by itself and removes them from every frame, wide or vertical, in your browser.',
+    features: ['Finds the Veo text mark and the sparkle automatically', 'Wide (16:9) and vertical (9:16) clips', 'Restores the real pixels under a see-through logo', 'Keeps resolution, frame rate, length and sound', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
     howTo: {
-      name: 'How to remove the Sora watermark from a video',
+      name: 'How to remove the Veo watermark from a video',
       steps: [
-        { name: 'Add your Sora videos', text: 'Drag the videos you downloaded from Sora onto the page, or choose files. MP4, MOV and WebM work.' },
-        { name: 'Wait while the mark is found', text: 'The tool looks through the whole video, learns where the white cloud logo and the name sit and when they jump to a new spot. There is nothing to draw.' },
-        { name: 'Check the result', text: 'Slide the Compare line over the places where the mark used to be, and zoom in to check the rebuilt area.' },
-        { name: 'Download', text: 'Download the clean video, or several as one ZIP. The size, frame rate, length and sound stay the same.' },
+        { name: 'Add your Veo clips', text: 'Drag your clips onto the page, or choose files or a whole folder. Use the originals you downloaded rather than screen recordings.' },
+        { name: 'Let it find the marks', text: 'The sparkle is found by its shape. The “Veo” text mark is found by noticing what stays perfectly still while the scene moves. Each is measured in your clip, and cleaning starts by itself.' },
+        { name: 'Check the result', text: 'Slide the Compare line over the corner and zoom in on the places where the sparkle or the text used to be.' },
+        { name: 'Download', text: 'Download each clean clip, or all of them as one ZIP. The size, frame rate, length and sound stay as they were.' },
       ],
     },
     uses: [
-      { title: 'Your own Sora videos', text: 'Use clips you generated in your own edits, reels and presentations without a moving logo in the frame.' },
-      { title: 'Cleaner AI storytelling', text: 'Cut several Sora clips together without the mark appearing in a different corner in each one.' },
-      { title: 'Presentations and demos', text: 'Show AI video in a talk or a demo without a watermark that pops up in the middle of a side.' },
-      { title: 'Batches', text: 'Clean a set of clips in one go; each video is searched on its own and downloaded as one ZIP.' },
+      { title: 'Cinematic and b-roll shots', text: 'Use Veo shots as b-roll in a longer film without the text mark crossing the corner of every cut.' },
+      { title: 'Vertical clips for social', text: 'Clean 9:16 Veo clips for Reels, Shorts and TikTok. Vertical videos are handled exactly like wide ones.' },
+      { title: 'Marketing and explainer videos', text: 'Put generated scenes in an explainer, a promo or a presentation without a logo that is not yours on the picture.' },
+      { title: 'A series in one go', text: 'Clean all the clips of a project in one batch, and download them together as one ZIP.' },
     ],
-    files: [['Videos', 'MP4, MOV, WebM and MKV'], ['What it finds', 'The Sora cloud logo, the word “Sora” and the creator’s name, wherever they sit and whenever they move'], ['What you get', 'An MP4 with the same size, frame rate, length and sound'], ['Photos', 'Not for this tool: use the photo logo remover'], ['Best on', 'A recent Chrome or Edge on a computer'], ['Price', 'Free, no sign-up, no limit on files']],
-    tips: ['Use the original download from Sora, not a screen recording.', 'Where the scene stands still, the picture is copied back from moments when the mark was elsewhere, so it looks the same as the original.', 'Fast, busy motion right behind the mark can show a soft patch. Check those moments in the Compare view.', 'A video without the Sora mark is left alone and the card says so.', 'Keep the tab open and visible while it works.'],
+    files: [['Videos', 'MP4, MOV, WebM and MKV, in any codec your browser can decode (H.264, HEVC, VP9, AV1)'], ['What it finds', 'The “Veo” text mark and the four-pointed sparkle, wherever the clip carries one or both'], ['Shapes', 'Wide and vertical clips'], ['What you get', 'An MP4 with the same resolution, frame rate, length and sound'], ['Photos', 'Not for this page: use the Gemini photo watermark remover'], ['Best on', 'A recent Chrome or Edge on a computer'], ['Price', 'Free, no sign-up, no limit on files']],
+    tips: ['Use the original download. A screen recording or a re-upload has already been compressed, which softens the text mark’s edge.', 'The text mark is found from motion: a clip with a very still camera and a very still scene gives it less to work with. If it is missed, draw a box around it.', 'Keep the tab open and visible while the clip is cleaned.', 'Check the result at 2× or 4× zoom; look at the letters’ position in the corner before and after.', 'Several clips from one project? Add them together: the first one shows the others where the mark sits.'],
     trouble: [
-      { q: 'It says “No Sora watermark found”.', a: 'The video may not carry the Sora mark, or the mark may be too faint or too small to find. For another logo, use the video logo remover and draw a box around it.' },
-      { q: 'A soft patch is left where the mark was.', a: 'The Sora mark is almost solid, so the pixels under it are gone and have to be rebuilt. Busy motion behind it can leave a soft patch. Try the original file, and compare at 2× or 4× zoom before you publish.' },
-      { q: 'The mark moves. Will it still work?', a: 'Yes, that is what the tool is made for: it finds the mark at every moment and removes it in each place.' },
-      { q: 'Is the audio kept?', a: 'Yes. The sound is copied across and the length stays the same.' },
-      { q: 'How long does it take?', a: 'It depends on your computer and the video’s length. A ten-second clip usually takes seconds to a minute.' },
+      { q: 'It says “No logo found”.', a: 'The clip may already be clean, or the mark may be faint on a light picture. The card shows where a mark normally sits and asks “Is the logo here?”. Choose “Yes, remove it”, or “Draw a box” and drag a rectangle around the Veo text or the sparkle; the tool learns it from your box.' },
+      { q: 'The “Veo” text is still faintly visible.', a: 'A heavily compressed clip can keep a faint outline of the letters. Try the original download, keep Best quality on, and redo the file after drawing a box around the text so its shape is measured again.' },
+      { q: 'Does it work on vertical (9:16) clips?', a: 'Yes. Vertical clips are cleaned exactly like wide ones, and the preview is made larger so you can see the corner clearly.' },
+      { q: 'My clip has the sparkle and the text. Do I do it twice?', a: 'No. Both marks are found and removed in the same pass.' },
+      { q: 'The cleaning is slow.', a: 'Speed depends on your computer and the clip’s length and resolution. Keep the page visible, close heavy tabs and plug your laptop in.' },
+      { q: 'Is the sound kept?', a: 'Yes. The sound is copied across untouched and the length stays the same.' },
     ],
-    guides: ['remove-sora-watermark', 'blur-crop-or-restore', 'label-ai-generated-content'],
+    guides: ['remove-gemini-watermark-from-video', 'batch-remove-watermarks', 'label-ai-generated-content'],
   },
-  video: {
-    summary: 'A free online logo remover for videos. Draw a box around any steady logo, badge or date stamp and it is rebuilt in every frame, in your browser.',
-    features: ['Removes any logo that stays in one place', 'You draw one box; it is cleaned in every frame', 'Only the logo’s own pixels are rebuilt', 'Hidden pixels are copied back from other frames when the scene moves', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
+  gphoto: {
+    summary: 'A free online Gemini photo watermark remover. The sparkle in the corner of a Gemini image is fitted to your picture and reversed in seconds, with no blur, in your browser.',
+    features: ['Removes the Gemini sparkle from images automatically', 'Fitted to your picture: its place, size, softness and strength', 'Reversed on each colour channel, not painted over', 'PNG stays lossless, JPG stays high quality', 'Runs in your browser: nothing is uploaded', 'Free, no sign-up'],
     howTo: {
-      name: 'How to remove a logo from a video',
+      name: 'How to remove the Gemini watermark from an image',
       steps: [
-        { name: 'Add your video', text: 'Drag your video onto the page, or choose a file. MP4, MOV and WebM work.' },
-        { name: 'Draw a box around the logo', text: 'On the preview, drag a rectangle around the logo, a little bigger than it. Zoom in for a precise box. Let go and the cleaning starts.' },
-        { name: 'Check the result', text: 'Use the Compare view and zoom in on the spot. If a piece of the logo is left, draw the box again, a little bigger.' },
-        { name: 'Download', text: 'Download the clean video, or several as one ZIP.' },
+        { name: 'Add your images', text: 'Drag PNG, JPG or WebP images onto the page, or choose files or a whole folder.' },
+        { name: 'Let it fit the sparkle', text: 'The sparkle is found in the corner, and its exact place, size, sharpness and strength are fitted to your image. Cleaning starts by itself; there is nothing to draw.' },
+        { name: 'Check the result', text: 'Slide the Compare line over the corner and zoom in to 2× or 4× on the spot where the sparkle was.' },
+        { name: 'Download', text: 'Download each clean image, or all of them together as one ZIP. The size stays the same and a PNG stays lossless.' },
       ],
     },
     uses: [
-      { title: 'Channel logos and bugs', text: 'Remove a corner badge from your own old footage before you re-edit it.' },
-      { title: 'Date and time stamps', text: 'Clean a camera date stamp or a timecode burned into your own footage.' },
-      { title: 'Your old watermark', text: 'Swap an out-of-date watermark of your own for a new one.' },
-      { title: 'Screen recordings', text: 'Take a small widget or a tool’s corner logo out of a screen capture you made.' },
+      { title: 'Blog posts and thumbnails', text: 'Use a Gemini image as a header or a thumbnail without a sparkle in the corner of the picture.' },
+      { title: 'Presentations and decks', text: 'Put generated images on slides, clean at the edges, at their full original size.' },
+      { title: 'Product and mood images', text: 'Clean generated product shots and mood boards you own before they go in a shop page or a catalogue.' },
+      { title: 'A folder of images', text: 'Drop in a whole folder of generated images and download them all as one ZIP when they are done.' },
     ],
-    files: [['Videos', 'MP4, MOV, WebM and MKV'], ['What it removes', 'Logos and text that stay in one place for the whole video'], ['Not for', 'Logos that move around the picture (not supported yet)'], ['What you get', 'An MP4 with the same size, frame rate and sound'], ['Photos', 'Use the photo logo remover'], ['Price', 'Free, no sign-up, no limit on files']],
-    tips: ['Draw the box a little bigger than the logo with some picture around it; only the logo’s own pixels inside it are rebuilt.', 'A moving background gives the best result: the hidden pixels show up in other frames and are copied back.', 'On a still background the area is filled from its surroundings: plain backgrounds look natural, detailed patterns may look smooth.', 'Check the result at 2× or 4× zoom before you download.', 'For the Gemini sparkle or the Sora mark use their own removers: no box to draw.'],
+    files: [['Photos', 'PNG, JPG and WebP'], ['What it finds', 'The four-pointed Gemini sparkle near the bottom-right corner'], ['What you get', 'PNG stays lossless; JPG is saved again at 95% quality; WebP comes back as PNG; the image size stays the same'], ['How many', 'As many images as your computer can hold, one after another, or a whole folder'], ['Videos', 'Not for this page: use the Gemini Omni or the Veo watermark remover'], ['Best on', 'A recent Chrome or Edge on a computer; phones work for single images'], ['Price', 'Free, no sign-up, no limit on files']],
+    tips: ['Use the image exactly as Gemini gave it to you. A screenshot, or an image that has been re-saved as a small JPG, has a softer sparkle edge and a trace is more likely.', 'PNG gives the cleanest result because nothing is lost when it is saved again.', 'A photo has only one frame, so the sparkle cannot be learned over time; it is fitted from its known shape. That is fast, and very exact when the image is the original.', 'Zoom in to 2× or 4× on the corner before you download, and compare the two sides of the slider.', 'Several images from one session? Add them together; they are cleaned one after another.'],
     trouble: [
-      { q: 'A piece of the logo is still there.', a: 'The box probably cut through the logo. Draw it again, a little bigger, so the whole logo is inside.' },
-      { q: 'The cleaned spot looks smooth or blurry.', a: 'On a still, detailed background there is nothing to copy back, so the area is filled from around it. A tighter box over a plainer part helps, or accept a soft patch.' },
-      { q: 'The logo moves around the picture.', a: 'Only logos that stay in one place are supported for now.' },
-      { q: 'Can I draw more than one box?', a: 'Clean the video once for each logo: run it, download, add the result again and draw the next box.' },
-      { q: 'Is the sound kept?', a: 'Yes. The sound and the length stay as they were.' },
+      { q: 'It says “No logo found”.', a: 'The image may be clean already, or cropped so that the sparkle is outside it. The card shows the spot where it normally sits and asks “Is the logo here?”. Choose “Yes, remove it” if you can see it, or “Draw a box” around the place.' },
+      { q: 'A faint trace of the sparkle is left.', a: 'A small, heavily compressed JPG can keep a faint trace because compression has already blurred the edge. Try the original image, ideally a PNG, and redo it after drawing a box around the sparkle.' },
+      { q: 'Will my image get smaller or softer?', a: 'No. The image keeps its exact dimensions, and only the pixels inside the sparkle change. A PNG stays lossless and a JPG is saved again at 95% quality.' },
+      { q: 'Why did my WebP come back as a PNG?', a: 'WebP images are saved as PNG so that nothing is lost. If you need WebP again, convert the PNG afterwards in any image editor.' },
+      { q: 'Does it work on a screenshot of a Gemini image?', a: 'It can, but a screenshot has been resampled, which blurs the sparkle’s edge. For the cleanest result use the image you downloaded.' },
+      { q: 'Is my image uploaded?', a: 'No. The image is opened, cleaned and saved by your browser on your own device and never reaches our servers.' },
     ],
-    guides: ['remove-logo-from-video', 'blur-crop-or-restore', 'label-ai-generated-content'],
-  },
-  photo: {
-    summary: 'A free online logo and watermark remover for photos. Draw a box and only the logo’s own pixels are rebuilt from the picture around them, in your browser.',
-    features: ['Removes a logo, stamp or watermark from a photo', 'Only the logo’s own pixels are rebuilt, the rest of the box is untouched', 'The photo’s grain is put back so the patch does not look smooth', 'As many boxes as you need on one photo', 'PNG stays lossless, JPG stays high quality', 'Free, no sign-up, nothing is uploaded'],
-    howTo: {
-      name: 'How to remove a logo or watermark from a photo',
-      steps: [
-        { name: 'Add your photo', text: 'Drag a PNG, JPG or WebP onto the page, or choose files.' },
-        { name: 'Draw a box around the logo', text: 'Drag a rectangle around the logo or watermark, a little bigger than it. Zoom in for a precise box. Let go and it is removed.' },
-        { name: 'Add more boxes if you need them', text: 'Choose “Add another box” for each further logo. “Clear boxes” starts again from the original.' },
-        { name: 'Download', text: 'Download the clean photo, or several as one ZIP. A PNG stays lossless and a JPG is saved at high quality.' },
-      ],
-    },
-    uses: [
-      { title: 'Your own photos', text: 'Remove a stamp, a date or an old watermark of yours from photos you took.' },
-      { title: 'AI images', text: 'Clean a logo off an image you generated, for a blog post, a thumbnail or a deck.' },
-      { title: 'Product pictures', text: 'Take a stray label or a sticker out of a product shot you own.' },
-      { title: 'Screenshots', text: 'Remove a small badge or an account name from a screenshot of your own work.' },
-    ],
-    files: [['Photos', 'PNG, JPG and WebP'], ['Boxes', 'As many as you need on one photo'], ['What you get', 'PNG stays lossless; JPG is saved again at high quality; WebP comes back as PNG; the size stays the same'], ['Videos', 'Use the video logo remover'], ['Best on', 'Skies, walls, water, studio backdrops and most AI images'], ['Price', 'Free, no sign-up, no limit on files']],
-    tips: ['Draw the box a little bigger than the logo. Only the logo’s pixels inside it are rebuilt, so a generous box costs nothing, but a box that cuts through the logo leaves a piece.', 'Logos on smooth backgrounds (sky, wall, water, studio) come out best.', 'Fine texture such as foliage, fabric or crowds can leave a smooth patch. The tool says when it had to rebuild the whole box.', 'Zoom in to 2× or 4× to check the edges before you download.', 'For the Gemini sparkle use the Gemini remover, which restores the real pixels.'],
-    trouble: [
-      { q: 'A piece of the logo is left.', a: 'Draw the box again a little bigger so that the whole logo is inside it. “Clear boxes” starts again from the original.' },
-      { q: 'The fixed spot looks smooth.', a: 'On fine texture there is little to copy from. The tool puts the photo’s grain back, but detailed patterns can still look soft. A tighter box over a plainer part helps.' },
-      { q: 'It says it rebuilt the whole box.', a: 'The logo could not be told apart from the picture here (a busy photo, or a very faint mark), so the whole box was filled from around it. A tighter box gives a cleaner result.' },
-      { q: 'Can I remove several logos?', a: 'Yes. Choose “Add another box” after the first, and draw the next one. All boxes are applied to the same photo.' },
-      { q: 'Will my photo’s quality drop?', a: 'Only the logo’s pixels change. A PNG stays lossless, a JPG is saved again at high quality, and the size stays the same.' },
-    ],
-    guides: ['remove-logo-from-photo', 'blur-crop-or-restore', 'visible-watermark-vs-synthid'],
+    guides: ['blur-crop-or-restore', 'visible-watermark-vs-synthid', 'watermark-remover-without-upload'],
   },
 };

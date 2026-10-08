@@ -1,5 +1,13 @@
-# the any-logo remover became the video logo remover when the photo logo remover was split off
-/remove-logo  /remove-logo-from-video  301
+# the tools that were taken away, and the pages that moved: nothing returns a 404 for a link that used to work
+/app                         /tools                            301
+/sora-watermark-remover      /tools                            301
+/remove-logo-from-video      /tools                            301
+/remove-logo-from-photo      /tools                            301
+/remove-logo                 /tools                            301
+/ai-image-watermark-remover  /gemini-photo-watermark-remover   301
+/guides/remove-sora-watermark      /guides                     301
+/guides/remove-logo-from-video     /guides                     301
+/guides/remove-logo-from-photo     /guides                     301
 # the site is free now: the pages about plans and refunds are gone
 /pricing  /  301
 /refunds  /  301

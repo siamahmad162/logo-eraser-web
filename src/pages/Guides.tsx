@@ -11,10 +11,9 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const fmt = (iso: string) => { const [y, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; };
 
 const GUIDE_TOOL: Record<string, { to: string; label: string; title: string }> = {
-  'remove-sora-watermark': { to: '/sora-watermark-remover', label: 'Open the Sora remover', title: 'Try it on your Sora video' },
-  'remove-logo-from-video': { to: '/remove-logo-from-video', label: 'Open the video logo remover', title: 'Remove a logo from your video' },
-  'remove-logo-from-photo': { to: '/remove-logo-from-photo', label: 'Open the photo logo remover', title: 'Remove a logo from your photo' },
+  'remove-gemini-watermark-from-video': { to: '/gemini-omni-watermark-remover', label: 'Open the Gemini Omni remover', title: 'Try it on your Gemini video' },
   'watermark-remover-without-upload': { to: '/tools', label: 'See all tools', title: 'Pick the tool for your file' },
+  'batch-remove-watermarks': { to: '/tools', label: 'Open a tool', title: 'Clean a whole folder in one go' },
 };
 
 export function GuideCards({ items }: { items: GuideMeta[] }) {
@@ -45,7 +44,7 @@ export function Guides() {
       </section>
       <section className="section section-tight">
         <div className="wrap">
-          <p className="lede">New to watermark removal? Start with <Link to="/guides/blur-crop-or-restore">blur, crop or restore</Link> to see why the method matters, then pick the guide for your file: a <Link to="/guides/remove-gemini-watermark-from-video">Gemini or Veo video</Link>, a <Link to="/guides/remove-sora-watermark">Sora video</Link>, a <Link to="/guides/remove-logo-from-video">logo in a video</Link> or a <Link to="/guides/remove-logo-from-photo">logo in a photo</Link>. Everything runs in your browser, so your files stay private. See <Link to="/guides/watermark-remover-without-upload">how a tool works without uploading</Link>.</p>
+          <p className="lede">New to watermark removal? Start with <Link to="/guides/blur-crop-or-restore">blur, crop or restore</Link> to see why the method matters, then read how to clean a <Link to="/guides/remove-gemini-watermark-from-video">Gemini or Veo video</Link>, or a <Link to="/guides/batch-remove-watermarks">whole folder at once</Link>. Everything runs in your browser, so your files stay private. See <Link to="/guides/watermark-remover-without-upload">how a tool works without uploading</Link>.</p>
           <GuideCards items={GUIDES} />
         </div>
       </section>

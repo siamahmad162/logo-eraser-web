@@ -8,32 +8,27 @@ export const ROUTES: RouteMeta[] = [
   {
     path: '/',
     title: `${n}: Free Watermark Remover for AI Videos and Photos`,
-    description: 'Free online tools to remove the Gemini, Veo and Sora watermark, or any logo, from videos and photos. They run in your browser: no upload, no sign-up.',
+    description: 'Free online tools to remove the Gemini Omni, Veo and Gemini photo watermark from your videos and images. They run in your browser: no upload, no sign-up.',
   },
   {
-    path: '/app',
-    title: `Gemini & Veo Watermark Remover, Free — ${n}`,
-    description: 'Remove the Gemini sparkle and the Veo text mark from videos and photos for free. The real pixels are restored frame by frame in your browser, with no upload.',
+    path: '/gemini-omni-watermark-remover',
+    title: `Gemini Omni Watermark Remover, Free — ${n}`,
+    description: 'Remove the Gemini sparkle from your videos for free. It is found by itself and the real picture under it is restored frame by frame, in your browser. No upload.',
   },
   {
-    path: '/sora-watermark-remover',
-    title: `Sora Watermark Remover, Free — No Upload | ${n}`,
-    description: 'Remove the moving Sora watermark from your videos for free. It is found at every moment and rebuilt frame by frame, in your browser. Nothing is uploaded.',
+    path: '/veo-watermark-remover',
+    title: `Veo Watermark Remover, Free — No Upload | ${n}`,
+    description: 'Remove the Veo text mark and the sparkle from your clips for free, wide or vertical. Found automatically and removed from every frame in your browser. No upload.',
   },
   {
-    path: '/remove-logo-from-video',
-    title: `Remove a Logo from a Video, Free — ${n}`,
-    description: 'Remove a logo, badge or date stamp from a video for free. Draw one box and it is rebuilt in every frame, right in your browser. Nothing is uploaded.',
-  },
-  {
-    path: '/remove-logo-from-photo',
-    title: `Remove a Logo from a Photo, Free — ${n}`,
-    description: 'Remove a logo, stamp or watermark from a photo for free. Draw a box and only the logo’s own pixels are rebuilt. It runs in your browser; nothing is uploaded.',
+    path: '/gemini-photo-watermark-remover',
+    title: `Gemini Photo Watermark Remover, Free — ${n}`,
+    description: 'Remove the Gemini sparkle from your images for free. It is fitted to your picture and reversed in seconds, with no blur. PNG stays lossless. Nothing is uploaded.',
   },
   {
     path: '/tools',
-    title: `Free Watermark and Logo Removers for Video and Photo — ${n}`,
-    description: 'Four free removers for videos and photos: Gemini and Veo, Sora, any logo in a video and any logo in a photo. Before and after examples. No upload.',
+    title: `Free Gemini, Veo and AI Watermark Removers — ${n}`,
+    description: 'Three free removers: Gemini Omni for videos, Veo for clips and Gemini photo for images. Before and after examples for each. They run in your browser: no upload.',
   },
   {
     path: '/faq',
@@ -49,7 +44,7 @@ export const ROUTES: RouteMeta[] = [
   {
     path: '/guides',
     title: `Guides: Remove AI Watermarks and Logos — ${n}`,
-    description: 'Practical guides to removing the Gemini, Veo and Sora watermarks and any logo from videos and photos, keeping quality and labelling AI content.',
+    description: 'Practical guides to removing the Gemini and Veo watermarks from videos and images, keeping quality, working in batches and labelling AI content.',
   },
   ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, title: `${g.seoTitle || g.title} — ${n}`, description: g.description })),
   { path: '/about', title: `About ${n}: Free, Private Watermark Removal`, description: `Who makes ${n}, and the principles behind it: privacy, honest results and responsible use.` },
