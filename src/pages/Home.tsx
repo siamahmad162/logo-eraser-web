@@ -67,7 +67,7 @@ export function Home() {
               <span className="pill-dot" /> Three removers: Gemini Omni, Veo and Gemini photo <ArrowRight />
             </Link>
             <h1>
-              Remove AI watermarks.<br />
+              Remove AI watermarks.{' '}<br />
               <span className="grad">Keep every pixel.</span>
             </h1>
             <p className="lede">
@@ -111,7 +111,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Three tools</span>
-            <h2 id="tools" className="section-title">Pick the remover that fits your file.</h2>
+            <h2 id="tools" className="section-title">Free watermark removers for Gemini videos, Veo clips and images</h2>
             <p className="section-lede">One for Gemini videos, one for Veo clips and one for Gemini images, each with a real before-and-after. Move across a picture to compare, then open the tool.</p>
           </div>
           <ToolShowcase />
@@ -123,7 +123,7 @@ export function Home() {
 
       <section className="section" aria-labelledby="stats">
         <div className="wrap">
-          <h2 id="stats" className="sr-only">At a glance</h2>
+          <h2 id="stats" className="sr-only">ClearFrame at a glance: free, private, no upload</h2>
           <dl className="stats" data-reveal>
             {STATS.map((s) => (
               <div key={s.value} className="stat"><dt>{s.value}</dt><dd>{s.label}</dd></div>
@@ -136,7 +136,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Gemini and Veo</span>
-            <h2 id="results" className="section-title">More results, unedited.</h2>
+            <h2 id="results" className="section-title">Before and after: AI watermark removal examples</h2>
             <p className="section-lede">Each clip plays the original and the result side by side, frame for frame. Move across a card to compare.</p>
           </div>
           <Gallery />
@@ -147,7 +147,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">How it works</span>
-            <h2 id="how" className="section-title">Three steps. No upload.</h2>
+            <h2 id="how" className="section-title">How to remove an AI watermark in three steps</h2>
           </div>
           <ol className="steps" data-reveal>
             {STEPS.map((s, k) => (
@@ -166,7 +166,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Why {SITE.name}</span>
-            <h2 id="why" className="section-title">Restored, not covered up.</h2>
+            <h2 id="why" className="section-title">Why restoring the pixels beats blurring the logo</h2>
             <p className="section-lede">The AI sparkle is see-through, so the real picture is still in every frame. We measure the logo in your file and undo it exactly.</p>
           </div>
           <div className="bento" data-reveal>
@@ -244,7 +244,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Made for</span>
-            <h2 id="made-for" className="section-title">Whatever you made with AI.</h2>
+            <h2 id="made-for" className="section-title">Use cases: Gemini videos, Veo clips and Gemini images</h2>
           </div>
           <ul className="usecases" data-reveal>
             {LANDINGS.filter((l) => l.icon !== 'overview').map((l) => (
@@ -264,7 +264,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Free</span>
-            <h2 id="free" className="section-title">Free for everyone. No sign-up, no limits.</h2>
+            <h2 id="free" className="section-title">A free watermark remover: no sign-up, no limits</h2>
             <p className="section-lede">Clean as many videos and photos as you like. Ads on the pages around the tools pay for {SITE.name}; they are never placed inside a tool, and they never see your files, because your files never leave your device.</p>
           </div>
           <ul className="ticks free-ticks" data-reveal>
@@ -282,7 +282,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Guides</span>
-            <h2 id="guides" className="section-title">Publish AI video the right way.</h2>
+            <h2 id="guides" className="section-title">Guides: label and publish AI-generated video the right way</h2>
           </div>
           <GuideCards items={GUIDES.slice(0, 3)} />
           <p className="more"><Link to="/guides">All guides <ArrowRight /></Link></p>
@@ -293,7 +293,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">FAQ</span>
-            <h2 id="faq" className="section-title">Questions, answered.</h2>
+            <h2 id="faq" className="section-title">Watermark remover questions, answered</h2>
             <p className="section-lede">Anything else? <Link to="/contact">Get in touch</Link>.</p>
           </div>
           <div className="faq-cols">
@@ -308,7 +308,7 @@ export function Home() {
         <div className="wrap">
           <div className="cta-band" data-reveal>
             <div className="cta-glow" aria-hidden="true" />
-            <h2>Clean your first video in a minute.</h2>
+            <h2>Remove your first watermark in a minute</h2>
             <p>No sign-up, no upload. Just drop it in.</p>
             <Link to="/tools" className="btn btn-primary btn-lg">Open a remover <ArrowRight /></Link>
           </div>

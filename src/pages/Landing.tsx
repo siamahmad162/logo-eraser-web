@@ -101,7 +101,7 @@ export function Landing({ path }: { path: string }) {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <span className="eyebrow">Who it is for</span>
-            <h2 id="who" className="section-title">Where people use it</h2>
+            <h2 id="who" className="section-title">Who uses {p.subject} watermark removal</h2>
           </div>
           <ul className="aud" data-reveal>
             {p.audiences.map((a) => (
@@ -113,7 +113,7 @@ export function Landing({ path }: { path: string }) {
 
       <section className="section" aria-labelledby="steps">
         <div className="wrap">
-          <h2 id="steps" className="section-title">How it goes</h2>
+          <h2 id="steps" className="section-title">Four steps to a clean {p.subject} file</h2>
           <ol className="steps">
             {p.steps.map((s, k) => (
               <li key={s.title} className="step-card">
@@ -128,7 +128,7 @@ export function Landing({ path }: { path: string }) {
 
       <section className="section" aria-labelledby="versus">
         <div className="wrap">
-          <h2 id="versus" className="section-title">Why not crop, blur or fill?</h2>
+          <h2 id="versus" className="section-title">Why not crop, blur or fill a {p.subject} watermark?</h2>
           <div className="cmp-wrap" data-reveal>
             <table className="cmp cmp-text">
               <thead>
@@ -147,7 +147,7 @@ export function Landing({ path }: { path: string }) {
 
       <section className="section" aria-labelledby="questions">
         <div className="wrap narrow">
-          <h2 id="questions" className="section-title">Questions</h2>
+          <h2 id="questions" className="section-title">{p.subject} watermark remover: questions and answers</h2>
           <div className="faq">
             {p.faq.map((f) => (
               <details key={f.q} className="faq-item">
@@ -164,7 +164,7 @@ export function Landing({ path }: { path: string }) {
 
       <section className="section" aria-labelledby="read">
         <div className="wrap">
-          <h2 id="read" className="section-title">Read next</h2>
+          <h2 id="read" className="section-title">Guides to read next</h2>
           <GuideCards items={guides} />
           <p className="also">
             More use cases: {related.map((r, k) => (<span key={r.path}>{k > 0 && ' · '}<Link to={r.path}>{r.name}</Link></span>))}
@@ -189,14 +189,14 @@ export function UseCases() {
         <div className="wrap">
           <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: HUB.path, label: 'Use cases' }]} />
           <span className="eyebrow">Use cases</span>
-          <h1 className="h1-long">Clean AI videos and images <span className="grad">for the job you have</span></h1>
+          <h1 className="h1-long">AI watermark removal use cases: <span className="grad">videos, clips and images</span></h1>
           <p className="lede">The same free engine, explained for each kind of file: who it helps, what it keeps, and where to start. Everything runs in your browser, and nothing is uploaded.</p>
         </div>
       </section>
 
       <section className="section" aria-labelledby="cases">
         <div className="wrap">
-          <h2 id="cases" className="sr-only">All use cases</h2>
+          <h2 id="cases" className="sr-only">All watermark removal use cases</h2>
           <ul className="usecases usecases-4" data-reveal>
             {LANDINGS.map((l) => (
               <li key={l.path}>
@@ -217,15 +217,15 @@ export function UseCases() {
         <div className="wrap">
           <div className="explain" data-reveal>
             <div className="explain-item">
-              <h2 id="choose">How to pick one</h2>
+              <h2 id="choose">How to pick the right watermark remover</h2>
               <p>Start from the file you have. A video made with Gemini belongs to the Gemini Omni page, a clip made with Veo to the Veo page, and a still picture to the Gemini images page. If you are not sure, the overview explains what the Gemini watermark is and how the three differ.</p>
             </div>
             <div className="explain-item">
-              <h2>What they have in common</h2>
+              <h2>What every use case has in common</h2>
               <p>Every page uses the same engine. It finds the logo, measures how it was blended into your picture, and reverses that blend, so the real pixels come back instead of a blur. It runs on your own device, so nothing is uploaded, and it is free.</p>
             </div>
             <div className="explain-item">
-              <h2>Ready to clean a file?</h2>
+              <h2>Ready to remove a watermark?</h2>
               <p>The use-case pages explain; the tools do the work. Open the <Link to={TOOLS[0].path}>Gemini Omni remover</Link>, the <Link to={TOOLS[1].path}>Veo remover</Link> or the <Link to={TOOLS[2].path}>Gemini photo remover</Link>, or see <Link to="/tools">all tools with examples</Link>.</p>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function UseCases() {
 
       <section className="section" aria-labelledby="read">
         <div className="wrap">
-          <h2 id="read" className="section-title">Read next</h2>
+          <h2 id="read" className="section-title">Guides to read next</h2>
           <GuideCards items={['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'label-ai-generated-content'].map((s) => GUIDES.find((g) => g.slug === s)!)} />
           <JsonLd data={schema} />
         </div>

@@ -12,6 +12,8 @@ export type Landing = {
   name: string;
   /** one line under the name in the header menu and the footer */
   note: string;
+  /** what the watermark is on, for headings: “Gemini video”, “Veo clip” */
+  subject: string;
   /** the small label on the home page card */
   kind: string;
   icon: ToolId | 'overview';
@@ -45,6 +47,7 @@ export const LANDINGS: Landing[] = [
     path: '/gemini-watermark-remover',
     name: 'Gemini watermark remover',
     note: 'Videos and images, all in one place',
+    subject: 'Gemini',
     kind: 'Gemini overview',
     icon: 'overview',
     title: 'Gemini watermark remover for videos and images',
@@ -108,12 +111,13 @@ export const LANDINGS: Landing[] = [
     path: '/use-cases/gemini-omni-videos',
     name: 'Gemini Omni videos',
     note: 'For videos made with Gemini',
+    subject: 'Gemini video',
     kind: 'Gemini video',
     icon: 'omni',
-    title: 'Remove the Gemini Watermark from AI Videos',
+    title: 'Gemini Video Watermark Removal for Reels and Ads',
     description: 'Post Gemini videos without the sparkle: reels, ads and edits. It is found by itself and removed frame by frame, free, in your browser. No upload.',
     eyebrow: 'Use case · Gemini Omni videos',
-    h1: ['Post your Gemini videos ', 'without the sparkle'],
+    h1: ['Gemini video watermark removal ', 'for reels, ads and edits'],
     lede: `You made a good clip with Gemini, and a small sparkle sits in its corner. ${n} removes it from every frame by restoring the picture under it, on your own device, for free.`,
     go: [{ to: '/gemini-omni-watermark-remover', label: 'Open the Gemini Omni remover' }],
     sections: [
@@ -184,12 +188,13 @@ export const LANDINGS: Landing[] = [
     path: '/use-cases/veo-videos',
     name: 'Veo videos',
     note: 'For Veo clips, wide or vertical',
+    subject: 'Veo clip',
     kind: 'Veo video',
     icon: 'veo',
-    title: 'Remove the Veo Watermark from Clips and Reels',
+    title: 'Veo Watermark Removal for Reels, Ads and Edits',
     description: 'Clean Veo clips for reels, ads and edits: the “Veo” text mark and the sparkle are found and removed in every frame. Free, in your browser.',
     eyebrow: 'Use case · Veo videos',
-    h1: ['Use your Veo clips ', 'without the Veo mark'],
+    h1: ['Remove the Veo mark from clips ', 'for reels, ads and films'],
     lede: `A Veo clip can carry a sparkle, a “Veo” text mark, or both. ${n} finds each one by itself and removes it from every frame, on your own device, for free.`,
     go: [{ to: '/veo-watermark-remover', label: 'Open the Veo remover' }],
     sections: [
@@ -259,12 +264,13 @@ export const LANDINGS: Landing[] = [
     path: '/use-cases/gemini-images',
     name: 'Gemini images',
     note: 'For images made with Gemini',
+    subject: 'Gemini image',
     kind: 'Gemini image',
     icon: 'gphoto',
-    title: 'Remove the Gemini Watermark from AI Images',
+    title: 'Gemini Image Watermark Removal for Blogs and Designs',
     description: 'Use Gemini images in posts, slides and designs without the sparkle. It is fitted to your picture and reversed, with no blur. Free, no upload.',
     eyebrow: 'Use case · Gemini images',
-    h1: ['Use your Gemini images ', 'without the sparkle'],
+    h1: ['Gemini image watermark removal ', 'for blogs, slides and designs'],
     lede: `The sparkle in the corner of a Gemini image is see-through. ${n} fits its known shape to your picture and reverses it, so the real pixels come back. Free, and on your own device.`,
     go: [{ to: '/gemini-photo-watermark-remover', label: 'Open the Gemini photo remover' }],
     sections: [

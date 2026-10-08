@@ -17,7 +17,7 @@ export const ROUTES: RouteMeta[] = [
   },
   {
     path: '/veo-watermark-remover',
-    title: `Veo Watermark Remover, Free — No Upload | ${n}`,
+    title: `Veo Watermark Remover, Free, No Upload — ${n}`,
     description: 'Remove the Veo text mark and the sparkle from your clips for free, wide or vertical. Found automatically and removed from every frame in your browser. No upload.',
   },
   {
@@ -48,10 +48,10 @@ export const ROUTES: RouteMeta[] = [
     description: 'Practical guides to removing the Gemini and Veo watermarks from videos and images, keeping quality, working in batches and labelling AI content.',
   },
   ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, title: `${g.seoTitle || g.title} — ${n}`, description: g.description })),
-  { path: '/about', title: `About ${n}: Free, Private Watermark Removal`, description: `Who makes ${n}, and the principles behind it: privacy, honest results and responsible use.` },
+  { path: '/about', title: `About ${n}: Free, Private Watermark Removal`, description: `Who makes ${n} and why: a free watermark remover built on privacy, honest results and responsible use of AI media.` },
   { path: '/contact', title: `Contact ${n}: Help, Feedback and Business`, description: `Get help with a file, report an ad, send feedback or write to us about business enquiries. We usually reply within one or two working days.` },
-  { path: '/terms', title: `Terms of Service — ${n}`, description: `The terms for using ${n}: what you may process, acceptable use, how the free, ad-supported service works, and our limits of liability.` },
-  { path: '/privacy', title: `Privacy Policy — ${n}`, description: `How ${n} handles your data: your files are processed on your device and never uploaded; what the website collects and how advertising works.` },
+  { path: '/terms', title: `Terms of Service for the Free Watermark Remover — ${n}`, description: `The terms for using ${n}: what you may process, acceptable use, how the free, ad-supported service works, and our limits of liability.` },
+  { path: '/privacy', title: `Privacy Policy: Your Files Stay on Your Device — ${n}`, description: `How ${n} handles your data: your files are processed on your device and never uploaded; what the website collects and how advertising works.` },
 ];
 
 export const NOT_FOUND: RouteMeta = { path: '/404', title: `Page not found — ${n}`, description: 'This page does not exist.' };

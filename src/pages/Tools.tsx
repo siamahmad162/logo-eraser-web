@@ -29,13 +29,13 @@ export function Tools() {
     <>
       <section className="page-head">
         <div className="wrap">
-          <h1>All tools</h1>
+          <h1>Free AI watermark removers: Gemini, Veo and images</h1>
           <p className="lede">Three removers, one for each kind of file: Gemini videos, Veo clips and Gemini images. They all run in your browser, so nothing is uploaded. Pick the one that matches your file.</p>
         </div>
       </section>
       <section className="section section-tight" aria-labelledby="which">
         <div className="wrap">
-          <h2 id="which" className="section-title">Which one do I need?</h2>
+          <h2 id="which" className="section-title">Which watermark remover do I need?</h2>
           <p className="section-lede">Start from the file you have. The three removers run the same engine; each is tuned for its own kind of file.</p>
           <ul className="pick-grid" data-reveal>
             {TOOLS.map((t) => {
@@ -75,7 +75,7 @@ export function Tools() {
       <section className="section section-tight" aria-labelledby="common">
         <div className="wrap">
           <div className="section-head">
-            <h2 id="common" className="section-title">What they have in common</h2>
+            <h2 id="common" className="section-title">What all three removers have in common</h2>
             <p className="section-lede">Your files stay on your device: videos and photos are opened, cleaned and saved by your browser, so there is no upload and no waiting in a queue. Size, frame rate and sound are kept. Use them on content you made or have the right to edit, and read how the <Link to="/how-it-works">removers work</Link> to know what to expect from each.</p>
           </div>
         </div>

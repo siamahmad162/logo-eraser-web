@@ -16,6 +16,9 @@ const GUIDE_TOOL: Record<string, { to: string; label: string; title: string }> =
   'batch-remove-watermarks': { to: '/tools', label: 'Open a tool', title: 'Clean a whole folder in one go' },
 };
 
+// the guides that are about doing the removal; the others are about privacy, labelling and what stays
+const REMOVE = ['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'batch-remove-watermarks'];
+
 export function GuideCards({ items }: { items: GuideMeta[] }) {
   return (
     <ul className="guide-cards">
@@ -38,14 +41,17 @@ export function Guides() {
       <section className="page-head">
         <div className="wrap">
           <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/guides', label: 'Guides' }]} />
-          <h1>Guides</h1>
+          <h1>Guides: remove AI watermarks from videos and images</h1>
           <p className="lede">Practical help with removing AI watermarks, keeping your video quality, and publishing AI content the right way.</p>
         </div>
       </section>
       <section className="section section-tight">
         <div className="wrap">
           <p className="lede">New to watermark removal? Start with <Link to="/guides/blur-crop-or-restore">blur, crop or restore</Link> to see why the method matters, then read how to clean a <Link to="/guides/remove-gemini-watermark-from-video">Gemini or Veo video</Link>, or a <Link to="/guides/batch-remove-watermarks">whole folder at once</Link>. Everything runs in your browser, so your files stay private. See <Link to="/guides/watermark-remover-without-upload">how a tool works without uploading</Link>.</p>
-          <GuideCards items={GUIDES} />
+          <h2 className="section-title" id="remove-guides">How to remove a watermark well</h2>
+          <GuideCards items={GUIDES.filter((g) => REMOVE.includes(g.slug))} />
+          <h2 className="section-title section-title-gap" id="trust-guides">Privacy, labels and responsible use</h2>
+          <GuideCards items={GUIDES.filter((g) => !REMOVE.includes(g.slug))} />
         </div>
       </section>
     </>

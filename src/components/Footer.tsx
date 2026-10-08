@@ -11,7 +11,7 @@ export function Footer() {
       <div className="wrap">
         <div className="footer-cta">
           <div>
-            <h2>Got a watermark to remove?</h2>
+            <p className="footer-cta-title">Got a watermark to remove?</p>
             <p>Free, no sign-up, and your files never leave your device.</p>
           </div>
           <div className="footer-cta-actions">
@@ -32,14 +32,14 @@ export function Footer() {
           <a className="footer-mailbtn" href={`mailto:${SITE.supportEmail}`}><Mail /> {SITE.supportEmail}</a>
         </div>
         <nav aria-label="Product">
-          <h2>Product</h2>
+          <p className="footer-title">Product</p>
           <Link to="/tools" className="fl"><span>All tools</span><ArrowRight /></Link>
           <Link to="/how-it-works" className="fl"><span>How it works</span><ArrowRight /></Link>
           <Link to="/faq" className="fl"><span>FAQ</span><ArrowRight /></Link>
           <Link to="/guides" className="fl"><span>Guides</span><ArrowRight /></Link>
         </nav>
         <nav aria-label="Use cases">
-          <h2>Use cases</h2>
+          <p className="footer-title">Use cases</p>
           {USE_CASES.map((u) => (
             <Link key={u.path} to={u.path} className="fl fl-uc">
               <i className="fl-ic">{u.icon === 'overview' ? <Stack /> : <ToolIcon id={u.icon} />}</i><span>{u.name}<small>{u.note}</small></span>
@@ -48,12 +48,12 @@ export function Footer() {
           <Link to={USE_CASES_PATH} className="fl"><span>All use cases</span><ArrowRight /></Link>
         </nav>
         <nav aria-label="Resources">
-          <h2>Resources</h2>
+          <p className="footer-title">Resources</p>
           <Link to="/about" className="fl"><span>About</span><ArrowRight /></Link>
           <Link to="/contact" className="fl"><span>Contact</span><ArrowRight /></Link>
         </nav>
         <nav aria-label="Legal">
-          <h2>Legal</h2>
+          <p className="footer-title">Legal</p>
           <Link to="/terms" className="fl"><span>Terms of Service</span><ArrowRight /></Link>
           <Link to="/privacy" className="fl"><span>Privacy Policy</span><ArrowRight /></Link>
           {asksFirst() && <button type="button" className="fl footer-link-btn" onClick={() => setConsent(null)}><span>Ad choices</span></button>}

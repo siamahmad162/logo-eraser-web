@@ -9,7 +9,7 @@ export function Contact() {
       <section className="page-head">
         <div className="wrap narrow">
           <Breadcrumbs items={[{ to: '/', label: 'Home' }, { to: '/contact', label: 'Contact' }]} />
-          <h1>Contact us</h1>
+          <h1>Contact ClearFrame</h1>
           <p className="lede">Email {mail}. We usually reply within one or two working days.</p>
         </div>
       </section>

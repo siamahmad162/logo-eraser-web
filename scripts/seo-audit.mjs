@@ -24,7 +24,8 @@ for (const f of files) {
   if (desc.length < 90 || desc.length > 165) fail(r, `description length ${desc.length}`);
   if (titles.has(title)) fail(r, `same title as ${titles.get(title)}`); titles.set(title, r);
   if (descs.has(desc)) fail(r, `same description as ${descs.get(desc)}`); descs.set(desc, r);
-  const h1 = (html.match(/<h1[\s>]/g) || []).length, h2 = (html.match(/<h2[\s>]/g) || []).length;
+  const main = html.replace(/<(header|footer)[\s\S]*?<\/\1>/g, (m) => (/<h1[\s>]/.test(m) ? m : ' '));
+  const h1 = (html.match(/<h1[\s>]/g) || []).length, h2 = (main.match(/<h2[\s>]/g) || []).length;
   if (h1 !== 1) fail(r, `${h1} h1 headings`);
   if (h2 < 2 && !LEGAL.includes(r) && r !== '/contact') fail(r, `only ${h2} h2 headings`);
   const words = text(html.replace(/<(nav|header|footer)[\s\S]*?<\/\1>/g, ' ')).split(' ').length;
