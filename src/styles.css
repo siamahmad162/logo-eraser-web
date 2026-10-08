@@ -131,6 +131,9 @@ button { font: inherit; }
 /* Hero */
 .hero { position: relative; padding-block: 40px 28px; overflow: hidden; isolation: isolate; }
 @media (min-width: 980px) { .hero { padding-block: 60px 40px; } }
+/* the home page starts with a pill, so it needs less room under the header */
+.hero-center { padding-block-start: 18px; }
+@media (min-width: 980px) { .hero-center { padding-block-start: 26px; } }
 .hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .hero-bg::before {
   content: ""; position: absolute; inset: 0;
