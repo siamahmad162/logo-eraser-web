@@ -1,6 +1,6 @@
 import { AdSlot } from '../components/AdSlot';
 import { ToolShowcase } from '../components/ToolShowcase';
-import { TOOLS } from '../content/tools';
+import { TOOLS, USE_CASES } from '../content/tools';
 import { Link } from '../router';
 import { ArrowRight } from '../components/Icons';
 import { ToolIcon } from '../components/ToolIcon';
@@ -8,11 +8,12 @@ import { JsonLd, abs, faqSchema } from '../components/Seo';
 import { FaqList, type Qa } from '../faq';
 import { SITE } from '../site';
 
-const CHOOSE: [string, string][] = [
-  ['A video from Gemini, with the sparkle in the corner', '/gemini-omni-watermark-remover'],
-  ['A Veo clip, with the “Veo” text or the sparkle', '/veo-watermark-remover'],
-  ['An image from Gemini, with the sparkle in the corner', '/gemini-photo-watermark-remover'],
-];
+// "Which one do I need?": start from the file you have
+const CHOOSE: Record<string, { q: string; formats: string[]; cta: string }> = {
+  omni: { q: 'A video from Gemini, with the sparkle in the corner', formats: ['MP4', 'MOV', 'WebM', 'MKV'], cta: 'Clean a video' },
+  veo: { q: 'A Veo clip, with the “Veo” text or the sparkle', formats: ['MP4', 'MOV', 'WebM', 'MKV'], cta: 'Clean a Veo clip' },
+  gphoto: { q: 'An image from Gemini, with the sparkle in the corner', formats: ['PNG', 'JPG', 'WebP'], cta: 'Clean an image' },
+};
 
 const TOOLS_FAQ: Qa[] = [
   { id: 'tools-which', q: 'Which watermark remover should I use?', a: <p>Use the <Link to="/gemini-omni-watermark-remover">Gemini Omni watermark remover</Link> for a Gemini video, the <Link to="/veo-watermark-remover">Veo watermark remover</Link> for a Veo clip (it removes the text mark and the sparkle), and the <Link to="/gemini-photo-watermark-remover">Gemini photo watermark remover</Link> for a Gemini image.</p> },
@@ -35,16 +36,25 @@ export function Tools() {
       <section className="section section-tight" aria-labelledby="which">
         <div className="wrap">
           <h2 id="which" className="section-title">Which one do I need?</h2>
-          <ul className="choose" data-reveal>
-            {CHOOSE.map(([q, to]) => {
-              const t = TOOLS.find((x) => x.path === to)!;
+          <p className="section-lede">Start from the file you have. The three removers run the same engine; each is tuned for its own kind of file.</p>
+          <ul className="pick-grid" data-reveal>
+            {TOOLS.map((t) => {
+              const c = CHOOSE[t.id];
+              const uc = USE_CASES.find((u) => u.icon === t.id)!;
               return (
-                <li key={to}>
-                  <Link to={to} className="choose-item">
-                    <ToolIcon id={t.id} className="choose-ico" />
-                    <span className="choose-q">{q}</span>
-                    <span className="choose-a">{t.name} <ArrowRight /></span>
-                  </Link>
+                <li key={t.id} className="pick-card">
+                  <div className="pick-top">
+                    <ToolIcon id={t.id} className="pick-ico" />
+                    <span className="pick-step">{t.files}</span>
+                  </div>
+                  <h3 className="pick-q">{c.q}</h3>
+                  <p className="pick-name">{t.name}</p>
+                  <p className="pick-text">{t.short}</p>
+                  <ul className="pick-fmt" aria-label="File types">{c.formats.map((f) => <li key={f}>{f}</li>)}</ul>
+                  <div className="pick-actions">
+                    <Link to={t.path} className="btn btn-primary btn-sm">{c.cta} <ArrowRight /></Link>
+                    <Link to={uc.path} className="pick-more">Who it is for</Link>
+                  </div>
                 </li>
               );
             })}
