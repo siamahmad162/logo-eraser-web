@@ -28,9 +28,14 @@ export const SITE = {
 export type AdUnit = { width: number; height: number; code: string };
 export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'welcome' | 'work' | 'side';
 
+// The code for one Adcash "Display" zone: its library, then the call that draws the banner inside the element it sits in.
+// (https: written out, because the unit runs in a frame that has no address of its own.)
+const adcash = (zoneId: string) =>
+  `<script id="aclib" data-cfasync="false" src="https://acscdn.com/script/aclib.js"></script><div><script data-cfasync="false">aclib.runBanner({ zoneId: '${zoneId}' });</script></div>`;
+
 export const ADS = {
   banner: {
-    desktop: { width: 728, height: 90, code: '' } as AdUnit,
+    desktop: { width: 728, height: 90, code: adcash('12289622') } as AdUnit,
     phone: { width: 320, height: 50, code: '' } as AdUnit,
   },
   rect: { width: 300, height: 250, code: '' } as AdUnit,

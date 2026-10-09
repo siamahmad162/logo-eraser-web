@@ -108,7 +108,9 @@ export function AdSlot({ place }: { place: AdPlace }) {
   if (!ADS.places[place]) return null;
   const live = adsOn() && (hasCode(d) || hasCode(p));
   if (live) {
-    const unit = phone ? (hasCode(p) ? p : d) : (hasCode(d) ? d : p);
+    // a phone is too narrow for the wide banner: without a phone unit it gets no banner (rather than a cut-off one)
+    const unit = phone ? (hasCode(p) ? p : null) : (hasCode(d) ? d : p);
+    if (!unit || !hasCode(unit)) return null;
     return <Unit unit={unit} className="ad ad-banner" place={place} />;
   }
   const w = phone ? p.width : d.width, h = phone ? p.height : d.height;
