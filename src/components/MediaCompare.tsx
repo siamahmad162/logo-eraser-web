@@ -14,7 +14,7 @@ type Props = {
   variant?: 'hero' | 'card';
   zoom?: boolean;
   eager?: boolean;
-  /** a looping arrow that points at the logo on the original side (default: on the hero) */
+  /** a looping arrow that points at the logo on the original side (default: on the hero, and on photos, whose logo is a small mark in a corner) */
   pointer?: boolean;
   /** called when a video has played to its end (the clip then does not loop); not called once the visitor has used the divider or zoom, then it loops */
   onEnded?: () => void;
@@ -24,7 +24,7 @@ const ZOOM_MS = 700;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
-export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false, pointer = variant === 'hero', onEnded }: Props) {
+export function MediaCompare({ media, logo, alt, variant = 'card', zoom = false, eager = false, pointer = variant === 'hero' || media.kind === 'image', onEnded }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const cv = useRef<HTMLCanvasElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
