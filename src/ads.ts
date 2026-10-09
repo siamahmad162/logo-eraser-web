@@ -18,7 +18,8 @@ const read = (): 'yes' | 'no' | null => { try { const v = localStorage.getItem(K
 const write = (v: 'yes' | 'no' | null) => { try { if (v) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch { /* private mode: asked again next time */ } };
 // time zones in Europe (a guess about where the visitor is; the ad company's own consent tool, if it has one, is better)
 const inEurope = () => { try { return /^(Europe|Atlantic\/(Reykjavik|Canary|Madeira|Faroe|Azores))/.test(Intl.DateTimeFormat().resolvedOptions().timeZone || ''); } catch { return true; } };
-export const asksFirst = () => adsOn() && (ADS.consent === 'all' || (ADS.consent === 'eu' && inEurope()));
+export const autotagOn = () => import.meta.env.MODE !== 'file' && !!ADS.autotag.zoneId.trim();
+export const asksFirst = () => (adsOn() || autotagOn()) && (ADS.consent === 'all' || (ADS.consent === 'eu' && inEurope()));
 const listeners = new Set<() => void>();
 export const consent = () => read();
 export const setConsent = (v: 'yes' | 'no' | null) => { write(v); listeners.forEach((f) => f()); };
@@ -26,6 +27,24 @@ export const onConsent = (f: () => void) => { listeners.add(f); return () => { l
 // may ads that use cookies run for this visitor right now?
 export const mayShow = () => adsOn() && (!asksFirst() || read() === 'yes');
 export type Allow = 'wait' | 'yes' | 'no';
+
+// ---------- Adcash Autotag ----------
+// Loaded once, after the page has settled, once the visitor allows it (where asked) and while no file is being cleaned.
+let tagStarted = false;
+export function startAutotag(): void {
+  if (tagStarted || typeof document === 'undefined' || !autotagOn() || (asksFirst() && read() !== 'yes')) return;
+  tagStarted = true;
+  const go = async () => {
+    await whenToolFree();
+    const s = document.createElement('script');
+    s.id = 'aclib'; s.async = true; s.src = ADS.autotag.lib; s.setAttribute('data-cfasync', 'false');
+    s.onload = () => { try { (window as unknown as { aclib: { runAutoTag: (o: { zoneId: string }) => void } }).aclib.runAutoTag({ zoneId: ADS.autotag.zoneId }); } catch { /* blocked or failed: the page works without it */ } };
+    document.head.appendChild(s);
+  };
+  const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+  const idle = () => (ric ? ric(() => { void go(); }, { timeout: 4000 }) : setTimeout(() => { void go(); }, 2500));
+  if (document.readyState === 'complete') idle(); else addEventListener('load', idle, { once: true });
+}
 
 // ---------- site-wide scripts ----------
 let loading: Promise<void> | null = null;

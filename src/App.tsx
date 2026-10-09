@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdRail, useRails } from './components/AdSlot';
 import { ConsentBar } from './components/ConsentBar';
+import { onConsent, startAutotag } from './ads';
 import { useRouter } from './router';
 import { Home } from './pages/Home';
 import { Faq } from './pages/Faq';
@@ -60,6 +61,7 @@ function useReveal(path: string) {
 export function App() {
   const { path } = useRouter();
   useReveal(path);
+  useEffect(() => { startAutotag(); return onConsent(startAutotag); }, []);
   const rails = useRails();
   return (
     <>

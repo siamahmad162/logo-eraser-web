@@ -28,21 +28,19 @@ export const SITE = {
 export type AdUnit = { width: number; height: number; code: string };
 export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'welcome' | 'work' | 'side';
 
-// The ad company's banner code for one unit (Adsterra "Banner": a key, its size, and its script).
-// data-cfasync="false" keeps Cloudflare's Rocket Loader from rewriting the scripts (Adsterra's own advice for sites behind Cloudflare).
-const banner = (key: string, width: number, height: number) =>
-  `<script data-cfasync="false">atOptions = { 'key': '${key}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };</script><script data-cfasync="false" src="https://bauval.org/22/${key}"></script>`;
-
 export const ADS = {
   banner: {
-    desktop: { width: 728, height: 90, code: banner('d49188e8cd955521204346f50e10780a', 728, 90) } as AdUnit,
-    phone: { width: 320, height: 50, code: banner('dca63593a1d520a373721f7a4406ca70', 320, 50) } as AdUnit,
+    desktop: { width: 728, height: 90, code: '' } as AdUnit,
+    phone: { width: 320, height: 50, code: '' } as AdUnit,
   },
-  rect: { width: 300, height: 250, code: banner('a8c4e587f76745a4b1eea14bea27e9ac', 300, 250) } as AdUnit,
+  rect: { width: 300, height: 250, code: '' } as AdUnit,
   rail: {
-    left: { width: 160, height: 600, code: banner('79873bbea9c76ea36cea850cc909ce89', 160, 600) } as AdUnit,
-    right: { width: 160, height: 600, code: banner('79873bbea9c76ea36cea850cc909ce89', 160, 600) } as AdUnit,
+    left: { width: 160, height: 600, code: '' } as AdUnit,
+    right: { width: 160, height: 600, code: '' } as AdUnit,
   },
+  // Adcash "Autotag": one zone that places its own formats; the library is loaded once for the whole site, after the page has
+  // settled and (where asked) the visitor has agreed. Empty zoneId: off. This is separate from the fixed-size units below.
+  autotag: { zoneId: 'sdbiaeyxij', lib: 'https://acscdn.com/script/aclib.js' },
   // Show a demo ad wherever a unit has no code yet. Set to false once all real codes are in (or to run without ads).
   demo: false,
   // vertical ads on both sides of every page on wide screens (false: none)

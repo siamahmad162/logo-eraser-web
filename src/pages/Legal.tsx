@@ -41,7 +41,7 @@ export function Terms() {
       <p>{n} removes visible marks only. AI-generated media may still contain invisible watermarks or metadata (for example Google’s SynthID), which {n} does not remove. You are responsible for how you use and publish your content.</p>
 
       <h2>3. Free service and advertising</h2>
-      <p>{n} is free to use. It is supported by advertising shown on the pages around the tools, provided by third-party advertising companies. Ads are not placed inside the tools, and advertisers never receive your files. See our <Link to="/privacy">Privacy Policy</Link> for how advertising uses data and how to control it. We may change, limit or stop any part of the service at any time, and we do not promise that it will always be available.</p>
+      <p>{n} is free to use. It is supported by advertising shown on the pages around the tools, provided by third-party advertising companies. Advertisers never receive your files: the cleaning happens in your browser and the files are not sent anywhere. See our <Link to="/privacy">Privacy Policy</Link> for how advertising uses data and how to control it. We may change, limit or stop any part of the service at any time, and we do not promise that it will always be available.</p>
 
       <h2>4. Fair use</h2>
       <p>Because the processing happens on your own device, there is no limit on how many files you clean. Automated or abusive use of the website itself, such as scripted ad clicks or attempts to disrupt the service, is not allowed and may be blocked.</p>
@@ -94,7 +94,7 @@ export function Privacy() {
       <p>To run and secure the service, show and measure advertising, answer support requests and meet legal obligations. We do not sell your personal data. Your videos and photos are never used for advertising, because they never leave your device.</p>
 
       <h2>Advertising</h2>
-      <p>{n} is free and supported by advertising from third-party advertising companies. Their ads are shown beside and between the pages’ text, and each ad runs in its own sandboxed frame, so it cannot reach the page or the files you are working on. Those companies are responsible for the data they collect; they have their own privacy policies, which you can read from their ads.</p>
+      <p>{n} is free and supported by advertising from third-party advertising companies. Our current advertising partner is Adcash. Its code is loaded on our pages and decides which ads, and in which form, are shown (for example banners or pop-ups). Because that code runs on the page, it can use cookies and similar technologies, and it receives technical data such as your IP address and browser. It does not receive the videos or photos you clean, which never leave your device. Advertising companies are responsible for the data they collect; they have their own privacy policies, which you can read from their ads.</p>
       <ul>
         <li>Where visitors have to be asked first (for example in the EEA, the UK and Switzerland), ads that use cookies or personal data are only shown after you say yes. You can change your answer at any time with “Ad choices” in the footer. If you say no, the website works the same, without ads.</li>
         <li>You can also block ads and cookies in your browser; the tools keep working without them.</li>
