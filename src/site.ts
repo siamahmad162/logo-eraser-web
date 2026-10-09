@@ -28,9 +28,10 @@ export const SITE = {
 export type AdUnit = { width: number; height: number; code: string };
 export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'welcome' | 'work' | 'side';
 
-// The ad company's banner code for one unit (Adsterra "Banner": a key, its size, and its script)
+// The ad company's banner code for one unit (Adsterra "Banner": a key, its size, and its script).
+// data-cfasync="false" keeps Cloudflare's Rocket Loader from rewriting the scripts (Adsterra's own advice for sites behind Cloudflare).
 const banner = (key: string, width: number, height: number) =>
-  `<script>atOptions = { 'key': '${key}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };</script><script src="https://bauval.org/22/${key}"></script>`;
+  `<script data-cfasync="false">atOptions = { 'key': '${key}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };</script><script data-cfasync="false" src="https://bauval.org/22/${key}"></script>`;
 
 export const ADS = {
   banner: {
