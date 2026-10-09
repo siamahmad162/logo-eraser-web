@@ -77,12 +77,12 @@ export const CLIPS = {
 } satisfies Record<string, Demo>;
 
 export const PHOTOS: Demo[] = [
-  { id: 'p-lake', source: 'Photo', title: 'Moonlit lake', alt: 'Moonlit lake (AI image)', media: { kind: 'image', before: PLakeBefore, after: PLakeAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  { id: 'p-desert', source: 'Photo', title: 'Desert night sky', alt: 'Desert night sky (AI image)', media: { kind: 'image', before: PDesertBefore, after: PDesertAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  { id: 'p-workshop', source: 'Photo', title: 'Isometric workshop', alt: 'Isometric workshop (AI image)', media: { kind: 'image', before: PWorkshopBefore, after: PWorkshopAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  { id: 'p-sneaker', source: 'Photo', title: 'Sneaker', alt: 'Sneaker (AI image)', media: { kind: 'image', before: PSneakerBefore, after: PSneakerAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  { id: 'p-breakfast', source: 'Photo', title: 'Breakfast', alt: 'Breakfast (AI image)', media: { kind: 'image', before: PBreakfastBefore, after: PBreakfastAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
-  { id: 'p-boat', source: 'Photo', title: 'Lantern boat', alt: 'Lantern boat (AI image)', media: { kind: 'image', before: PBoatBefore, after: PBoatAfter, w: 480, h: 270 }, logo: { x: 0.75, y: 0.6 } },
+  { id: 'p-lake', source: 'Photo', title: 'Moonlit lake', alt: 'Moonlit lake (AI image)', media: { kind: 'image', before: PLakeBefore, after: PLakeAfter, w: 960, h: 540 }, logo: { x: 0.959, y: 0.926 } },
+  { id: 'p-desert', source: 'Photo', title: 'Desert night sky', alt: 'Desert night sky (AI image)', media: { kind: 'image', before: PDesertBefore, after: PDesertAfter, w: 960, h: 540 }, logo: { x: 0.959, y: 0.926 } },
+  { id: 'p-workshop', source: 'Photo', title: 'Isometric workshop', alt: 'Isometric workshop (AI image)', media: { kind: 'image', before: PWorkshopBefore, after: PWorkshopAfter, w: 720, h: 720 }, logo: { x: 0.941, y: 0.941 } },
+  { id: 'p-sneaker', source: 'Photo', title: 'Sneaker', alt: 'Sneaker (AI image)', media: { kind: 'image', before: PSneakerBefore, after: PSneakerAfter, w: 720, h: 720 }, logo: { x: 0.941, y: 0.941 } },
+  { id: 'p-breakfast', source: 'Photo', title: 'Breakfast', alt: 'Breakfast (AI image)', media: { kind: 'image', before: PBreakfastBefore, after: PBreakfastAfter, w: 800, h: 597 }, logo: { x: 0.951, y: 0.934 } },
+  { id: 'p-boat', source: 'Photo', title: 'Lantern boat', alt: 'Lantern boat (AI image)', media: { kind: 'image', before: PBoatBefore, after: PBoatAfter, w: 600, h: 800 }, logo: { x: 0.926, y: 0.945 } },
 ];
 
 export const GALLERY_VIDEOS: Demo[] = [CLIPS.G_OCEAN, CLIPS.G_GARDEN, CLIPS.G_ALLEY, CLIPS.V_JELLY, CLIPS.V_AURORA, CLIPS.V_LAVA];
