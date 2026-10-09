@@ -28,25 +28,19 @@ export const SITE = {
 export type AdUnit = { width: number; height: number; code: string };
 export type AdPlace = 'home1' | 'home2' | 'home3' | 'tools1' | 'tools2' | 'tool1' | 'tool2' | 'article1' | 'article2' | 'faq1' | 'welcome' | 'work' | 'side';
 
-// The code for one Adcash "Display" zone: its library, then the call that draws the banner inside the element it sits in.
-// (https: written out, because the unit runs in a frame that has no address of its own.)
-const adcash = (zoneId: string) =>
-  `<script id="aclib" data-cfasync="false" src="https://acscdn.com/script/aclib.js"></script><div><script data-cfasync="false">aclib.runBanner({ zoneId: '${zoneId}' });</script></div>`;
-
 export const ADS = {
   banner: {
-    desktop: { width: 728, height: 90, code: adcash('12289622') } as AdUnit,
-    // phones get the 300x250 zone as their banner (Adcash has no 320x50 Display size)
-    phone: { width: 300, height: 250, code: adcash('12289630') } as AdUnit,
+    desktop: { width: 728, height: 90, code: '' } as AdUnit,
+    phone: { width: 320, height: 50, code: '' } as AdUnit,
   },
-  rect: { width: 300, height: 250, code: adcash('12289630') } as AdUnit,
+  rect: { width: 300, height: 250, code: '' } as AdUnit,
   rail: {
-    left: { width: 160, height: 600, code: adcash('12289666') } as AdUnit,
-    right: { width: 160, height: 600, code: adcash('12289666') } as AdUnit,
+    left: { width: 160, height: 600, code: '' } as AdUnit,
+    right: { width: 160, height: 600, code: '' } as AdUnit,
   },
   // Adcash "Autotag": one zone that places its own formats; the library is loaded once for the whole site, after the page has
   // settled and (where asked) the visitor has agreed. Empty zoneId: off. This is separate from the fixed-size units below.
-  autotag: { zoneId: '', lib: 'https://acscdn.com/script/aclib.js' },   // off (it was 'sdbiaeyxij'): the fixed banner zones below are used instead
+  autotag: { zoneId: '', lib: '' },
   // Show a demo ad wherever a unit has no code yet. Set to false once all real codes are in (or to run without ads).
   demo: false,
   // vertical ads on both sides of every page on wide screens (false: none)
