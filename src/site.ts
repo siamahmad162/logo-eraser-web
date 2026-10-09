@@ -36,9 +36,10 @@ const adcash = (zoneId: string) =>
 export const ADS = {
   banner: {
     desktop: { width: 728, height: 90, code: adcash('12289622') } as AdUnit,
-    phone: { width: 320, height: 50, code: '' } as AdUnit,
+    // phones get the 300x250 zone as their banner (Adcash has no 320x50 Display size)
+    phone: { width: 300, height: 250, code: adcash('12289630') } as AdUnit,
   },
-  rect: { width: 300, height: 250, code: '' } as AdUnit,
+  rect: { width: 300, height: 250, code: adcash('12289630') } as AdUnit,
   rail: {
     left: { width: 160, height: 600, code: '' } as AdUnit,
     right: { width: 160, height: 600, code: '' } as AdUnit,
