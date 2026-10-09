@@ -30,8 +30,8 @@ export function Terms() {
       <h2>1. The service</h2>
       <p>{n} is a browser-based tool that removes visible logos and watermarks from videos and images. Processing happens on your own device: your files are not uploaded to us. Results depend on your files, browser and device, and we can’t guarantee a perfect result for every file.</p>
 
-      <h2>2. Your content and acceptable use</h2>
-      <p>You may only process content that you created or that you have the rights and permissions to edit. You agree not to use {n}:</p>
+      <h2>2. Your content and responsible use</h2>
+      <p>{n} is made for people who want a clean version of AI-generated video or images that they created, for example without the visible sparkle in a finished edit. It is not a tool for taking marks off other people’s work. You may only process content that you created or that you have the rights and permissions to edit. You agree not to use {n}:</p>
       <ul>
         <li>to remove watermarks, logos or other identifying marks from content that belongs to someone else without their permission;</li>
         <li>to infringe anyone’s copyright, trademark, privacy or other rights;</li>
@@ -39,9 +39,10 @@ export function Terms() {
         <li>in breach of the terms of the service that generated your content, or of any law that applies to you, including rules that require AI-generated content to be labelled.</li>
       </ul>
       <p>{n} removes visible marks only. AI-generated media may still contain invisible watermarks or metadata (for example Google’s SynthID), which {n} does not remove. You are responsible for how you use and publish your content.</p>
+      <p>Responsible use in short: process only what you have the right to edit, say that content is AI-generated where a platform or the law asks you to, and never present it as something it is not. Your files stay on your device, so we cannot see what is processed. If you learn that {n} is being misused, tell us on the <Link to="/contact">contact page</Link>; we may limit or block abusive use of the website.</p>
 
       <h2>3. Free service and advertising</h2>
-      <p>{n} is free to use. It is supported by advertising shown on the pages around the tools, provided by third-party advertising companies. Advertisers never receive your files: the cleaning happens in your browser and the files are not sent anywhere. See our <Link to="/privacy">Privacy Policy</Link> for how advertising uses data and how to control it. We may change, limit or stop any part of the service at any time, and we do not promise that it will always be available.</p>
+      <p>{n} is free to use. It may be supported by advertising shown on the pages around the tools, provided by third-party advertising companies. Advertisers never receive your files: the cleaning happens in your browser and the files are not sent anywhere. See our <Link to="/privacy">Privacy Policy</Link> for how advertising uses data and how to control it. We may change, limit or stop any part of the service at any time, and we do not promise that it will always be available.</p>
 
       <h2>4. Fair use</h2>
       <p>Because the processing happens on your own device, there is no limit on how many files you clean. Automated or abusive use of the website itself, such as scripted ad clicks or attempts to disrupt the service, is not allowed and may be blocked.</p>

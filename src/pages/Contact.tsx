@@ -99,7 +99,7 @@ export function Contact() {
             </div>
             <div className="contact-card">
               <h2>Ads and privacy</h2>
-              <p>{SITE.name} is free and supported by ads. If an ad looks wrong or unsafe, tell us what you saw and on which page. Privacy questions are answered in our <Link to="/privacy">Privacy Policy</Link>.</p>
+              <p>{SITE.name} is free and may show ads. If an ad looks wrong or unsafe, tell us what you saw and on which page. Privacy questions are answered in our <Link to="/privacy">Privacy Policy</Link>.</p>
             </div>
             <div className="contact-card">
               <h2>Business &amp; press</h2>

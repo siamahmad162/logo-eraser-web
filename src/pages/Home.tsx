@@ -272,7 +272,7 @@ export function Home() {
           <div className="section-head" data-reveal>
             <span className="eyebrow">Free</span>
             <h2 id="free" className="section-title">A free watermark remover: no sign-up, no limits</h2>
-            <p className="section-lede">Clean as many videos and photos as you like. Ads on the pages around the tools pay for {SITE.name}; they are never placed inside a tool, and they never see your files, because your files never leave your device.</p>
+            <p className="section-lede">Clean as many videos and photos as you like. {SITE.name} may show ads on the pages around the tools to pay for itself; they never see your files, because your files never leave your device.</p>
           </div>
           <ul className="ticks free-ticks" data-reveal>
             <li><Check /> No account, no limit on files, no watermark of ours on your results</li>
@@ -284,6 +284,23 @@ export function Home() {
       </section>
 
       <AdSlot place="home3" />
+
+      <section className="section" aria-labelledby="responsible">
+        <div className="wrap">
+          <div className="section-head" data-reveal>
+            <span className="eyebrow">Responsible use</span>
+            <h2 id="responsible" className="section-title">Made for your own AI-generated videos and images</h2>
+            <p className="section-lede">{SITE.name} cleans the visible sparkle or text mark from AI media you made, for example before you edit it into a finished video. It is not for taking marks off other people’s work.</p>
+          </div>
+          <ul className="ticks free-ticks" data-reveal>
+            <li><Check /> Use it only on content you created or have the right to edit</li>
+            <li><Check /> Don’t remove marks from someone else’s work, and don’t pass off AI-generated media as real footage</li>
+            <li><Check /> Label AI content where a platform or the law asks you to. Invisible marks such as SynthID stay in the file; {SITE.name} does not remove them</li>
+            <li><Check /> Follow the terms of the service that generated your media</li>
+          </ul>
+          <p className="more"><Link to="/guides/visible-watermark-vs-synthid">Visible watermark vs SynthID <ArrowRight /></Link> · <Link to="/terms">Terms of Service</Link></p>
+        </div>
+      </section>
 
       <section className="section" aria-labelledby="guides">
         <div className="wrap">

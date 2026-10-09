@@ -100,7 +100,7 @@ export const LANDINGS: Landing[] = [
       { q: 'Is the Gemini watermark the same on videos and images?', a: 'It is the same four-pointed sparkle, but a video has thousands of frames to measure it in and a still image has one. That is why there are separate pages for each, both running the same engine.' },
       { q: 'Does removing it change the picture anywhere else?', a: 'No. Only the small area around the logo is touched, and there the real picture is restored. The rest of every frame is left as it was.' },
       { q: 'Are my files sent to a server?', a: 'No. Everything runs in your browser on your own device, so your videos and images never leave it.' },
-      { q: 'Is it free?', a: 'Yes, with no sign-up. The site is supported by ads, and the tools have no limits on how many files you clean.' },
+      { q: 'Is it free?', a: 'Yes, with no sign-up. The site may show ads, and the tools have no limits on how many files you clean.' },
       { q: 'Should I still say the content is AI-made?', a: 'Yes, wherever a platform asks for it. Removing the visible logo does not change where a file came from, and Google’s invisible SynthID mark is a separate thing. See the guides for details.' },
     ],
     guides: ['remove-gemini-watermark-from-video', 'blur-crop-or-restore', 'visible-watermark-vs-synthid'],
