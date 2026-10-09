@@ -41,12 +41,12 @@ export const ADS = {
   },
   rect: { width: 300, height: 250, code: adcash('12289630') } as AdUnit,
   rail: {
-    left: { width: 160, height: 600, code: '' } as AdUnit,
-    right: { width: 160, height: 600, code: '' } as AdUnit,
+    left: { width: 160, height: 600, code: adcash('12289666') } as AdUnit,
+    right: { width: 160, height: 600, code: adcash('12289666') } as AdUnit,
   },
   // Adcash "Autotag": one zone that places its own formats; the library is loaded once for the whole site, after the page has
   // settled and (where asked) the visitor has agreed. Empty zoneId: off. This is separate from the fixed-size units below.
-  autotag: { zoneId: 'sdbiaeyxij', lib: 'https://acscdn.com/script/aclib.js' },
+  autotag: { zoneId: '', lib: 'https://acscdn.com/script/aclib.js' },   // off (it was 'sdbiaeyxij'): the fixed banner zones below are used instead
   // Show a demo ad wherever a unit has no code yet. Set to false once all real codes are in (or to run without ads).
   demo: false,
   // vertical ads on both sides of every page on wide screens (false: none)
