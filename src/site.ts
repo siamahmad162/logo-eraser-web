@@ -8,7 +8,7 @@ export const SITE = {
   // Who runs the service, as it should appear in the legal pages.
   operator: 'VanishLogo',
   country: 'Bangladesh',
-  legalUpdated: '9 October 2026',
+  legalUpdated: '10 October 2026',
 };
 
 // ---------------------------------------------------------------------------------------------------------------

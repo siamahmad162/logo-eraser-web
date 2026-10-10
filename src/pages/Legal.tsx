@@ -35,6 +35,7 @@ export function Terms() {
       <ul>
         <li>to remove watermarks, logos or other identifying marks from content that belongs to someone else without their permission;</li>
         <li>to infringe anyone’s copyright, trademark, privacy or other rights;</li>
+        <li>to copy, scrape, decompile, reverse engineer, extract or redistribute {n}’s code, algorithms or data (including the logo-opacity data it contains), or to use them to build or train a competing product or service, except where the law gives you that right regardless of this clause;</li>
         <li>to deceive people about the origin of content, including passing off AI-generated content as real footage, or to create fraud, disinformation, harassment or non-consensual intimate imagery;</li>
         <li>in breach of the terms of the service that generated your content, or of any law that applies to you, including rules that require AI-generated content to be labelled.</li>
       </ul>
@@ -51,7 +52,7 @@ export function Terms() {
       <p>The ads and links on {n} lead to sites we do not control. We are not responsible for what those sites offer or do, so please use your own judgement.</p>
 
       <h2>6. Intellectual property</h2>
-      <p>You keep all rights to your content. {n}’s software, design and brand belong to us. Third-party names such as Gemini and Veo are trademarks of their owners and are used only to describe compatibility; {n} is not affiliated with or endorsed by Google.</p>
+      <p>You keep all rights to your content. {n}’s software, design and brand belong to us. Third-party names such as Gemini and Veo are trademarks of their owners and are used only to describe compatibility; {n} is not affiliated with or endorsed by Google. The software, algorithms, measured data and design of {n} are protected by copyright and other laws, even though the code runs in your browser: that it can be downloaded to run does not give anyone a licence to copy or reuse it. We may act against copying, including by sending takedown notices to hosting providers and platforms.</p>
 
       <h2>7. Disclaimer</h2>
       <p>{n} is provided “as is” and “as available”, without warranties of any kind, to the extent the law allows. Keep your original files: always check results before publishing them.</p>
