@@ -30,7 +30,7 @@ export function Footer() {
             <li><Lock /> Stays on your device</li>
             <li><Stack /> Batches and folders</li>
           </ul>
-          <a className="footer-mailbtn" href={`mailto:${SITE.supportEmail}`}><Mail /> {SITE.supportEmail}</a>
+          <Link className="footer-mailbtn" to="/contact"><Mail /> Contact us</Link>
         </div>
         <nav aria-label="Product">
           <p className="footer-title">Product</p>

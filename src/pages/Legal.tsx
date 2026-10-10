@@ -19,7 +19,7 @@ function LegalPage({ title, children }: { title: string; children: ReactNode }) 
   );
 }
 
-const Mail = () => <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>;
+const Mail = () => <Link to="/contact">contact page</Link>;
 
 export function Terms() {
   const n = SITE.name;
@@ -70,7 +70,7 @@ export function Terms() {
       <p>These terms are governed by the laws of {SITE.country}, without affecting any mandatory consumer protections you have where you live.</p>
 
       <h2>12. Contact</h2>
-      <p>Questions about these terms: <Mail />.</p>
+      <p>Questions about these terms: use our <Mail />.</p>
     </LegalPage>
   );
 }
@@ -113,7 +113,7 @@ export function Privacy() {
       <p>We keep support emails for as long as needed to help you and meet legal obligations. Advertising data is kept by the advertising companies under their own policies.</p>
 
       <h2>Your rights</h2>
-      <p>Depending on where you live (for example under the GDPR or the CCPA), you can ask to access, correct, delete or export the data we hold about you, and object to or restrict its use. Write to <Mail /> and we will reply within 30 days. You can also complain to your local data protection authority.</p>
+      <p>Depending on where you live (for example under the GDPR or the CCPA), you can ask to access, correct, delete or export the data we hold about you, and object to or restrict its use. Send us a message on the <Mail /> and we will reply within 30 days. You can also complain to your local data protection authority.</p>
 
       <h2>International transfers</h2>
       <p>Our providers may process data in other countries. Where required, transfers are protected by appropriate safeguards such as standard contractual clauses.</p>
@@ -125,7 +125,7 @@ export function Privacy() {
       <p>We will post updates here and change the date above. Significant changes will be announced on the website or by email.</p>
 
       <h2>Contact</h2>
-      <p><Mail /></p>
+      <p>Use the form on our <Mail />.</p>
     </LegalPage>
   );
 }

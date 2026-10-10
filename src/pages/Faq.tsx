@@ -1,6 +1,6 @@
 import { AdSlot } from '../components/AdSlot';
 import { FAQ, FaqList } from '../faq';
-import { SITE } from '../site';
+import { Link } from '../router';
 
 const GROUPS = [
   { id: 'faq-what', title: 'What the watermark remover does', ids: ['which-watermarks', 'clean', 'quality'] },
@@ -15,7 +15,7 @@ export function Faq() {
       <section className="page-head">
         <div className="wrap narrow">
           <h1>Watermark remover FAQ: files, privacy and cost</h1>
-          <p className="lede">Can’t find an answer? Write to <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>.</p>
+          <p className="lede">Can’t find an answer? <Link to="/contact">Send us a message</Link>.</p>
         </div>
       </section>
       {GROUPS.map((g) => (

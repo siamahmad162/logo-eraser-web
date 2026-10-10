@@ -38,7 +38,7 @@ const COMPARE_ROWS: [string, string, string, string][] = [
 const SCHEMA = {
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('/favicon.svg'), email: SITE.supportEmail },
+    { '@type': 'Organization', name: SITE.name, url: abs('/'), logo: abs('/favicon.svg') },
     { '@type': 'WebSite', name: SITE.name, url: abs('/') },
     faqSchema(FAQ.slice(0, 6)),
     {

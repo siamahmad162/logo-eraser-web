@@ -48,7 +48,7 @@ function ContactForm() {
         </label>
         <label className="cf-field">
           <span>Email</span>
-          <input type="email" name="email" required autoComplete="email" placeholder="you@example.com" maxLength={160} />
+          <input type="email" name="email" required autoComplete="email" placeholder="Your email address" maxLength={160} />
         </label>
       </div>
       <label className="cf-field">
