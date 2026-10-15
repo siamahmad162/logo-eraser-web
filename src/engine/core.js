@@ -453,6 +453,33 @@ const LogoCore = (() => {
         } else p.data[o] = clamp(Math.round((p.data[o] - a * W) / (1 - a)), 0, 255);
       }
     }
+    // Ghost removal: on dark backgrounds, bad alpha can create dark artifacts. Detect and brighten them.
+    {
+      const w = r.w, h = r.h;
+      for (let j = 1; j < h - 1; j++) {
+        for (let i = 1; i < w - 1; i++) {
+          const q = j * w + i;
+          if (alpha[q] < 0.05) continue; // skip regions with low alpha (logo area)
+          const o = p.off + (r.y + j) * p.stride + (r.x + i) * p.step;
+          const v = p.data[o];
+          let sum = 0, cnt = 0;
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+            if (dj === 0 && di === 0) continue;
+            const nj = j + dj, ni = i + di;
+            if (nj > 0 && nj < h - 1 && ni > 0 && ni < w - 1) {
+              const no = p.off + (r.y + nj) * p.stride + (r.x + ni) * p.step;
+              sum += p.data[no]; cnt++;
+            }
+          }
+          const avgNeighbor = sum / cnt;
+          // If pixel is significantly darker than neighbors (dark ghost), brighten it
+          if (avgNeighbor - v > 8) {
+            const blend = 0.4; // blend toward neighbor average
+            p.data[o] = clamp(Math.round(v + (avgNeighbor - v) * blend), 0, 255);
+          }
+        }
+      }
+    }
     if (holes) fillHoles(p, pm);
     if (!pm.noHeal) heal(p, pm);
     if (pm.soften) soften(p, pm);
